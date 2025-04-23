@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adyen Drop-in Demo (Advanced Flow)</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Adyen SDK -->
+  <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
+  <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
+
+  <script>
+    const clientKey = "<%= clientKey %>";
+  </script>
+
+  <style>
+    .container {
+      margin-top: 3rem;
+    }
+
+    .form-box {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    }
+
+    #dropin-container {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">Adyen Drop-in Demo (Advanced Flow)</h1>
+
+    <div class="row">
+      <!-- Configuration Form -->
+      <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
+        <div class="form-box">
+          <form id="dropinForm">
+            <div class="mb-3">
+              <label for="env" class="form-label">Environment</label>
+              <select id="env" name="env" class="form-select">
+                <option value="test">Test</option>
+                <option value="live">Live</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="merchantPrefix" class="form-label">Merchant Prefix (Live only)</label>
+              <input type="text" id="merchantPrefix" name="merchantPrefix" class="form-control" placeholder="e.g. yourcompany" />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Drop-in -->
+      <div class="col-md-8 order-2 order-md-1">
+        <div id="dropin-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("dropinForm");
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const env = form.env.value;
+      const isLive = env === 'live';
+      const merchantPrefix = form.merchantPrefix.value;
+
+      // 1. Get available payment methods
+      const paymentMethodsRes = await fetch('/api/paymentMethods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isLive,
+          merchantPrefix,
+          countryCode: "NL",
+          shopperLocale: "en_US",
+          amount: { value: 1000, currency: "EUR" },
+          channel: "Web"
+        })
+      });
+      const paymentMethods = await paymentMethodsRes.json();
+
+      // 2. Create Drop-in config
+      const configuration = {
+        environment: env,
+        clientKey: clientKey,
+        paymentMethodsResponse: paymentMethods,
+        locale: "en_US",
+        amount: { value: 1000, currency: "EUR" },
+        countryCode: "NL",
+
+        onSubmit: async (state, dropin) => {
+          const res = await fetch('/api/payments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              isLive,
+              merchantPrefix,
+              amount: { value: 1000, currency: "SGD" },
+              reference: "ORDER_ADVANCED_DEMO",
+              paymentMethod: state.data.paymentMethod,
+              returnUrl: window.location.href,
+              browserInfo: state.data.browserInfo,
+              channel: "Web",
+              origin: window.location.origin
+            })
+          });
+
+          const result = await res.json();
+
+          if (result.action) {
+            dropin.handleAction(result.action);
+          } else if (result.resultCode === 'Authorised') {
+            alert("Payment successful 🎉");
+          } else {
+            alert("Payment result: " + result.resultCode);
+          }
+        },
+
+        onAdditionalDetails: async (state, dropin) => {
+          const res = await fetch('/api/payments/details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              isLive,
+              merchantPrefix,
+              details: state.data.details,
+              paymentData: state.data.paymentData
+            })
+          });
+
+          const result = await res.json();
+
+          if (result.action) {
+            dropin.handleAction(result.action);
+          } else if (result.resultCode === 'Authorised') {
+            alert("Payment authorised ✅");
+          } else {
+            alert("Payment result: " + result.resultCode);
+          }
+        },
+
+        onError: (err) => {
+          console.error("Payment error:", err);
+          alert("Something went wrong 😢");
+        }
+      };
+
+      const checkout = await AdyenCheckout(configuration);
+      checkout.create('dropin').mount('#dropin-container');
+    });
+  </script>
+</body>
+</html>

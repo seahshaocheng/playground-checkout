@@ -59,6 +59,21 @@
               <input type="text" id="merchantPrefix" name="merchantPrefix" class="form-control" placeholder="e.g. yourcompany" />
             </div>
 
+            <div class="mb-3">
+              <label for="amount" class="form-label">Amount (in minor units)</label>
+              <input type="number" id="amount" name="amount" class="form-control" placeholder="e.g. 1000" value="1000" />
+            </div>
+
+            <div class="mb-3">
+              <label for="currency" class="form-label">Currency</label>
+              <input type="text" id="currency" name="currency" class="form-control" placeholder="e.g. SGD" value="SGD" />
+            </div>
+
+            <div class="mb-3">
+              <label for="reference" class="form-label">Reference</label>
+              <input type="text" id="reference" name="reference" class="form-control" placeholder="e.g. ORDER12345" value="ORDER_ADVANCED_DEMO" />
+            </div>
+
             <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
           </form>
         </div>
@@ -80,20 +95,26 @@
       const env = form.env.value;
       const isLive = env === 'live';
       const merchantPrefix = form.merchantPrefix.value;
+      const amountValue = parseInt(form.amount.value);
+      const currency = form.currency.value;
+      const reference = form.reference.value;
 
-      // 1. Get available payment methods
+      const amount = { value: amountValue, currency };
+
+      // 1. Get paymentMethods
       const paymentMethodsRes = await fetch('/api/paymentMethods', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           isLive,
           merchantPrefix,
-          countryCode: "NL",
-          shopperLocale: "en_US",
-          amount: { value: 1000, currency: "EUR" },
+          amount,
+          countryCode: "SG",
+          shopperLocale: "en_SG",
           channel: "Web"
         })
       });
+
       const paymentMethods = await paymentMethodsRes.json();
 
       // 2. Create Drop-in config
@@ -101,10 +122,14 @@
         environment: env,
         clientKey: clientKey,
         paymentMethodsResponse: paymentMethods,
-        locale: "en_US",
-        amount: { value: 1000, currency: "EUR" },
-        countryCode: "NL",
-
+        locale: "en_SG",
+        amount,
+        countryCode: "SG",
+        paymentMethodsConfiguration:{
+          card:{
+            enableStoreDetails:true
+          },
+        },
         onSubmit: async (state, dropin) => {
           const res = await fetch('/api/payments', {
             method: 'POST',
@@ -112,9 +137,9 @@
             body: JSON.stringify({
               isLive,
               merchantPrefix,
-              amount: { value: 1000, currency: "SGD" },
-              reference: "ORDER_ADVANCED_DEMO",
-              paymentMethod: state.data.paymentMethod,
+              amount,
+              reference,
+              ...state.data,
               returnUrl: window.location.href,
               browserInfo: state.data.browserInfo,
               channel: "Web",

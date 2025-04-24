@@ -37,7 +37,12 @@ app.get('/dropin-advanced', (req, res) => {
   res.render('dropin-advance', { sdkVersion, env, clientKey });
 });
 
+//Hotels Tokenisation example
 
+
+//End hotels tokenisation example
+
+//Standard Integration Server Endpoints
 // POST /api/sessions
 app.post('/api/sessions', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, ...rest } = req.body;
@@ -53,7 +58,8 @@ app.post('/api/sessions', async (req, res) => {
 // POST /api/paymentMethods
 app.post('/api/paymentMethods', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, ...rest } = req.body;
-
+  console.log("Calling /payment/mtehods");
+  rest.merchantAccount=process.env.ADYEN_TEST_MERCHANTACCOUNT;
   try {
     const result = await getPaymentMethods(rest, isLive, merchantPrefix, version);
     res.json(result);
@@ -65,7 +71,7 @@ app.post('/api/paymentMethods', async (req, res) => {
 // POST /api/payments
 app.post('/api/payments', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, ...rest } = req.body;
-
+  rest.merchantAccount = process.env.ADYEN_TEST_MERCHANTACCOUNT;
   try {
     const result = await intiatePayment(rest, isLive, merchantPrefix, version);
     res.json(result);
@@ -85,6 +91,8 @@ app.post('/api/payments/details', async (req, res) => {
     res.status(500).json(error.response?.data || { error: error.message });
   }
 });
+
+//End Standard Integration Server Endpoints
 
 app.listen(PORT, () => {
   console.log(`🚀 Adyen API Demo running at http://localhost:${PORT}`);

@@ -6,7 +6,7 @@ const latestVersion = 'v71';
 const configHandler= (isLive,merchantPrefix,version) => {
     const url = isLive
         ? `https://${merchantPrefix}-checkout-live.adyenpayments.com/checkout/${version}`
-        : `https://checkout-test.adyen.com/${version}`;
+        : `https://checkout-test.adyen.com/checkout/${version}`;
 
     const apikey = isLive? process.env.ADYEN_API_KEY_LIVE : process.env.ADYEN_API_KEY_TEST;
 
@@ -95,7 +95,29 @@ const submitAdditionalDetails = async (data,isLive=false,merchantPrefix="",versi
     }
 }
 
+
+const forward = async (data,isLive=false,merchantPrefix="",version = latestVersion) => {
+    const config = configHandler(isLive,merchantPrefix,version);
+    const url = `${config.url}/forward`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': config.apikey,
+    };
+
+    try {
+        const response = await axios.post(url, data, { headers });
+        return response.data;
+    } catch (error) {
+        console.error('Error submitting additional details:', error);
+        throw error;
+    }
+}
+
+
+
+
 module.exports = {
+    forward,
     createSession,
     getPaymentMethods,
     intiatePayment,

@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
 
 const {
   forward,
@@ -46,8 +47,57 @@ app.get('/dropin-advance-booking',(req,res)=>{
   res.render('dropin-advance-booking', { sdkVersion, env, clientKey });
 })
 
+app.get('/custom-card',(req,res)=>{
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
+  const env = req.query.env || 'test';
+  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  res.render('custom-card', { sdkVersion, env, clientKey });
+})
+
 //Hotels Tokenisation example
-app.post('/api/initatePayment', async (req, res) => {
+const forwardAPIHandler = async(newShopperReference,originalStoredPaymentMethodId,originalShopperReference) => {
+  const randomUuid = uuidv4();
+        const forwardBody = {
+          merchantAccount,
+          shopperReference:originalShopperReference,
+          storedPaymentMethodId: originalStoredPaymentMethodId,
+          baseUrl: isLive ? "https://pal-test.adyen.com" : "https://pal-test.adyen.com",
+          request: {
+            httpMethod: "POST",
+            urlSuffix: "pal/servlet/Recurring/v30/storeToken",
+            credentials: process.env.ADYEN_API_KEY_TEST, // or use secure key vault
+            headers: {
+              "X-Api-Key": process.env.ADYEN_API_KEY_TEST,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              card:{
+                "number": "{{number}}",
+                "expiryMonth": "{{expiryMonth}}",
+                "expiryYear": "{{expiryYear}}",
+                "holderName": "{{holderName}}"
+              },
+              reference:newShopperReference,
+              merchantAccount,
+              shopperReference:`${newShopperReference}`,
+              recurring: {
+                contract:"ONECLICK"
+              }
+            })
+          }}
+          
+      console.log("Retrieved shopper token for reservation");
+      const forwardResult = await forward(forwardBody,false, merchantPrefix,version);
+      console.log(rest.merchantReference);
+      console.log(forwardResult);
+      const convertedForwardResult = JSON.parse(forwardResult.response.body);
+      console.log(convertedForwardResult.recurringDetailReference);
+
+      return convertedForwardResult;
+}
+
+
+app.post('/api/hotel/initatePayment', async (req, res) => {
   try {
     const {
       isLive = false,
@@ -76,51 +126,73 @@ app.post('/api/initatePayment', async (req, res) => {
 
     if (isMember && rest.paymentMethod.storedPaymentMethodId !== undefined) {
       console.log('Forwarding payment request as ContAuth for member...');
-      const forwardBody = {
-        merchantAccount,
-        shopperReference:rest.shopperReference,
-        storedPaymentMethodId: rest.paymentMethod.storedPaymentMethodId,
-        baseUrl: isLive ? "https://checkout-live.adyen.com" : "https://checkout-test.adyen.com",
-        request: {
-          httpMethod: "POST",
-          urlSuffix: "checkout/v71/payments",
-          credentials: process.env.ADYEN_API_KEY, // or use secure key vault
-          headers: {
-            "X-Api-Key": process.env.ADYEN_API_KEY,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            amount:rest.amount,
-            paymentMethod:{
-              "type": "scheme",
-              "number": "{{number}}",
-              "expiryMonth": "{{expiryMonth}}",
-              "expiryYear": "{{expiryYear}}",
-              encryptedSecurityCode: rest.paymentMethod.encryptedSecurityCode,
-              "holderName": rest.paymentMethod.holderName
-            },
-            shopperInteraction: "Ecommerce",
-            channel: "web",
-            reference:rest.merchantReference,
-            merchantAccount,
-            returnUrl:rest.returnUrl,
-            shopperReference:rest.merchantReference,
-            storePaymentMethod: true,
-            recurringProcessingModel: "UnscheduledCardOnFile"
-          })
-         
+  
+        const paymentRequest = {
+          ...rest,
+          merchantAccount,
+          recurringProcessingModel:"CardOnFile",
+          shopperInteraction:"ContAuth",
+          authenticationData:{
+            "threeDSRequestData": {
+              "nativeThreeDS": "preferred"
+            }
+          }
         }
-      }
-      result = await forward(forwardBody,false, merchantPrefix,version);
+        console.log(paymentRequest);
+        const paymentResult = await intiatePayment(paymentRequest, isLive, merchantPrefix, version);
+        console.log(paymentResult);
+       
+        //Forwarding payment request to retrieve a token for ORN number
+        let originalShopperReference = rest.shopperReference;
+        let originalStoredPaymentMethodId= rest.paymentMethod.storedPaymentMethodId;
+        let newShopperReference = rest.merchantReference;
+
+        if(paymentResult.action===undefined){
+
+          //if member and using Cardon file, forward to get token for Opera
+
+          // if member and wants to store card, forward to get token for member_id
+          forwardAPIHandler(newShopperReference,originalStoredPaymentMethodId,originalShopperReference)
+        }
+
+      res.json(paymentResult);
     } else {
       console.log('Executing standard payment request...');
+      const paymentRequest = {
+        ...rest,
+        merchantAccount,
+        recurringProcessingModel:"CardOnFile",
+        shopperInteraction:"ContAuth"
+      }
+      const paymentResult = await intiatePayment(paymentRequest, isLive, merchantPrefix, version);
+      res.json(paymentResult);
       //result = await AdyenServices.payments(baseRequest, adyenEnv);
     }
-
-    res.json(result);
+   
   } catch (err) {
     console.error("Error in initiatePayment:", err);
     res.status(500).json({ error: 'Something went wrong', details: err.message });
+  }
+});
+
+// POST /api/payments/details
+app.post('/api/hotel/completepayment', async (req, res) => {
+  const { isLive = false, merchantPrefix = "", isMember, shopperReference, version, ...rest } = req.body;
+
+  try {
+    const result = await submitAdditionalDetails(rest, isLive, merchantPrefix, version);
+    console.log(result);
+    if(result.resultCode==="Authorised"){
+      console.log("result is authorised, forwarding API to get new token")
+        //if member and using Cardon file, forward to get token for Opera
+
+          // if member and wants to store card, forward to get token for member_id
+
+
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json(error.response?.data || { error: error.message });
   }
 });
 
@@ -136,6 +208,8 @@ app.post('/api/sessions', async (req, res) => {
     const result = await createSession(rest, isLive, merchantPrefix, version);
     res.json(result);
   } catch (error) {
+    console.log("THis is the error");
+    console.log(error);
     res.status(500).json(error.response?.data || { error: error.message });
   }
 });

@@ -171,6 +171,8 @@
       });
 
       const paymentMethods = await paymentMethodsRes.json();
+      const url = new URL(window.location.href);
+    const baseUrl = `${url.protocol}//${url.host}`;
 
       const configuration = {
         environment: env,
@@ -183,7 +185,7 @@
           card: { enableStoreDetails: true },
         },
         onSubmit: async (state, dropin) => {
-          const res = await fetch('/api/initatePayment', {
+          const res = await fetch('/api/hotel/initatePayment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -192,7 +194,7 @@
               amount,
               reference,
               ...state.data,
-              returnUrl: window.location.href,
+              returnUrl: `${baseUrl}/redirectPayments`,
               browserInfo: state.data.browserInfo,
               channel: "Web",
               origin: window.location.origin,
@@ -213,7 +215,7 @@
         },
 
         onAdditionalDetails: async (state, dropin) => {
-          const res = await fetch('/api/payments/details', {
+          const res = await fetch('/api/hotel/completepayment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -221,6 +223,8 @@
               merchantPrefix,
               details: state.data.details,
               paymentData: state.data.paymentData,
+              isMember,
+              shopperReference
             })
           });
 

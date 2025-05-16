@@ -76,6 +76,7 @@
 
   <script>
     const form = document.getElementById("dropinForm");
+    const { AdyenCheckout, Dropin} = window.AdyenWeb;  
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -92,7 +93,8 @@
           merchantPrefix,
           amount: { value: 100, currency: "SGD" },
           reference: "DROPIN_ORDER_DEMO",
-          returnUrl: window.location.href
+          returnUrl: window.location.href,
+          countryCode:"SG"
         })
       });
 
@@ -116,7 +118,8 @@
       };
 
       const checkout = await AdyenCheckout(configuration);
-      checkout.create('dropin').mount('#dropin-container');
+      // Create an instance of Drop-in and mount it to the container you created.
+      const dropin = new Dropin(checkout).mount('#dropin-container');
     });
   </script>
 </body>

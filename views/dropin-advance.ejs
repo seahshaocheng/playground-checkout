@@ -93,6 +93,8 @@
   </div>
 
   <script>
+    const { AdyenCheckout, Dropin} = window.AdyenWeb;  
+
     const form = document.getElementById("dropinForm");
 
     form.addEventListener("submit", async function (e) {
@@ -116,7 +118,6 @@
           merchantPrefix,
           amount,
           countryCode: "SG",
-          shopperLocale: "en_SG",
           channel: "Web"
         })
       });
@@ -128,7 +129,6 @@
         environment: env,
         clientKey: clientKey,
         paymentMethodsResponse: paymentMethods,
-        locale: "en_SG",
         amount,
         countryCode: "SG",
         paymentMethodsConfiguration:{
@@ -194,7 +194,8 @@
       };
 
       const checkout = await AdyenCheckout(configuration);
-      checkout.create('dropin').mount('#dropin-container');
+      // Create an instance of Drop-in and mount it to the container you created.
+      const dropin = new Dropin(checkout).mount('#dropin-container');
     });
   </script>
 </body>

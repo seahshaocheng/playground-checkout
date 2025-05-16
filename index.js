@@ -34,21 +34,21 @@ app.get('/.well-known/apple-developer-merchantid-domain-association', (req, res)
 });
 
 app.get('/dropin-session', (req, res) => {
-  const sdkVersion = req.query.version || '5.44.0'; // default fallback
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   res.render('dropin-session', { sdkVersion, env, clientKey });
 });
 
 app.get('/dropin-advanced', (req, res) => {
-  const sdkVersion = req.query.version || '5.44.0'; // default fallback
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   res.render('dropin-advance', { sdkVersion, env, clientKey });
 });
 
 app.get('/dropin-advance-booking',(req,res)=>{
-  const sdkVersion = req.query.version || '5.44.0'; // default fallback
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   res.render('dropin-advance-booking', { sdkVersion, env, clientKey });

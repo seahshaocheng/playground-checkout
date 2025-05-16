@@ -113,6 +113,9 @@
     let shopperReference = null;
     let isMember = false;
 
+
+    const { AdyenCheckout, Dropin} = window.AdyenWeb;  
+    
     const userTypeModal = new bootstrap.Modal(document.getElementById('userTypeModal'), {
       backdrop: 'static',
       keyboard: false
@@ -246,7 +249,8 @@
       };
 
       const checkout = await AdyenCheckout(configuration);
-      checkout.create('dropin').mount('#dropin-container');
+      // Create an instance of Drop-in and mount it to the container you created.
+      const dropin = new Dropin(checkout).mount('#dropin-container');
     });
   </script>
 </body>

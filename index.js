@@ -20,10 +20,17 @@ app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(path.join(__dirname, 'public'), {
+  dotfiles: 'allow'
+}));
 // Health check
+
 app.get('/', (req, res) => {
   res.send('Adyen Checkout API is running ✅');
+});
+
+app.get('/.well-known/apple-developer-merchantid-domain-association', (req, res) => {
+  res.sendFile(path.join(__dirname,'.well-known','apple-developer-merchantid-domain-association'));
 });
 
 app.get('/dropin-session', (req, res) => {

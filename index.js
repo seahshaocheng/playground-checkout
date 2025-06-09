@@ -56,7 +56,7 @@ app.get('/dropin-advance-booking',(req,res)=>{
 
 app.get('/custom-card',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
+  const env = req.query.ADYEN_ENV || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   res.render('custom-card', { sdkVersion, env, clientKey });
 })
@@ -224,7 +224,7 @@ app.post('/api/sessions', async (req, res) => {
 // POST /api/paymentMethods
 app.post('/api/paymentMethods', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
-  console.log("Calling /payment/mtehods");
+  console.log("Calling /payment/methods");
   rest.merchantAccount=process.env.ADYEN_TEST_MERCHANTACCOUNT;
   try {
     const result = await getPaymentMethods(rest, isLive, merchantPrefix, version);
@@ -238,6 +238,7 @@ app.post('/api/paymentMethods', async (req, res) => {
 app.post('/api/payments', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, ...rest } = req.body;
   rest.merchantAccount = process.env.ADYEN_TEST_MERCHANTACCOUNT;
+
   try {
     const result = await intiatePayment(rest, isLive, merchantPrefix, version);
     res.json(result);
@@ -258,6 +259,50 @@ app.post('/api/payments/details', async (req, res) => {
   }
 });
 
+app.get('/status', (req, res) => {
+  const status = req.query.status || 'unknown';
+  res.render('status', { status });
+});
+
+app.all('/redirect', async (req, res) => {
+  try {
+    const redirectResult = req.method === 'POST' ? req.body.redirectResult : req.query.redirectResult;
+
+    if (!redirectResult) {
+      return res.status(400).json({ error: 'Missing redirectResult parameter.' });
+    }
+
+    const result = await submitAdditionalDetails(
+      { details: { redirectResult } }, // Format expected by Adyen
+      false, // isLive
+      ''    // merchantPrefix
+    );
+
+    if (result.resultCode) {
+      switch (result.resultCode) {
+        case "Authorised":
+          return res.redirect("/status?status=success");
+        case "Pending":
+        case "Received":
+          return res.redirect("/status?status=pending");
+        case "Refused":
+          return res.redirect("/status?status=failed");
+        case "Cancelled":
+          return res.redirect("/status?status=cancelled");
+        case "Error":
+          return res.redirect("/status?status=error");
+        default:
+          return res.redirect("/status?status=unknown");
+      }
+    }
+
+    res.json(result); // Or handle result.action.type for redirects, etc.
+
+  } catch (error) {
+    console.error('Error during redirect handling:', error.message);
+    res.status(500).json(error.response?.data || { error: error.message });
+  }
+});
 //End Standard Integration Server Endpoints
 
 app.listen(PORT, () => {

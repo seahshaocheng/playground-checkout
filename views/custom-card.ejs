@@ -1,169 +1,379 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Adyen Drop-in Demo (Advanced Flow)</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Custom Card Integration with Encrypted Data</title>
 
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Adyen SDK -->
+    <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
+    <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
 
-  <!-- Adyen SDK -->
-  <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
-  <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
+    <script>
+      const clientKey = "<%= clientKey %>";
+      const env = "<%= env %>";
+      const amount = 15632;
+      const reference = "Traveloka-Demo-Transaction";
+    </script>
 
-  <script>
-    const clientKey = "<%= clientKey %>";
-  </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f7f9fc;
+      }
+      .container {
+        max-width: 1000px;
+        margin-top: 40px;
+      }
+      .form-box {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+      }
+      .flight-summary {
+        background: #f0f9ff;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #ddd;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 12px;
+        background: #e0f7e9;
+        color: #2e7d32;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-right: 5px;
+      }
+      .details-link {
+        font-size: 12px;
+        color: #007bff;
+        cursor: pointer;
+      }
+      .timer {
+        background: #007bff;
+        color: white;
+        padding: 10px;
+        font-size: 13px;
+        text-align: center;
+      }
 
-  <style>
-    .container {
-      margin-top: 3rem;
-    }
+      #customCard-container label{
+        width:100%;
+      }
 
-    .form-box {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 2rem;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
-    }
+      #customCard-container iframe[title="Iframe for card number"],
+      #customCard-container iframe[title="Iframe for expiry date"],
+      #customCard-container iframe[title="Iframe for security code"] {
+        width: 100%;
+        height: 2em;
+        border: 1px solid #EEE;
+        border-radius: 6px;
+      }
 
-    #dropin-container {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 class="text-center">Adyen Drop-in Demo (Advanced Flow)</h1>
+      #customCard-container label {
+        display: block;
+        margin-bottom: 1rem;
+      }
 
-    <div class="row">
-      <!-- Configuration Form -->
-      <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
-        <div class="form-box">
-          <form id="dropinForm">
-            <div class="mb-3">
-              <label for="env" class="form-label">Environment</label>
-              <select id="env" name="env" class="form-select">
-                <option value="test">Test</option>
-                <option value="live">Live</option>
-              </select>
+      #customCard-container .row-group {
+        display: flex;
+        gap: 1rem;
+      }
+
+      #customCard-container .row-group label {
+        flex: 1;
+        margin-bottom: 0;
+      }
+
+      .accordion-button::after {
+        display: none !important;
+      }
+
+      .accordion-item{
+        border:none;
+        padding:0px;
+      }
+
+      .divider-or {
+        display: flex;
+        align-items: center;
+        text-align: center;
+      }
+
+      .divider-or::before,
+      .divider-or::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid #ccc;
+      }
+
+      .divider-or:not(:empty)::before {
+        margin-right: 0.75em;
+      }
+
+      .divider-or:not(:empty)::after {
+        margin-left: 0.75em;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="timer">
+      We're holding this price for you! Let’s complete your payment in <strong>00:02:36</strong>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <!-- Left: Payment Methods -->
+        <div class="col-md-8 mb-4">
+          <form id="customComponentForm">
+            <div class="form-box">
+              <h4>How would you like to pay?</h4>
+              <div class="accordion" id="paymentAccordion">
+                <div class="accordion-item">
+                  <div class="accordion-header d-flex justify-content-between align-items-center mb-2" style="padding:0px 1em">
+                    <div class="d-flex align-items-center">
+                      <h5>Credit/Debit Card</h5>
+                    </div>
+                    <div class="d-flex gap-2 ms-3">
+                      <img src="https://ik.imagekit.io/tvlk/image/imageResource/2017/01/06/1483707776912-1abb188266f6d5b3f2e27f4733ca32e9.png?tr=h-24,q-75" alt="Visa" height="24">
+                      <img src="https://ik.imagekit.io/tvlk/image/imageResource/2017/01/06/1483707787206-abc175b224ab92a6967e24bc17c30f45.png?tr=h-24,q-75" alt="Mastercard" height="24">
+                      <img src="https://ik.imagekit.io/tvlk/image/imageResource/2024/10/22/1729595074604-687427c73bfe8c59f282631bfbf97f68.png?tr=h-24,q-75" alt="Amex" height="24">
+                    </div>
+                  </div>
+                  <div id="collapseCard" class="accordion-collapse show" aria-labelledby="headingCard" data-bs-parent="#paymentAccordion">
+                    <div class="accordion-body">
+                      <div id="customCard-container">
+                        <div id="cardelements-container">
+                          <label>
+                            <span>Card number:</span>
+                            <span data-cse="encryptedCardNumber"></span>
+                          </label>
+                          <div class="row-group">
+                            <label style="flex: 1;">
+                              <span>Expiry date:</span>
+                              <span data-cse="encryptedExpiryDate"></span>
+                            </label>
+                            <label style="flex: 1;">
+                              <span>CVV/CVC:</span>
+                              <span data-cse="encryptedSecurityCode"></span>
+                            </label>
+                            <label style="flex: 0 0 43px; display: flex; align-items: end; justify-content: center;">
+                              <span>
+                                <img src="https://ik.imagekit.io/tvlk/image/imageResource/2023/04/27/1682590689907-1e638731e8bc451e52ea7f7e4c6d4d45.svg?tr=q-75" width="43" alt="CVV help">
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <div class="accordion-header d-flex align-items-center mb-2" style="text-align:center">
+                    <div style="text-align:center;width:100%;padding:1em;font-size:.7em;color:#CCC">
+                      OR
+                    </div>
+                  </div>
+                  <div id="collapsePayNow" class="accordion-collapse show" aria-labelledby="headingPayNow" data-bs-parent="#paymentAccordion">
+                    <div class="accordion-body">
+                      <div id="dropin-container"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+           
+              <button type="submit" id="submitCard" class="btn btn-primary w-100 mt-3" style="background:rgb(255, 94, 31)">Pay</button>   
             </div>
-
-            <div class="mb-3">
-              <label for="merchantPrefix" class="form-label">Merchant Prefix (Live only)</label>
-              <input type="text" id="merchantPrefix" name="merchantPrefix" class="form-control" placeholder="e.g. yourcompany" />
-            </div>
-
-            <div class="mb-3">
-              <label for="amount" class="form-label">Amount (in minor units)</label>
-              <input type="number" id="amount" name="amount" class="form-control" placeholder="e.g. 1000" value="1000" />
-            </div>
-
-            <div class="mb-3">
-              <label for="currency" class="form-label">Currency</label>
-              <input type="text" id="currency" name="currency" class="form-control" placeholder="e.g. SGD" value="SGD" />
-            </div>
-
-            <div class="mb-3">
-              <label for="reference" class="form-label">Reference</label>
-              <input type="text" id="reference" name="reference" class="form-control" placeholder="e.g. ORDER12345" value="ORDER_ADVANCED_DEMO" />
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
           </form>
         </div>
-      </div>
 
-      <!-- Custom Card Integration-->
-      <div class="col-md-8 order-2 order-md-1">
-        <div id="customCard-container">
-            <label>
-                <span>Card number:</span>
-                <span data-cse="encryptedCardNumber"></span>
-            </label>
-            <label>
-                <span>Expiry date:</span>
-                <span data-cse="encryptedExpiryDate"></span>
-            </label>
-            <label>
-                <span>CVV/CVC:</span>
-                <span data-cse="encryptedSecurityCode"></span>
-            </label>
+        <!-- Right: Flight Summary -->
+        <div class="col-md-4">
+          <div class="flight-summary">
+            <h5>Flight Summary</h5>
+            <p><strong>Singapore (SIN) → Bali / Denpasar (DPS)</strong><br>
+            Scoot · Economy<br>
+            15:55 → 18:40, Wed, 30 Jul 2025 (2h 45m)<br>
+            <span class="tag">Non-refundable</span> <span class="tag">Reschedule available</span><br>
+            <span class="details-link">View Details</span></p>
+
+            <p><strong>Bali / Denpasar (DPS) → Singapore (SIN)</strong><br>
+            AirAsia Indonesia · Economy<br>
+            07:10 → 09:50, Sat, 2 Aug 2025 (2h 40m)<br>
+            <span class="tag">Non-refundable</span> <span class="tag">Reschedule available</span><br>
+            <span class="details-link">View Details</span></p>
+
+            <hr>
+            <p><strong>Passenger</strong><br>
+            Mr. (Adult) Mark Seah<br>
+            Passport: ****66D</p>
+
+            <hr>
+            <div class="d-flex justify-content-between">
+              <span><strong>Total Price</strong></span>
+              <span><strong>SGD 156.32</strong></span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <script>
+    
+    <script>
+      const { AdyenCheckout, CustomCard, PayNow, Dropin } = window.AdyenWeb;
+      let paymentMethods = null;
 
-  
-  const { AdyenCheckout, CustomCard} = window.AdyenWeb;  
-
-  const form = document.getElementById("dropinForm");
-    function handleOnSubmit(state, component) {
-    console.log("Form state", state);
-  }
-
-  window.addEventListener("load", async function () {
-    const form = document.getElementById("dropinForm");
-
-    const configuration = {
-        locale: "en_US",
-        environment: "test",
-        clientKey: clientKey,
-        countryCode:'SG',
-        onSubmit: handleOnSubmit
+      const getPaymentMethods = async () => {
+        const res = await fetch('/api/paymentMethods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount:{
+              value:1000000,
+              currency:"SGD"
+            },
+            countryCode: "SG",
+            channel: "Web",
+            blockedPaymentMethods:["visa","mc","jcb","cup","amex","discover","diners","paynow_pos","applepay"]
+          })
+        });
+        return await res.json();
       };
 
-    const checkout = await AdyenCheckout(configuration);
+      const postRedirect = (action) => {
+        const form = document.createElement('form');
+        form.method = action.method || 'POST';
+        form.action = action.url;
+        for (const key in action.data) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = action.data[key];
+          form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+      }
 
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
+      const handleSubmit = async (state, component) => {
+        const res = await fetch('/api/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: { value: amount, currency: "SGD" },
+            reference,
+            ...state.data,
+            returnUrl: window.location.origin + "/redirect",
+            browserInfo: state.data.browserInfo,
+            authenticationData: {
+              threeDSRequestData: {
+                nativeThreeDS: "preferred"
+              }
+            },
+            channel: "Web",
+            origin: window.location.origin
+          })
+        });
 
-      const customCard = new CustomCard(checkout, {
-            // Optional configuration
-            type: 'card',
-            brands: ['mc', 'visa', 'amex', 'bcmc', 'maestro'],
-            styles: {
-                error: {
-                    color: 'red'
-                },
-                validated: {
-                    color: 'green'
-                },
-                placeholder: {
-                    color: '#d8d8d8'
-                }
-            },
-            // Only for Web Components before 4.0.0.
-            // For Web Components 4.0.0 and above, configure aria-label attributes in translation files
-            ariaLabels: {
-                lang: 'en-GB',
-                encryptedCardNumber: {
-                    label: 'Credit or debit card number field',
-                    iframeTitle: 'Iframe for secured card number',
-                    error: 'Message that gets read out when the field is in the error state'
-                }
-            },
-            // Events
-            onSubmit: function() {},
-            onValid : function() {},
-            onLoad: function() {},
-            onConfigSuccess: function() {},
-            onFieldValid : function() {},
-            onBrand: function() {},
-            onError: function() {},
-            onFocus: function() {},
-            onBinValue: function(bin) {},
+        const result = await res.json();
+        if (result.action) {
+          document.getElementById("cardelements-container").style.display = "none";
+          component.handleAction(result.action);
+        } else if (result.resultCode === 'Authorised') {
+          alert("Payment successful 🎉");
+          window.location.href = "/status?status=success";
+        } else {
+          alert("Payment result: " + result.resultCode);
+          window.location.href = "/status?status=" + result.resultCode.toLowerCase();
+        }
+      };
+
+      const handleAdditionalDetails = async (state, component) => {
+        const res = await fetch('/api/payments/details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...state.data })
+        });
+
+        const result = await res.json();
+        if (result.action) {
+          document.getElementById("cardelements-container").style.display = "none";
+          component.handleAction(result.action);
+        } else if (result.resultCode === 'Authorised') {
+          window.location.href = "/status?status=success";
+        } else {
+          alert("Payment result: " + result.resultCode);
+          window.location.href = "/status?status=" + result.resultCode.toLowerCase();
+        }
+      }
+
+      window.addEventListener("load", async function () {
+        const checkout = await AdyenCheckout({
+          locale: "en_US",
+          environment: env,
+          clientKey,
+          countryCode: 'SG'
+        });
+
+        paymentMethods = await getPaymentMethods();
+
+        const dropinConfiguration = {
+          environment: env,
+          clientKey: clientKey,
+          paymentMethodsResponse: paymentMethods,
+          amount,
+          countryCode: "SG",
+          showPayButton: false,
+          onSubmit: handleSubmit,
+          onAdditionalDetails: handleAdditionalDetails,
+          onError: (err) => {
+            console.error("Payment error:", err);
+            alert("Something went wrong 😢");
+          }
+        };
+
+        const checkoutDropIn = await AdyenCheckout(dropinConfiguration);
+        const dropin = new Dropin(checkoutDropIn).mount('#dropin-container');
+
+        const customCard = new CustomCard(checkout, {
+          type: 'card',
+          brands: ['mc', 'visa', 'amex', 'bcmc', 'maestro'],
+          styles: {
+            error: { color: 'red' },
+            validated: { color: 'green' },
+            placeholder: { color: '#d8d8d8' }
+          },
+          onSubmit: handleSubmit,
+          onAdditionalDetails: handleAdditionalDetails
         }).mount('#customCard-container');
-    });
-  });
-  
-  </script>
-</body>
+
+        document.getElementById("customComponentForm").addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // First try Custom Card
+            if (customCard?.isValid) {
+              console.log("Submitting custom card");
+              customCard.submit();
+              return;
+            }
+
+            // Then try Drop-in (requires a selected method like iDEAL, PayNow, etc.)
+            const activeDropInMethod = dropin?.activePaymentMethod;
+
+            if (activeDropInMethod && dropin.isValid) {
+              console.log("Submitting drop-in method:", activeDropInMethod.type);
+              dropin.submit();
+              return;
+            }
+        });
+      });
+    </script>
+  </body>
 </html>

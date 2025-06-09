@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Payment Status</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .status-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            }
+            .success { background-color: #28a745; }
+            .pending { background-color: #ffc107; }
+            .failed, .cancelled, .error { background-color: #dc3545; }
+        </style>
+    </head>
+    <body>
+        <div class="container py-5">
+            <div class="text-center">
+            <h2>
+                <% if (status === 'success') { %>
+                <span class="status-indicator success"></span> Payment Successful!
+                <% } else if (status === 'pending') { %>
+                <span class="status-indicator pending"></span> Payment Pending...
+                <% } else if (status === 'failed') { %>
+                <span class="status-indicator failed"></span> Payment Failed.
+                <% } else if (status === 'cancelled') { %>
+                <span class="status-indicator cancelled"></span> Payment Cancelled.
+                <% } else if (status === 'error') { %>
+                <span class="status-indicator error"></span> An Error Occurred.
+                <% } else { %>
+                <span class="status-indicator"></span> Unknown Payment Status.
+                <% } %>
+            </h2>
+            <p class="mt-4">
+                <a href="/" class="btn btn-outline-primary">Return to Homepage</a>
+            </p>
+            </div>
+        </div>
+    </body>
+</html>

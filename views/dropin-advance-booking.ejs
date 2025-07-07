@@ -197,6 +197,11 @@
               amount,
               reference,
               ...state.data,
+              authenticationData: {
+                threeDSRequestData: {
+                  nativeThreeDS: "preferred"
+                }
+              },
               returnUrl: `${baseUrl}/redirectPayments`,
               browserInfo: state.data.browserInfo,
               channel: "Web",

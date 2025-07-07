@@ -16,6 +16,8 @@ const req = require('express/lib/request');
 const app = express();
 const PORT = process.env.PORT || 3005;
 
+let hotelOrders = [];
+
 app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -155,11 +157,15 @@ app.post('/api/hotel/initatePayment', async (req, res) => {
         let newShopperReference = rest.merchantReference;
 
         if(paymentResult.action===undefined){
-
-          //if member and using Cardon file, forward to get token for Opera
-
           // if member and wants to store card, forward to get token for member_id
           forwardAPIHandler(newShopperReference,originalStoredPaymentMethodId,originalShopperReference)
+        }
+        else{
+          hotelOrders.push({
+            reservation:rest.merchantReference,
+            memberTokenUsed:originalStoredPaymentMethodId,
+            member_id:originalShopperReference
+          })
         }
 
       res.json(paymentResult);
@@ -184,21 +190,54 @@ app.post('/api/hotel/initatePayment', async (req, res) => {
 
 // POST /api/payments/details
 app.post('/api/hotel/completepayment', async (req, res) => {
+  console.log("completeing payment after action");
   const { isLive = false, merchantPrefix = "", isMember, shopperReference, version, ...rest } = req.body;
-
   try {
     const result = await submitAdditionalDetails(rest, isLive, merchantPrefix, version);
     console.log(result);
-    if(result.resultCode==="Authorised"){
-      console.log("result is authorised, forwarding API to get new token")
-        //if member and using Cardon file, forward to get token for Opera
 
-          // if member and wants to store card, forward to get token for member_id
+    if (result.resultCode === "Authorised") {
+      console.log("Result is authorised, checking forwarding conditions...");
+
+      const storedPaymentMethodId = rest?.paymentMethod?.storedPaymentMethodId;
+      const wantsToStoreCard = rest?.storePaymentMethod; // or your custom flag
+
+      const merchantAccount = isLive && merchantPrefix
+        ? process.env.ADYEN_LIVE_MERCHANTACCOUNT
+        : process.env.ADYEN_TEST_MERCHANTACCOUNT;
+
+      const baseUrl = isLive
+        ? 'https://pal-live.adyen.com'
+        : 'https://pal-test.adyen.com';
 
 
+        console.log("conditions");
+        console.log("isMember: ",isMember);
+        console.log("storedPaymentMethodId: ",storedPaymentMethodId);
+        console.log("wantsToStoreCard", wantsToStoreCard);
+
+      // Forward for card-on-file for Opera
+      if (isMember && storedPaymentMethodId) {
+        console.log("Forwarding to Opera (card-on-file)...");
+
+        //console.log("Opera token response:", operaResponse);
+      }
+
+      // Forward to store token for member profile
+      else if (isMember && wantsToStoreCard) {
+        console.log("Forwarding to store token for member...");
+
+
+        //console.log("Member token response:", memberTokenResponse);
+      }
+      else{
+        console.log("not supported")
+      }
     }
+
     res.json(result);
   } catch (error) {
+    console.error("Error completing payment:", error);
     res.status(500).json(error.response?.data || { error: error.message });
   }
 });
@@ -210,6 +249,10 @@ app.post('/api/hotel/completepayment', async (req, res) => {
 // POST /api/sessions
 app.post('/api/sessions', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
+
+  rest.storePaymentMethodMode="enabled";
+  rest.recurringProcessingModel = "recurringProcessingModel"
+  rest.shopperReference = "TestShopper"
 
   try {
     const result = await createSession(rest, isLive, merchantPrefix, version);

@@ -250,9 +250,12 @@ app.post('/api/hotel/completepayment', async (req, res) => {
 app.post('/api/sessions', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
 
+  console.log("TESTING")
   rest.storePaymentMethodMode="enabled";
-  rest.recurringProcessingModel = "recurringProcessingModel"
+  rest.recurringProcessingModel = "Subscription"
   rest.shopperReference = "TestShopper"
+
+  console.log(rest);
 
   try {
     const result = await createSession(rest, isLive, merchantPrefix, version);

@@ -251,7 +251,7 @@ app.post('/api/sessions', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
 
   console.log("TESTING")
-  rest.storePaymentMethodMode="enabled";
+  rest.storePaymentMethodMode="askForConsent";
   rest.recurringProcessingModel = "Subscription"
   rest.shopperReference = "TestShopper"
 

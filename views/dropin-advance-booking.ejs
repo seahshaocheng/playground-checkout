@@ -184,10 +184,9 @@
         locale: "en_SG",
         amount,
         countryCode: "SG",
-        paymentMethodsConfiguration: {
-          card: { enableStoreDetails: true },
-        },
         onSubmit: async (state, dropin) => {
+          console.log("the state data at this stage is: ")
+          console.log(state.data);
           const res = await fetch('/api/hotel/initatePayment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -253,9 +252,18 @@
         }
       };
 
+      const dropinConfiguration = {
+        paymentMethodsConfiguration: {
+          card: { 
+            enableStoreDetails: true,
+            hasHolderName:true
+          },
+        },
+      }
+      
       const checkout = await AdyenCheckout(configuration);
       // Create an instance of Drop-in and mount it to the container you created.
-      const dropin = new Dropin(checkout).mount('#dropin-container');
+      const dropin = new Dropin(checkout,dropinConfiguration).mount('#dropin-container');
     });
   </script>
 </body>

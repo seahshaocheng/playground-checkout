@@ -10,13 +10,13 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Adyen SDK -->
-  <script src="https://checkoutshopper-test.cdn.adyen.com/checkoutshopper/sdk/6.3.0/adyen.js"
-  integrity="sha384-PpkKjJdtlCZuAK7HWeMaOwzrQMGgAWThLG+QZe0sxlohYwfVPP+G65HBrWbgwSoE"
+  <script src="https://checkoutshopper-test.cdn.adyen.com/checkoutshopper/sdk/6.21.0/adyen.js"
+  integrity="sha384-9ACJt6rr08TBRxTTQGUu2qUgAB7UUNvYJFVEqPnFP+8CMotP0VWsJ0ZQEibvyIxp"
   crossorigin="anonymous"></script>
 
 <link rel="stylesheet"
-  href="https://checkoutshopper-test.cdn.adyen.com/checkoutshopper/sdk/6.3.0/adyen.css"
-  integrity="sha384-pC2TKxh6gMtWIUiXzlw5Jnq9ZtnyuPT0ymaHY6skdegLVNDMNiiQ7/NFixA87/Wb"
+  href="https://checkoutshopper-test.cdn.adyen.com/checkoutshopper/sdk/6.21.0/adyen.css"
+  integrity="sha384-0JJkPi5WFgV93vC2lk67gb4iRk/U81LdAR2fsTKRTfpILtk0p+AA8HDAyaOQhUAG"
   crossorigin="anonymous">
 
   <script>
@@ -131,11 +131,6 @@
         paymentMethodsResponse: paymentMethods,
         amount,
         countryCode: "SG",
-        paymentMethodsConfiguration:{
-          card:{
-            enableStoreDetails:"true",
-          },
-        },
         onSubmit: async (state, dropin) => {
           const res = await fetch('/api/payments', {
             method: 'POST',
@@ -146,6 +141,7 @@
               amount,
               reference,
               ...state.data,
+              shopperInteraction:"Ecommerce",
               returnUrl: window.location.href,
               browserInfo: state.data.browserInfo,
               channel: "Web",
@@ -192,10 +188,24 @@
           alert("Something went wrong 😢");
         }
       };
+      
 
       const checkout = await AdyenCheckout(configuration);
+
+      const dropinConfiguration = {
+        paymentMethodsConfiguration: {
+          card: { 
+            enableStoreDetails: true,
+            hasHolderName:true,
+            onFieldValid:async(value, actions)=>{
+              console.log("value",value);
+            }
+          },
+        },
+      }
+
       // Create an instance of Drop-in and mount it to the container you created.
-      const dropin = new Dropin(checkout).mount('#dropin-container');
+      const dropin = new Dropin(checkout,dropinConfiguration).mount('#dropin-container');
     });
   </script>
 </body>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>lyf Chinatown Kuala Lumpur</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles from the original website */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+    }
+    .text-ascott-green {
+      color: #4C6866;
+    }
+    .bg-ascott-green {
+      background-color: #4C6866;
+    }
+    .text-ascott-brown {
+      color: #87674f;
+    }
+    .tab-active {
+      border-bottom: 2px solid #4C6866;
+      font-weight: 500;
+    }
+    .search-bar-input {
+      border: none;
+      outline: none;
+      background: transparent;
+    }
+    .divider {
+      border-right: 1px solid #e5e7eb;
+    }
+    .asr-card {
+      border: 1px solid #e5e7eb;
+      background-color: #ffffff;
+    }
+    .asr-button-primary {
+      background-color: #4c6866;
+      color: white;
+    }
+    .show-rates {
+      color: #4c6866;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Modal styles */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+<!-- Top Navigation Bar -->
+<header class="bg-white shadow-sm">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-6">
+      <div class="text-2xl font-bold text-gray-800">lyf</div>
+      <div class="text-gray-500 text-sm">
+        <span class="font-semibold">lyf Chinatown Kuala Lumpur</span>
+      </div>
+    </div>
+    <div class="flex items-center space-x-6">
+      <a href="#" class="text-sm text-gray-600 hover:text-gray-900">My Cart</a>
+      <a href="#" class="text-sm text-gray-600 hover:text-gray-900">ASR</a>
+      <div class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- Booking Search Bar -->
+<div class="bg-white shadow-md rounded-b-lg overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
+      <div class="flex-1 w-full md:w-auto">
+        <div class="flex space-x-1 justify-center">
+          <a href="#" class="pb-2 px-2 text-sm text-gray-600 tab-active">Room(s) and Rates</a>
+          <a href="#" class="pb-2 px-2 text-sm text-gray-400 hover:text-gray-600">Booking Summary</a>
+        </div>
+      </div>
+      <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
+        <div class="flex flex-1 w-full rounded-full border border-gray-300 divide-x divide-gray-300 p-2">
+          <div class="flex-1 flex items-center pl-4 pr-2">
+            <span class="text-sm text-gray-500">Check-in</span>
+            <input type="text" value="Tue, 02 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+          </div>
+          <div class="flex-1 flex items-center pl-4 pr-2">
+            <span class="text-sm text-gray-500">Check-out</span>
+            <input type="text" value="Wed, 03 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+          </div>
+        </div>
+        <div class="flex items-center w-full md:w-auto rounded-full border border-gray-300 p-2 pl-4">
+          <span class="text-sm text-gray-500">Guest</span>
+          <input type="text" value="1 Room, 1 Adult(s), 0 Child(ren)" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+        </div>
+        <button class="bg-ascott-green hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full w-full md:w-auto">
+          Edit
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-xl font-bold text-gray-800">6 Room Type(s)</h1>
+    <div class="flex space-x-4 text-sm text-gray-500">
+      <a href="#" class="hover:underline">Sort & Filter</a>
+      <a href="#" class="hover:underline">Changes Per Stay</a>
+    </div>
+  </div>
+  
+  <!-- This is the room listing component from the previous request -->
+  <div id="home" role="tabpanel" aria-labelledby="home" class="tab-pane fade show active">
+    <!-- Apartment Item: Nano Single -->
+    <div class="asr-booking-apartment-item wrap asr-card p-4 my-4 flex flex-col md:flex-row rounded-lg shadow-sm">
+        <div class="w-full md:w-1/3 asr-image bg-gray-200 rounded-lg overflow-hidden">
+            <img src="https://placehold.co/600x400/98d4d4/ffffff?text=Good+for+One+(Studio)" alt="Good for One (Studio)" class="w-full h-full object-cover">
+        </div>
+        <div class="w-full md:w-2/3 p-4 flex flex-col justify-between">
+            <div>
+                <h3 class="card-title text-xl font-bold">Good for One (Studio)</h3>
+                <div class="text-sm text-gray-600 mt-2 flex flex-wrap items-center space-x-4">
+                    <span class="flex items-center"><span class="text-ascott-brown">9 sqm / 97 sqft</span></span>
+                    <span class="flex items-center"><span class="text-ascott-brown">Max 1 pax</span></span>
+                    <span class="flex items-center"><span class="text-ascott-brown">One single bed</span></span>
+                </div>
+                <p class="text-gray-700 mt-2 text-sm">
+                    This cosy room is perfect for the minimalist travelling solo! The private haven has all the essentials you need to settle down after a busy day out and about.
+                </p>
+                <div class="flex justify-end mt-2">
+                    <a href="#" class="text-sm text-ascott-green underline">Room details</a>
+                </div>
+            </div>
+            <div class="flex items-center justify-between mt-4">
+                <div class="text-lg">
+                    <p class="text-xs text-gray-500 font-semibold">From</p>
+                    <span class="font-bold text-2xl text-gray-800">SGD 46.77</span>
+                    <p class="text-sm text-gray-500">For 1 Night(s)</p>
+                </div>
+                <button id="bookButton" class="px-6 py-3 rounded-full font-semibold bg-ascott-green hover:bg-green-700 text-white">Book</button>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pop-up Modal -->
+<div id="booking-modal" class="modal-backdrop hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl flex">
+        <!-- Left side of the modal -->
+        <div class="w-1/2 p-8 border-r border-gray-200">
+            <h3 class="text-xl font-bold text-gray-800">Already a member? Sign in and earn rewards</h3>
+            <div class="mt-4">
+                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+            </div>
+            <div class="mt-4">
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <a href="#" class="text-sm text-ascott-green mt-1 block">Forgot password?</a>
+            </div>
+            <button class="w-full mt-6 px-4 py-2 rounded-full font-semibold text-white bg-ascott-green hover:bg-green-700">Sign in</button>
+        </div>
+        
+        <!-- Right side of the modal -->
+        <div class="w-1/2 p-8">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Not a member? Join now and enjoy these perks</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <ul class="mt-4 space-y-2">
+                <li class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-ascott-green mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Best Rate Guarantee</span>
+                </li>
+                <li class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-ascott-green mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Exclusive Member Rates</span>
+                </li>
+                <li class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-ascott-green mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Earn ASR points to redeem free nights!</span>
+                </li>
+            </ul>
+            <button onClick={onClickInternalLink("ascott/booking-confirmation")} class="w-full mt-6 px-4 py-2 rounded-full font-semibold text-white bg-ascott-green hover:bg-green-700">Join and book</button>
+            <button class="w-full mt-2 px-4 py-2 rounded-full font-semibold text-ascott-green border border-ascott-green hover:bg-gray-100">select another rate</button>
+        </div>
+    </div>
+</div>
+
+<script>
+  const onClickInternalLink= (link) => {
+    window.location ="/"+link;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const showRatesLink = document.querySelector('.show-rates');
+    if (showRatesLink) {
+        showRatesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const ratesSection = document.getElementById('rates-section');
+            if (ratesSection) {
+                ratesSection.classList.toggle('hidden');
+                e.target.textContent = ratesSection.classList.contains('hidden') ? 'See More Rates' : 'Hide Rates';
+            }
+        });
+    }
+
+    const bookButton = document.getElementById('bookButton');
+    const modal = document.getElementById('booking-modal');
+    const closeModalButton = document.getElementById('closeModal');
+    const body = document.body;
+
+    if (bookButton && modal && closeModalButton) {
+        bookButton.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            body.style.overflow = 'hidden';
+        });
+
+        closeModalButton.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            body.style.overflow = 'auto';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+                body.style.overflow = 'auto';
+            }
+        });
+    }
+  });
+</script>
+
+</body>
+</html>

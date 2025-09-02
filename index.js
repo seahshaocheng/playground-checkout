@@ -63,6 +63,30 @@ app.get('/custom-card',(req,res)=>{
   res.render('custom-card', { sdkVersion, env, clientKey });
 })
 
+//Ascott Customisation
+app.get('/ascott/booking',(req,res)=>{
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
+  const env = req.query.env || 'test';
+  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  res.render('custom-demos/ascott/ascott-booking', { sdkVersion, env, clientKey });
+})
+
+app.get('/ascott/booking-confirmation',(req,res)=>{
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
+  const env = req.query.env || 'test';
+  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  res.render('custom-demos/ascott/ascott-booking-confirmation', { sdkVersion, env, clientKey });
+})
+
+app.get('/ascott/booking-payment',(req,res)=>{
+  const sdkVersion = req.query.version || '6.13.1'; // default fallback
+  const env = req.query.env || 'test';
+  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  res.render('custom-demos/ascott/ascott-booking-payment', { sdkVersion, env, clientKey });
+})
+
+//end ascott customisation
+
 //Hotels Tokenisation example
 const forwardAPIHandler = async(newShopperReference,originalStoredPaymentMethodId,originalShopperReference) => {
   const randomUuid = uuidv4();

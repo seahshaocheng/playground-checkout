@@ -27,7 +27,10 @@ const createSession = async (data,isLive=false,merchantPrefix="",version=latestV
         'X-API-Key': config.apikey,
     };
 
-    data.merchantAccount = config.merchantAccount;
+    //if merchantaccount in data is not defined
+    if (!data.merchantAccount) {
+        data.merchantAccount = config.merchantAccount;
+    }
 
     console.log(data);
     
@@ -79,15 +82,32 @@ const intiatePayment = async (data,isLive=false,merchantPrefix="",version=latest
 
 const submitAdditionalDetails = async (data,isLive=false,merchantPrefix="",version=latestVersion) => {
    
+        const config = configHandler(isLive,merchantPrefix,version);
+        const url = `${config.url}/payments/details`;
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-API-Key': config.apikey,
+        };
+
+        try {
+            const response = await axios.post(url, data, { headers });
+            return response.data;
+        } catch (error) {
+            console.error('Error submitting additional details:', error.response.data);
+            throw error;
+        }
+}
+
+const checkSessionOutcome = async (data,isLive=false,merchantPrefix="",version = latestVersion) => {
     const config = configHandler(isLive,merchantPrefix,version);
-    const url = `${config.url}/payments/details`;
+    const url = `${config.url}/sessions/${data.sessionId}?sessionResult=${data.sessionResult}`;
     const headers = {
         'Content-Type': 'application/json',
-        'X-API-Key': config.apikey,
+        'X-API-Key': config.apikey
     };
 
     try {
-        const response = await axios.post(url, data, { headers });
+        const response = await axios.get(url ,{ headers });
         return response.data;
     } catch (error) {
         console.error('Error submitting additional details:', error.response.data);
@@ -121,5 +141,6 @@ module.exports = {
     createSession,
     getPaymentMethods,
     intiatePayment,
-    submitAdditionalDetails
+    submitAdditionalDetails,
+    checkSessionOutcome
 }

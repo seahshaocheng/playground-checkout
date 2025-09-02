@@ -9,7 +9,8 @@ const {
   createSession,
   getPaymentMethods,
   intiatePayment,
-  submitAdditionalDetails
+  submitAdditionalDetails,
+  checkSessionOutcome
 } = require('./services/AdyenCheckoutServices');
 const req = require('express/lib/request');
 
@@ -26,6 +27,30 @@ app.use(express.static(path.join(__dirname, 'public'), {
   dotfiles: 'allow'
 }));
 // Health check
+
+const handleCurrencyToCountryCode = (currency) => {
+  //default singapore, switch case, if MYR = MY
+  switch (currency) {
+    case 'SGD':
+      return 'SG';
+    case 'MYR':
+      return 'MY';
+    default:
+      return 'SG';
+  }
+}
+
+const handleAscottMerchantAccountCode = (currency) => {
+  //default singapore
+  switch (currency) {
+    case 'SGD':
+      return 'SG_Lyf_Funan';
+    case 'MYR':
+      return 'MY_Lyf_ChinatownKL';
+    default:
+      return 'SG_Lyf_Funan';
+  }
+}
 
 app.get('/', (req, res) => {
   res.send('Adyen Checkout API is running ✅');
@@ -68,23 +93,34 @@ app.get('/ascott/booking',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('custom-demos/ascott/ascott-booking', { sdkVersion, env, clientKey });
+  const mode = req.query.mode || null;
+  const currency = req.query.CURRENCY || 'SGD';
+  const country = handleCurrencyToCountryCode(currency);
+  const merchantAccount = handleAscottMerchantAccountCode(currency);
+  res.render('custom-demos/ascott/ascott-booking', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount });
 })
 
 app.get('/ascott/booking-confirmation',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('custom-demos/ascott/ascott-booking-confirmation', { sdkVersion, env, clientKey });
+  const mode = req.query.mode || null;
+  const currency = req.query.CURRENCY || 'SGD';
+  const country = handleCurrencyToCountryCode(currency);
+  const merchantAccount = handleAscottMerchantAccountCode(currency);
+  res.render('custom-demos/ascott/ascott-booking-confirmation', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount });
 })
 
 app.get('/ascott/booking-payment',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('custom-demos/ascott/ascott-booking-payment', { sdkVersion, env, clientKey });
+  const mode = req.query.mode || null;
+  const currency = req.query.CURRENCY || 'SGD';
+  const country = handleCurrencyToCountryCode(currency);
+  const merchantAccount = handleAscottMerchantAccountCode(currency);
+  res.render('custom-demos/ascott/ascott-booking-payment', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount });
 })
-
 //end ascott customisation
 
 //Hotels Tokenisation example
@@ -234,12 +270,6 @@ app.post('/api/hotel/completepayment', async (req, res) => {
         ? 'https://pal-live.adyen.com'
         : 'https://pal-test.adyen.com';
 
-
-        console.log("conditions");
-        console.log("isMember: ",isMember);
-        console.log("storedPaymentMethodId: ",storedPaymentMethodId);
-        console.log("wantsToStoreCard", wantsToStoreCard);
-
       // Forward for card-on-file for Opera
       if (isMember && storedPaymentMethodId) {
         console.log("Forwarding to Opera (card-on-file)...");
@@ -279,10 +309,9 @@ app.post('/api/sessions', async (req, res) => {
   rest.recurringProcessingModel = "Subscription"
   rest.shopperReference = "TestShopper"
 
-  console.log(rest);
-
   try {
     const result = await createSession(rest, isLive, merchantPrefix, version);
+    console.log("result",result);
     res.json(result);
   } catch (error) {
     console.log("THis is the error");
@@ -336,20 +365,29 @@ app.get('/status', (req, res) => {
 
 app.all('/redirect', async (req, res) => {
   try {
-    const redirectResult = req.method === 'POST' ? req.body.redirectResult : req.query.redirectResult;
-
-    if (!redirectResult) {
-      return res.status(400).json({ error: 'Missing redirectResult parameter.' });
+   
+    let actualResultCode = null; 
+    //check if there is session result in query, if there is make a get session result call to adyen
+    if(req.query.sessionResult){
+      const sessionResult = req.query.sessionResult;
+      const sessionOutcome = await checkSessionOutcome({ sessionId: req.query.sessionId, sessionResult });
+      console.log(sessionOutcome);
+      actualResultCode = sessionOutcome.payments?.[0].resultCode;
+    }else{
+        const redirectResult = req.method === 'POST' ? req.body.redirectResult : req.query.redirectResult;
+        if (!redirectResult) {
+          return res.status(400).json({ error: 'Missing redirectResult parameter.' });
+        }
+        const result = await submitAdditionalDetails(
+          { details: { redirectResult } }, // Format expected by Adyen
+          false, // isLive
+          ''    // merchantPrefix
+        );
+        actualResultCode = result.resultCode;
+        res.json(result); // Or handle result.action.type for redirects, etc.
     }
-
-    const result = await submitAdditionalDetails(
-      { details: { redirectResult } }, // Format expected by Adyen
-      false, // isLive
-      ''    // merchantPrefix
-    );
-
-    if (result.resultCode) {
-      switch (result.resultCode) {
+    if (actualResultCode) {
+      switch (actualResultCode) {
         case "Authorised":
           return res.redirect("/status?status=success");
         case "Pending":
@@ -365,9 +403,6 @@ app.all('/redirect', async (req, res) => {
           return res.redirect("/status?status=unknown");
       }
     }
-
-    res.json(result); // Or handle result.action.type for redirects, etc.
-
   } catch (error) {
     console.error('Error during redirect handling:', error.message);
     res.status(500).json(error.response?.data || { error: error.message });

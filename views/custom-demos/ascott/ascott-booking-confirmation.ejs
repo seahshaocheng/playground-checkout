@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>lyf Chinatown Kuala Lumpur</title>
   <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+      const mode = "<%= mode %>"
+      const currency = "<%= currency %>";
+      const country = "<%= country %>";
+    </script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -62,7 +67,9 @@
 
 <!-- Top Navigation Bar -->
 <header class="bg-white shadow-sm">
-  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+  <nav
+    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
+  >
     <div class="flex items-center space-x-6">
       <div class="text-2xl font-bold text-gray-800">lyf</div>
       <div class="text-gray-500 text-sm">
@@ -70,11 +77,68 @@
       </div>
     </div>
     <div class="flex items-center space-x-6">
+      <div class="relative inline-block text-left">
+        <select
+          id="country-currency-selector"
+          class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline-blue focus:border-blue-300"
+          onchange="updateCurrency(this)"
+        >
+          <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
+          <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
+        </select>
+        <div
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+        >
+          <svg
+            class="fill-current h-4 w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"
+            />
+          </svg>
+        </div>
+      </div>
+      <div class="relative inline-block text-left">
+        <select
+          id="booking-type-selector"
+          class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline-blue focus:border-blue-300"
+          onchange="updateBookingType(this)"
+        >
+          <option value="embedded" <%= mode === 'embedded' ? 'selected' : '' %>>Embedded</option>
+          <option value="hosted" <%= mode === 'hosted' ? 'selected' : '' %>>Hosted</option>
+        </select>
+        <div
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+        >
+          <svg
+            class="fill-current h-4 w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"
+            />
+          </svg>
+        </div>
+      </div>
       <a href="#" class="text-sm text-gray-600 hover:text-gray-900">My Cart</a>
       <a href="#" class="text-sm text-gray-600 hover:text-gray-900">ASR</a>
       <div class="flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-gray-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
         </svg>
       </div>
     </div>
@@ -206,9 +270,27 @@
   </div>
 </div>
 
+ <script>
+    function updateCurrency(selectElement) {
+      const selectedCurrency = selectElement.value;
+      const url = new URL(window.location.href);
+      url.searchParams.set('CURRENCY', selectedCurrency);
+      window.location.href = url.href;
+    }
+
+    function updateBookingType(selectElement) {
+      const selectedType = selectElement.value;
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', selectedType);
+      window.location.href = url.href;
+    }
+  </script>
 <script>
     const onClickToPayment = () =>{
-        window.location = "/ascott/booking-payment"
+        const url = new URL("/ascott/booking-payment", window.location.origin);
+        url.searchParams.set('mode', mode);
+        url.searchParams.set('currency', currency);
+        window.location = url.href;
     }
 
   document.addEventListener('DOMContentLoaded', () => {

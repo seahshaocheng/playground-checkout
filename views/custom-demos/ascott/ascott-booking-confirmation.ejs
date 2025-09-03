@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>lyf Chinatown Kuala Lumpur</title>
+  <title> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></title>
   <script src="https://cdn.tailwindcss.com"></script>
    <script>
       const mode = "<%= mode %>"
       const currency = "<%= currency %>";
       const country = "<%= country %>";
+      const shopperReference = "<%= shopperReference %>";
     </script>
   <style>
     body {
@@ -73,7 +74,7 @@
     <div class="flex items-center space-x-6">
       <div class="text-2xl font-bold text-gray-800">lyf</div>
       <div class="text-gray-500 text-sm">
-        <span class="font-semibold">lyf Bugis Singapore</span>
+        <span class="font-semibold"> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></span>
       </div>
     </div>
     <div class="flex items-center space-x-6">
@@ -194,11 +195,20 @@
   <!-- Room 1 Summary Card -->
   <div class="asr-card p-4 my-4 flex flex-col md:flex-row rounded-lg shadow-sm">
     <div class="w-full md:w-1/3 asr-image bg-gray-200 rounded-lg overflow-hidden">
-      <img src="https://placehold.co/600x400/98d4d4/ffffff?text=Nano+Single" alt="Nano Single" class="w-full h-full object-cover">
+      <% let roomImg; 
+              if (currency === 'MYR') {
+                roomImg = 'https://www.discoverasr.com/content/dam/tal/media/images/properties/malaysia/kuala-lumpur/lyf-chinatown-kuala-lumpur/gallery/lyf-rajachulan-kualalumpur-oneofakind(Studio)-LR.jpg';
+              } else if (currency === 'SGD') {
+                roomImg = 'https://www.discoverasr.com/content/dam/tal/media/images/properties/singapore/singapore/lyf-funan-singapore/apartmenttypes/one-of-a-kind/SR_Singapore_lyf_Funan_One_of_a_Kind_Mirror_Image-HR.jpg';
+              } else {
+                roomImg = 'https://via.placeholder.com/400x300?text=No+Image';
+              }
+            %>
+      <img src="<%= roomImg %>" alt="Nano Single" class="w-full h-full object-cover">
     </div>
     <div class="w-full md:w-2/3 p-4 flex flex-col justify-between">
       <div>
-        <h3 class="card-title text-xl font-bold">Nano Single</h3>
+        <h3 class="card-title text-xl font-bold"><%= currency === 'SGD' ? 'One of a Kind' : (currency === 'MYR' ? 'Good for One (Studio)' : 'Single Room') %></h3>
         <div class="flex items-center space-x-2 mt-2">
           <div class="asr-badge bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-semibold">GREAT VALUE - NON-REFUNDABLE</div>
         </div>
@@ -207,10 +217,11 @@
       </div>
       <div class="flex items-center justify-between mt-4">
         <div class="text-lg">
-          <p class="text-xs text-gray-500 font-semibold">SGD</p>
-          <span class="font-bold text-2xl text-gray-800">145.68</span>
+            <p class="text-xs text-gray-500 font-semibold"><%= currency %></p>
+          <span class="font-bold text-2xl text-gray-800">
+            <%= currency === 'SGD' ? '140.00' : (currency === 'MYR' ? '459.83' : '140.00') %>
+          </span></span>
           <p class="text-sm text-gray-500">For 1 Night(s)</p>
-          <p class="text-xs text-gray-400">incl. SGD 24.18 of taxes & fees for 1 night(s)</p>
         </div>
         <a href="#" class="text-sm text-ascott-green underline">Edit</a>
       </div>
@@ -234,7 +245,7 @@
       <div class="w-1/2 space-y-4">
         <div class="flex justify-between items-center">
           <h4 class="text-lg font-bold text-gray-800">Total Charges</h4>
-          <span class="text-lg font-bold text-gray-800">SGD 161.87</span>
+          <span class="text-lg font-bold text-gray-800"><%= currency %> <%= currency === 'SGD' ? '140.00' : (currency === 'MYR' ? '459.83' : '140.00') %></span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-sm text-gray-500">Incl. Tax</span>
@@ -250,7 +261,7 @@
         </div>
         <div class="flex justify-between items-center pt-4 border-t border-gray-200">
           <h4 class="text-xl font-bold text-gray-800">Total Payable Amount</h4>
-          <span class="text-xl font-bold text-gray-800">SGD 145.68</span>
+          <span class="text-xl font-bold text-gray-800"><%= currency %> <%= currency === 'SGD' ? '140.00' : (currency === 'MYR' ? '459.83' : '140.00') %></span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-sm text-gray-500">Incl. Tax</span>
@@ -258,7 +269,7 @@
         </div>
         <div class="pt-4">
           <h5 class="text-sm font-semibold text-gray-600">Approximate total in selected currency</h5>
-          <span class="text-lg font-bold text-gray-800">SGD 145.68</span>
+          <span class="text-lg font-bold text-gray-800"><%= currency %> <%= currency === 'SGD' ? '140.00' : (currency === 'MYR' ? '459.83' : '140.00') %></span>
           <p class="text-xs text-gray-500">Final payment will be in the property's currency</p>
         </div>
       </div>
@@ -290,6 +301,7 @@
         const url = new URL("/ascott/booking-payment", window.location.origin);
         url.searchParams.set('mode', mode);
         url.searchParams.set('currency', currency);
+        url.searchParams.set('shopperReference', shopperReference);
         window.location = url.href;
     }
 

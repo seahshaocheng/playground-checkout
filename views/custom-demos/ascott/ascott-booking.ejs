@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>lyf Chinatown Kuala Lumpur</title>
+  <title> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Custom styles from the original website */
@@ -75,10 +75,12 @@
   >
     <div class="flex items-center space-x-6">
       <div class="text-2xl font-bold text-gray-800">
-        <div class="brand-logo-wrapper listing"><img src="https://www.discoverasr.com/content/dam/tal/common/assets/logos/brands/lyf/lyf-black-logo-132x80.png.transform/ascott-lowres/image.pngc" alt="Brand Logo" class="brand-logo"></div>
+        <div class="brand-logo-wrapper listing"><img src="https://www.discoverasr.com/content/dam/tal/common/assets/logos/brands/lyf/lyf-black-logo-132x80.png.transform/ascott-lowres/image.png" alt="Brand Logo" class="brand-logo" style="width:40px"></div>
       </div>
       <div class="text-gray-500 text-sm">
-        <span class="font-semibold">lyf Bugis Singapore</span>
+        <span class="font-semibold">
+          <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %>
+        </span></span>
       </div>
     </div>
     <div class="flex items-center space-x-6">
@@ -164,11 +166,11 @@
         <div class="flex flex-1 w-full rounded-full border border-gray-300 divide-x divide-gray-300 p-2">
           <div class="flex-1 flex items-center pl-4 pr-2">
             <span class="text-sm text-gray-500">Check-in</span>
-            <input type="text" value="Tue, 02 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+            <input type="text" value="Tue, 05 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
           </div>
           <div class="flex-1 flex items-center pl-4 pr-2">
             <span class="text-sm text-gray-500">Check-out</span>
-            <input type="text" value="Wed, 03 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+            <input type="text" value="Wed, 06 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
           </div>
         </div>
         <div class="flex items-center w-full md:w-auto rounded-full border border-gray-300 p-2 pl-4">
@@ -198,11 +200,21 @@
     <!-- Apartment Item: Nano Single -->
     <div class="asr-booking-apartment-item wrap asr-card p-4 my-4 flex flex-col md:flex-row rounded-lg shadow-sm">
         <div class="w-full md:w-1/3 asr-image bg-gray-200 rounded-lg overflow-hidden">
-            <img src="https://placehold.co/600x400/98d4d4/ffffff?text=Good+for+One+(Studio)" alt="Good for One (Studio)" class="w-full h-full object-cover">
-        </div>
+            <% let roomImg; 
+              if (currency === 'MYR') {
+                roomImg = 'https://www.discoverasr.com/content/dam/tal/media/images/properties/malaysia/kuala-lumpur/lyf-chinatown-kuala-lumpur/gallery/lyf-rajachulan-kualalumpur-oneofakind(Studio)-LR.jpg';
+              } else if (currency === 'SGD') {
+                roomImg = 'https://www.discoverasr.com/content/dam/tal/media/images/properties/singapore/singapore/lyf-funan-singapore/apartmenttypes/one-of-a-kind/SR_Singapore_lyf_Funan_One_of_a_Kind_Mirror_Image-HR.jpg';
+              } else {
+                roomImg = 'https://via.placeholder.com/400x300?text=No+Image';
+              }
+            %>
+            <img src="<%= roomImg %>" alt="Good for One (Studio)" class="w-full h-full object-cover"></div>
         <div class="w-full md:w-2/3 p-4 flex flex-col justify-between">
             <div>
-                <h3 class="card-title text-xl font-bold">Good for One (Studio)</h3>
+                <h3 class="card-title text-xl font-bold">
+                  <%= currency === 'SGD' ? 'One of a Kind' : (currency === 'MYR' ? 'Good for One (Studio)' : 'Single Room') %>
+                </h3>
                 <div class="text-sm text-gray-600 mt-2 flex flex-wrap items-center space-x-4">
                     <span class="flex items-center"><span class="text-ascott-brown">9 sqm / 97 sqft</span></span>
                     <span class="flex items-center"><span class="text-ascott-brown">Max 1 pax</span></span>
@@ -218,7 +230,7 @@
             <div class="flex items-center justify-between mt-4">
                 <div class="text-lg">
                     <p class="text-xs text-gray-500 font-semibold">From</p>
-                    <span class="font-bold text-2xl text-gray-800"><%= currency %> 46.77</span>
+                    <span class="font-bold text-2xl text-gray-800"><%= currency %> <%= currency === 'SGD' ? '140.00' : (currency === 'MYR' ? '459.83' : '140.00') %></span>
                     <p class="text-sm text-gray-500">For 1 Night(s)</p>
                 </div>
                 <button id="bookButton" class="px-6 py-3 rounded-full font-semibold bg-ascott-green hover:bg-green-700 text-white">Book</button>
@@ -236,14 +248,14 @@
             <h3 class="text-xl font-bold text-gray-800">Already a member? Sign in and earn rewards</h3>
             <div class="mt-4">
                 <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                <input type="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm" onchange="updateEmail(this)">
             </div>
             <div class="mt-4">
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                 <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
                 <a href="#" class="text-sm text-ascott-green mt-1 block">Forgot password?</a>
             </div>
-            <button class="w-full mt-6 px-4 py-2 rounded-full font-semibold text-white bg-ascott-green hover:bg-green-700">Sign in</button>
+            <button class="w-full mt-6 px-4 py-2 rounded-full font-semibold text-white bg-ascott-green hover:bg-green-700" onclick="onClickInternalLink('ascott/booking-confirmation')">Sign in</button>
         </div>
         
         <!-- Right side of the modal -->
@@ -283,6 +295,11 @@
 </div>
 
  <script>
+  let shopperReference=null;
+   function updateEmail(selectedElement){
+      shopperReference=selectedElement.value;
+    }
+
     function updateCurrency(selectElement) {
       const selectedCurrency = selectElement.value;
       const url = new URL(window.location.href);
@@ -303,6 +320,7 @@
     const url = new URL("/" + link, window.location.origin);
     url.searchParams.set('mode', mode);
     url.searchParams.set('currency', currency);
+    url.searchParams.set('shopperReference', shopperReference);
     window.location = url.href;
   }
 

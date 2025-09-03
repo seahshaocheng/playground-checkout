@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>lyf Chinatown Kuala Lumpur</title>
+    <title> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Adyen SDK CSS/JS -->
     <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
@@ -15,6 +15,7 @@
       const mode = "<%= mode %>"
       const currency = "<%= currency %>";
       const country = "<%= country %>";
+      let shopperReference = "<%= shopperReference %>";
     </script>
     <style>
       body {
@@ -84,7 +85,7 @@
           <div class="flex items-center space-x-6">
             <div class="text-2xl font-bold text-gray-800">lyf</div>
             <div class="text-gray-500 text-sm">
-              <span class="font-semibold">lyf Bugis Singapore</span>
+              <span class="font-semibold"> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></span>
             </div>
           </div>
           <div class="flex items-center space-x-6">
@@ -212,23 +213,28 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-semibold text-gray-700">First Name *</label>
-              <input type="text" value="Sean" class="form-input mt-1">
+              <input type="text" value="Seah" class="form-input mt-1">
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
-              <input type="text" value="Marks" class="form-input mt-1">
+              <input type="text" value="Mark" class="form-input mt-1">
             </div>
           </div>
           
           <div class="grid grid-cols-2 gap-4 mt-4">
             <div>
               <label class="block text-sm font-semibold text-gray-700">Email *</label>
-              <input type="email" value="sean.marks@gmail.com" class="form-input mt-1">
+              <input
+                type="email"
+                value="<%= shopperReference && shopperReference!=='null' && shopperReference.trim() !== '' ? shopperReference : '' %>"
+                class="form-input mt-1"
+                onChange="updateEmail(this)"
+              />
               <span class="text-xs text-gray-500">A confirmation email will be sent to the email address above. Please ensure it is accurate.</span>
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700">Country/Region of Residence: *</label>
-              <input type="text" value="Singapore" class="form-input mt-1">
+              <input type="text" value="<%= currency === 'SGD' ? 'Singapore' : 'Malaysia' %>" class="form-input mt-1">
             </div>
           </div>
 
@@ -295,7 +301,7 @@
       <div class="bg-white p-6 rounded-lg shadow-sm">
         <div class="flex justify-between items-center pb-4 border-b border-gray-200">
           <h4 class="text-lg font-semibold text-gray-800">Payment Details</h4>
-          <span class="text-gray-600 text-sm"><%= currency %> 121.50</span>
+          <span class="text-gray-600 text-sm"><%= currency %> <%= currency === 'SGD' ? '140.00' : '459.83' %></span>
         </div>
         
         <div class="mt-4 space-y-2 text-sm text-gray-600">
@@ -304,33 +310,34 @@
           </div>
           <div class="flex justify-between">
             <span>Service Charge</span>
-            <span><%= currency %> 12.15</span>
+            <span><%= currency %> <%= currency === 'SGD' ? '12.15' : '100.00' %></span>
           </div>
           <div class="flex justify-between">
             <span>Goods and Services Tax</span>
-            <span><%= currency %> 12.03</span>
+            <span><%= currency %> <%= currency === 'SGD' ? '12.03' : '100.00' %></span>
           </div>
         </div>
         
         <div class="mt-4 pt-4 border-t border-gray-200">
           <div class="flex justify-between items-center text-lg font-bold">
             <span>Total Payable Amount</span>
-            <span><%= currency %> 145.68</span>
+            <span><%= currency %> <%= currency === 'SGD' ? '164.68' : '659.83' %></span>
           </div>
           <p class="text-sm text-gray-500">Incl. Tax</p>
           <a href="#" class="text-sm text-ascott-green underline mt-1 block">Show breakdown</a>
         </div>
-        
-        <div class="mt-6 pt-4 border-t border-gray-200">
-          <h5 class="text-sm font-semibold text-gray-600">Approximate total in selected currency</h5>
-          <span class="text-lg font-bold text-gray-800"><%= currency %> 145.68</span>
-          <p class="text-xs text-gray-500">Final payment will be in the property's currency</p>
-        </div>
-
       </div>
     </div>
   </div>
   <script>
+    function updateEmail(selectedElement){
+      const url = new URL(window.location.href);
+      url.searchParams.set('shopperReference', selectedElement.value);
+      url.searchParams.set('mode', '<%= mode %>');
+      url.searchParams.set('CURRENCY', '<%= currency %>');
+      window.location.href = url.href;
+    }
+
     function updateCurrency(selectElement) {
       const selectedCurrency = selectElement.value;
       const url = new URL(window.location.href);
@@ -379,6 +386,7 @@
 
       const handleOnSubmitPayment = (e) => {
         e.preventDefault();
+        console.log(dropin);
         if(mode===""){
           if(dropin!==null){
             dropin.submit();
@@ -389,6 +397,21 @@
         }
       }
 
+      const removePaymentMethod = async (id) => {
+        const response = await fetch(`/api/deletePaymentMethods/${id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body:JSON.stringify({
+            isLive:false,
+            merchantPrefix:"test",
+            merchantAccount:"<%= merchantAccount %>",
+            shopperReference:"d-sg-hotels__"+decodeURIComponent(shopperReference)
+          })
+        });
+        return response.json();
+      };
 
       window.addEventListener("load", async function () {
         console.log("mode",mode);
@@ -400,12 +423,13 @@
         let body = {
             isLive,
             merchantPrefix,
-            amount: { value: 0, currency: currency },
-            reference: "DROPIN_ORDER_DEMO",
+            amount: { value: currency === "SGD" ? 16468 : 65983, currency: currency },
+            reference: `${Math.random().toString(36).substring(2, 6).toUpperCase()}_${new Date().toISOString()}`,
             returnUrl: `${window.location.origin}/redirect`,
             countryCode: country,
             merchantAccount: "<%= merchantAccount %>",
-            storePaymentMethodMode: "enabled"
+            storePaymentMethodMode: "enabled",
+            shopperReference: "d-sg-hotels__"+decodeURIComponent(shopperReference)
           };
         //if mode is not null, include a new field in body mode
         if (mode === 'hosted') {
@@ -419,6 +443,7 @@
         });
 
         const session = await response.json();
+        let session_id = session.id;
 
         const configuration = {
           environment: env,
@@ -428,26 +453,52 @@
             id: session.id,
             sessionData: session.sessionData,
           },
-          onPaymentCompleted: (result) => {
-            alert("Payment completed! 🎉");
-            console.log(result);
+          onPaymentCompleted: async(result) => {
+
+            //send api request to backend
+            /*const response = await fetch(`/api/sessionoutcome/${session_id}?sessionResult=${result.sessionResult}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+            
+            console.log("session outcome");
+            console.log(response);*/
+
+            window.location.href = "/status?status=success";
           },
           onError: (err) => {
-            alert("Payment failed 😢");
-            console.error(err);
+            window.location.href = "/status?status=error";
+          },
+        };
+
+        const dropinConfiguration = {
+          showRemovePaymentMethodButton:true,
+          onDisableStoredPaymentMethod: async (storedPaymentMethodId, resolve, reject) => {
+            // Handle disabling stored payment method
+            let removePaymentMethodOutcome= await removePaymentMethod(storedPaymentMethodId);
+            console.log(removePaymentMethodOutcome);
+
+            //removePaymentMethod httpSTatuscode == 204, resolve
+            if(removePaymentMethodOutcome === 204){
+              resolve();
+            }
+            else{
+              reject();
+            }
           },
         };
 
         if(mode !== "hosted"){
            const checkout = await AdyenCheckout(configuration);
           // Create an instance of Drop-in and mount it
-          dropin = new Dropin(checkout).mount("#dropin-container");
+          dropin = new Dropin(checkout,dropinConfiguration).mount("#dropin-container");
         }
         else{
           //set redirectHostedPaymentLink to the hosted payment link
           redirectHostedPaymentLink = session.url;
         }
-       
       });
     </script>
   </body>

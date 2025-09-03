@@ -10,7 +10,8 @@ const {
   getPaymentMethods,
   intiatePayment,
   submitAdditionalDetails,
-  checkSessionOutcome
+  checkSessionOutcome,
+  removeStoredPaymentMethod
 } = require('./services/AdyenCheckoutServices');
 const req = require('express/lib/request');
 
@@ -97,7 +98,8 @@ app.get('/ascott/booking',(req,res)=>{
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handleAscottMerchantAccountCode(currency);
-  res.render('custom-demos/ascott/ascott-booking', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount });
+  const shopperReference = req.query.shopperReference || '';
+  res.render('custom-demos/ascott/ascott-booking', { sdkVersion, env, clientKey,mode,currency,country,shopperReference,merchantAccount });
 })
 
 app.get('/ascott/booking-confirmation',(req,res)=>{
@@ -108,7 +110,8 @@ app.get('/ascott/booking-confirmation',(req,res)=>{
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handleAscottMerchantAccountCode(currency);
-  res.render('custom-demos/ascott/ascott-booking-confirmation', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount });
+  const shopperReference = req.query.shopperReference || '';
+  res.render('custom-demos/ascott/ascott-booking-confirmation', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
 })
 
 app.get('/ascott/booking-payment',(req,res)=>{
@@ -119,7 +122,8 @@ app.get('/ascott/booking-payment',(req,res)=>{
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handleAscottMerchantAccountCode(currency);
-  res.render('custom-demos/ascott/ascott-booking-payment', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount });
+  const shopperReference = req.query.shopperReference || '';
+  res.render('custom-demos/ascott/ascott-booking-payment', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
 })
 //end ascott customisation
 
@@ -304,10 +308,8 @@ app.post('/api/hotel/completepayment', async (req, res) => {
 app.post('/api/sessions', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
 
-  console.log("TESTING")
   rest.storePaymentMethodMode="askForConsent";
   rest.recurringProcessingModel = "Subscription"
-  rest.shopperReference = "TestShopper"
 
   try {
     const result = await createSession(rest, isLive, merchantPrefix, version);
@@ -316,6 +318,64 @@ app.post('/api/sessions', async (req, res) => {
   } catch (error) {
     console.log("THis is the error");
     console.log(error);
+    res.status(500).json(error.response?.data || { error: error.message });
+  }
+});
+
+app.get('/api/sessionoutcome/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+      const sessionResult = req.query.sessionResult;
+      const sessionOutcome = await checkSessionOutcome({ sessionId:id, sessionResult });
+      console.log("session outcome 1");
+      console.log(sessionOutcome);
+
+      let originalStoredPaymentMethodId = sessionOutcome.additionalData['tokenization.storedPaymentMethodId'];
+      let originalShopperReference = sessionOutcome.additionalData['recurring.shopperReference'];
+      let newShopperReference = sessionOutcome.reference;
+
+      console.log('Stored Payment Method ID:', originalStoredPaymentMethodId);
+      console.log('Original Shopper Reference:', originalShopperReference);
+      console.log('New Shopper Reference:', newShopperReference);
+
+
+      const forwardBody = {
+          merchantAccount:"SG_Lyf_Funan",
+          shopperReference:originalShopperReference,
+          storedPaymentMethodId: originalStoredPaymentMethodId,
+          baseUrl: "https://pal-test.adyen.com/",
+          request: {
+            httpMethod: "POST",
+            urlSuffix: "pal/servlet/Recurring/v30/storeToken",
+            credentials: process.env.ADYEN_API_KEY_TEST, // or use secure key vault
+            headers: {
+              "X-Api-Key": process.env.ADYEN_API_KEY_TEST,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              card:{
+                "number": "{{number}}",
+                "expiryMonth": "{{expiryMonth}}",
+                "expiryYear": "{{expiryYear}}",
+                "holderName": "{{holderName}}"
+              },
+              reference:newShopperReference,
+              shopperReference:newShopperReference,
+              recurring: {
+                contract:"RECURRING"
+              }
+            })
+          }}
+          
+      console.log("Retrieved shopper token for reservation");
+      const forwardResult = await forward(forwardBody,false,"");
+      console.log(forwardResult);
+      const convertedForwardResult = JSON.parse(forwardResult.response.body);
+      console.log(convertedForwardResult.recurringDetailReference); 
+
+    res.json(sessionOutcome);
+  } catch (error) {
+    console.error('Error retrieving session outcome:', error.message);
     res.status(500).json(error.response?.data || { error: error.message });
   }
 });
@@ -408,6 +468,24 @@ app.all('/redirect', async (req, res) => {
     res.status(500).json(error.response?.data || { error: error.message });
   }
 });
+
+//remove payment methods
+app.post('/api/deletePaymentMethods/:id', async (req, res) => {
+  const {id} = req.params;
+  const { merchantAccount, shopperReference } = req.body;
+  const { isLive = false, merchantPrefix = "", version } = req.body;
+
+  try {
+    const result = await removeStoredPaymentMethod({ storedPaymentMethodId: id, merchantAccount, shopperReference }, isLive, merchantPrefix, version);
+    console.log("DELETEING TOKENc")
+    console.log(result);
+    res.send(result.status);
+  } catch (error) {
+    res.status(500).json(error.response?.data || { error: error.message });
+  }
+});
+
+//
 //End Standard Integration Server Endpoints
 
 app.listen(PORT, () => {

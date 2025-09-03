@@ -133,13 +133,29 @@ const forward = async (data,isLive=false,merchantPrefix="",version = latestVersi
     }
 }
 
+//remove storedPaymentMethod
+const removeStoredPaymentMethod = async(data,isLive=false,merchantPrefix="",version = latestVersion) => {
+    const config = configHandler(isLive,merchantPrefix,version);
+    const url = `${config.url}/storedPaymentMethods/${data.storedPaymentMethodId}?merchantAccount=${data.merchantAccount}&shopperReference=${data.shopperReference}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': config.apikey,
+    };
 
-
+    try {
+        const response = await axios.delete(url, { headers });
+        return response;
+    } catch (error) {
+        console.error('Error removing stored payment method:', error.response.data);
+        throw error;
+    }
+}
 
 module.exports = {
     forward,
     createSession,
     getPaymentMethods,
+    removeStoredPaymentMethod,
     intiatePayment,
     submitAdditionalDetails,
     checkSessionOutcome

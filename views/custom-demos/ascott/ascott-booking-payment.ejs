@@ -3,500 +3,344 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></title>
+    <title><%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Adyen SDK CSS/JS -->
     <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
     <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
 
-    <!-- Inject client key -->
     <script>
       const clientKey = "<%= clientKey %>";
-      const mode = "<%= mode %>"
+      const mode = "<%= mode %>";
       const currency = "<%= currency %>";
       const country = "<%= country %>";
       let shopperReference = "<%= shopperReference %>";
     </script>
+
     <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #f3f4f6;
-      }
-      .text-ascott-green {
-        color: #4C6866;
-      }
-      .bg-ascott-green {
-        background-color: #4C6866;
-      }
-      .text-ascott-brown {
-        color: #87674f;
-      }
-      .tab-active {
-        border-bottom: 2px solid #4C6866;
-        font-weight: 500;
-      }
-      .search-bar-input {
-        border: none;
-        outline: none;
-        background: transparent;
-      }
-      .divider {
-        border-right: 1px solid #e5e7eb;
-      }
-      .asr-card {
-        border: 1px solid #e5e7eb;
-        background-color: #ffffff;
-      }
-      .asr-button-primary {
-        background-color: #4c6866;
-        color: white;
-      }
-      .show-rates {
-        color: #4c6866;
-        font-weight: 500;
-        cursor: pointer;
-      }
-      .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
-      .form-input {
-        border: 1px solid #e5e7eb;
-        padding: 8px;
-        border-radius: 4px;
-        width: 100%;
-      }
+      body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+      .text-ascott-green { color: #4C6866; }
+      .bg-ascott-green { background-color: #4C6866; }
+      .text-ascott-brown { color: #87674f; }
+      .tab-active { border-bottom: 2px solid #4C6866; font-weight: 500; }
+      .search-bar-input { border: none; outline: none; background: transparent; }
+      .divider { border-right: 1px solid #e5e7eb; }
+      .asr-card { border: 1px solid #e5e7eb; background-color: #ffffff; }
+      .asr-button-primary { background-color: #4c6866; color: white; }
+      .show-rates { color: #4c6866; font-weight: 500; cursor: pointer; }
+      .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+      .form-input { border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; width: 100%; }
     </style>
   </head>
-    <body class="bg-gray-100">
-      <!-- Top Navigation Bar -->
-      <header class="bg-white shadow-sm">
-        <nav
-          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
-        >
-          <div class="flex items-center space-x-6">
-            <div class="text-2xl font-bold text-gray-800">lyf</div>
-            <div class="text-gray-500 text-sm">
-              <span class="font-semibold"> <%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></span>
-            </div>
+  <body class="bg-gray-100">
+    <!-- Top Navigation Bar -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3 sm:gap-6 min-w-0">
+          <div class="text-2xl font-bold text-gray-800 shrink-0">lyf</div>
+          <div class="text-gray-500 text-sm truncate">
+            <span class="font-semibold"><%= currency === 'SGD' ? 'lyf Funan Singapore' : 'lyf Chinatown Kuala Lumpur' %></span>
           </div>
-          <div class="flex items-center space-x-6">
-            <div class="relative inline-block text-left">
-              <select
-                id="country-currency-selector"
-                class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline-blue focus:border-blue-300"
-                onchange="updateCurrency(this)"
-              >
-                <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
-                <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
-              </select>
-              <div
-                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
-              >
-                <svg
-                  class="fill-current h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"
-                  />
-                </svg>
-              </div>
-            </div>
-            <div class="relative inline-block text-left">
-              <select
-                id="booking-type-selector"
-                class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline-blue focus:border-blue-300"
-                onchange="updateBookingType(this)"
-              >
-                <option value="embedded" <%= mode === 'embedded' ? 'selected' : '' %>>Embedded</option>
-                <option value="hosted" <%= mode === 'hosted' ? 'selected' : '' %>>Hosted</option>
-              </select>
-              <div
-                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
-              >
-                <svg
-                  class="fill-current h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"
-                  />
-                </svg>
-              </div>
-            </div>
-            <a href="#" class="text-sm text-gray-600 hover:text-gray-900">My Cart</a>
-            <a href="#" class="text-sm text-gray-600 hover:text-gray-900">ASR</a>
-            <div class="flex items-center space-x-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-gray-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
+        </div>
+        <div class="hidden md:flex items-center gap-3">
+          <!-- Country/Currency -->
+          <div class="relative inline-block text-left">
+            <select id="country-currency-selector" class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-3 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-emerald-200" onchange="updateCurrency(this)">
+              <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
+              <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
+            </select>
           </div>
-        </nav>
-      </header>
-      <!-- Booking Progress Bar -->
-      <div class="bg-white shadow-md rounded-b-lg overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2"></div>
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="window.location.href='/ascott/booking?mode=<%= mode %>&CURRENCY=<%= currency %>'">
-          <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">1</div>
-          <span class="text-ascott-green font-semibold">Room(s) and Rates</span>
+          <!-- Booking Type -->
+          <div class="relative inline-block text-left">
+            <select id="booking-type-selector" class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-3 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-emerald-200" onchange="updateBookingType(this)">
+              <option value="embedded" <%= mode === 'embedded' ? 'selected' : '' %>>Embedded</option>
+              <option value="hosted" <%= mode === 'hosted' ? 'selected' : '' %>>Hosted</option>
+            </select>
+          </div>
+          <a href="#" class="text-sm text-gray-600 hover:text-gray-900">My Cart</a>
+          <a href="#" class="text-sm text-gray-600 hover:text-gray-900">ASR</a>
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
         </div>
-        <div class="flex-1 h-0.5 bg-ascott-green mx-2"></div>
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="window.location.href='/ascott/booking-confirmation?mode=<%= mode %>&CURRENCY=<%= currency %>'">
-          <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">2</div>
-          <span class="text-ascott-green font-semibold">Booking Summary</span>
+        <!-- Compact actions (mobile) -->
+        <div class="md:hidden flex items-center gap-2">
+          <button onclick="document.getElementById('mobile-filters').classList.toggle('hidden')" class="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3 py-1 text-sm">
+            Filters
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
         </div>
-        <div class="flex-1 h-0.5 bg-ascott-green mx-2"></div>
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="window.location.href='/ascott/booking-payment?mode=<%= mode %>&CURRENCY=<%= currency %>'"> 
-          <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">3</div>
-          <span class="text-ascott-green font-semibold">Enter Guest Details</span>
+      </nav>
+      <!-- Mobile filters panel -->
+      <div id="mobile-filters" class="md:hidden hidden border-t border-gray-200 bg-white">
+        <div class="max-w-7xl mx-auto px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select id="country-currency-selector-m" class="bg-white border border-gray-300 px-3 py-2 rounded" onchange="updateCurrency(this)">
+            <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
+            <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
+          </select>
+          <select id="booking-type-selector-m" class="bg-white border border-gray-300 px-3 py-2 rounded" onchange="updateBookingType(this)">
+            <option value="embedded" <%= mode === 'embedded' ? 'selected' : '' %>>Embedded</option>
+            <option value="hosted" <%= mode === 'hosted' ? 'selected' : '' %>>Hosted</option>
+          </select>
         </div>
       </div>
-      <div class="mt-4 flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
-        <div class="flex flex-1 w-full rounded-full border border-gray-300 divide-x divide-gray-300 p-2">
-          <div class="flex-1 flex items-center pl-4 pr-2">
-            <span class="text-sm text-gray-500">Check-in</span>
-            <input type="text" value="Tue, 02 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+    </header>
+
+    <!-- Booking Progress Bar -->
+    <div class="bg-white shadow-md rounded-b-lg overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between overflow-x-auto no-scrollbar">
+          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/ascott/booking?mode=<%= mode %>&CURRENCY=<%= currency %>'">
+            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">1</div>
+            <span class="text-ascott-green font-semibold text-sm sm:text-base">Room(s) and Rates</span>
           </div>
-          <div class="flex-1 flex items-center pl-4 pr-2">
-            <span class="text-sm text-gray-500">Check-out</span>
-            <input type="text" value="Wed, 03 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+          <div class="flex-1 h-0.5 bg-ascott-green mx-2 hidden sm:block"></div>
+          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/ascott/booking-confirmation?mode=<%= mode %>&CURRENCY=<%= currency %>'">
+            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">2</div>
+            <span class="text-ascott-green font-semibold text-sm sm:text-base">Booking Summary</span>
+          </div>
+          <div class="flex-1 h-0.5 bg-ascott-green mx-2 hidden sm:block"></div>
+          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/ascott/booking-payment?mode=<%= mode %>&CURRENCY=<%= currency %>'">
+            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">3</div>
+            <span class="text-ascott-green font-semibold text-sm sm:text-base">Enter Guest Details</span>
           </div>
         </div>
-        <div class="flex items-center w-full md:w-auto rounded-full border border-gray-300 p-2 pl-4 md:ml-4">
-          <span class="text-sm text-gray-500">Room(s) & Guest(s)</span>
-          <input type="text" value="1 Room, 1 Adult(s), 0 Child(ren)" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold"/>
+        <!-- Search/Date bar -->
+        <div class="mt-4 flex flex-col md:flex-row items-stretch md:items-center gap-2">
+          <div class="flex flex-1 rounded-full border border-gray-300 divide-x divide-gray-300 p-2 bg-white">
+            <div class="flex-1 flex items-center pl-4 pr-2">
+              <span class="text-xs sm:text-sm text-gray-500">Check-in</span>
+              <input type="text" value="Tue, 02 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold" />
+            </div>
+            <div class="flex-1 flex items-center pl-4 pr-2">
+              <span class="text-xs sm:text-sm text-gray-500">Check-out</span>
+              <input type="text" value="Wed, 03 Sep 2025" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold" />
+            </div>
+          </div>
+          <div class="flex items-center rounded-full border border-gray-300 p-2 pl-4 w-full md:w-auto bg-white">
+            <span class="text-xs sm:text-sm text-gray-500">Room(s) & Guest(s)</span>
+            <input type="text" value="1 Room, 1 Adult(s), 0 Child(ren)" class="search-bar-input w-full ml-2 text-sm text-gray-800 font-semibold" />
+          </div>
+          <button class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium p-2 rounded-full self-stretch md:self-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          </button>
         </div>
-        <button class="bg-white text-gray-600 hover:text-gray-900 font-bold p-2 rounded-full w-full md:w-auto md:ml-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </button>
       </div>
     </div>
-  </div>
 
-  <!-- Main Content Area -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex">
+    <!-- Main Content Area -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex flex-col lg:flex-row gap-6">
+      <!-- Reservation Form -->
+      <div class="w-full lg:w-2/3">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+          <h2 class="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">Reservation Details</h2>
+          <p class="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">Indicated fields require your attention. Welcome back, Mark Seah!</p>
 
-    <!-- Left Side: Reservation Form -->
-    <div class="w-2/3 pr-8">
-      <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h2 class="text-2xl font-bold mb-4">Reservation Details</h2>
-        <p class="text-sm text-gray-500 mb-6">Indicated fields require your attention. Welcome back, Mark Seah!</p>
-        
-        <form>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700">First Name *</label>
-              <input type="text" value="Seah" class="form-input mt-1">
+          <form>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700">First Name *</label>
+                <input type="text" value="Seah" class="form-input mt-1" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
+                <input type="text" value="Mark" class="form-input mt-1" />
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
-              <input type="text" value="Mark" class="form-input mt-1">
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700">Email *</label>
-              <input
-                type="email"
-                value="<%= shopperReference && shopperReference!=='null' && shopperReference.trim() !== '' ? shopperReference : '' %>"
-                class="form-input mt-1"
-                onChange="updateEmail(this)"
-              />
-              <span class="text-xs text-gray-500">A confirmation email will be sent to the email address above. Please ensure it is accurate.</span>
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700">Country/Region of Residence: *</label>
-              <input type="text" value="<%= currency === 'SGD' ? 'Singapore' : 'Malaysia' %>" class="form-input mt-1">
-            </div>
-          </div>
 
-          <div class="mt-4">
-            <label class="block text-sm font-semibold text-gray-700">Contact Number</label>
-            <div class="flex items-center mt-1">
-              <div class="relative">
-                <select class="form-input pr-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700">Email *</label>
+                <input type="email" value="<%= shopperReference && shopperReference!=='null' && shopperReference.trim() !== '' ? shopperReference : '' %>" class="form-input mt-1" onChange="updateEmail(this)" />
+                <span class="text-xs text-gray-500">A confirmation email will be sent to the email address above. Please ensure it is accurate.</span>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700">Country/Region of Residence: *</label>
+                <input type="text" value="<%= currency === 'SGD' ? 'Singapore' : 'Malaysia' %>" class="form-input mt-1" />
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <label class="block text-sm font-semibold text-gray-700">Contact Number</label>
+              <div class="flex items-center mt-1 gap-2">
+                <select class="form-input max-w-[120px]">
                   <option>+65</option>
                 </select>
+                <input type="text" class="form-input flex-1" />
               </div>
-              <input type="text" class="form-input ml-2">
             </div>
-          </div>
-          
-          <div class="flex items-center space-x-2 mt-4">
-            <input type="checkbox" class="rounded text-ascott-green">
-            <label class="text-sm text-gray-700">I am making this reservation for someone else.</label>
-          </div>
-          
-          <h3 class="text-xl font-bold mt-8 mb-4">Special Request</h3>
-          <textarea rows="4" class="form-input"></textarea>
-          <p class="text-sm text-gray-500">Please let us know if you have any special request such as accessible room/services, etc</p>
-          
-          <!-- Adyen Drop-in Placeholder -->
-          <div class="mt-8">
-              <h3 class="text-xl font-bold mb-4">Personal Data Protection Notice and Consent</h3>
-              <div class="border-t border-gray-200 pt-4">
-                <div class="flex items-start space-x-2 mb-4">
-                  <input type="checkbox" class="rounded text-ascott-green mt-1">
-                  <p class="text-sm text-gray-600">
-                      I consent to The Ascott Limited (<b>Ascott</b>) and its subsidiaries, their authorised agents and service providers (Ascott Group) processing my Personal Data for purpose of providing apartment (s) / room(s) and services to me in accordance with the <a href="#" class="text-ascott-green underline">Ascott Data Protection Policy</a>. I confirm that such consent (i) does not supersede any other marketing consents which I may have previously provided to the Ascott Group and are in addition to any rights which the Ascott Group may have at law on personal data; and (ii) continues until such consents are withdrawn.
-                  </p>
+
+            <div class="flex items-start gap-2 mt-4">
+              <input type="checkbox" class="mt-1 rounded text-ascott-green" />
+              <label class="text-sm text-gray-700">I am making this reservation for someone else.</label>
+            </div>
+
+            <h3 class="text-lg sm:text-xl font-bold mt-6 sm:mt-8 mb-2 sm:mb-4">Special Request</h3>
+            <textarea rows="4" class="form-input"></textarea>
+            <p class="text-xs sm:text-sm text-gray-500">Please let us know if you have any special request such as accessible room/services, etc</p>
+
+            <!-- Personal Data Notice -->
+            <div class="mt-6 sm:mt-8">
+              <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Personal Data Protection Notice and Consent</h3>
+              <div class="border-t border-gray-200 pt-4 space-y-4">
+                <div class="flex items-start gap-2">
+                  <input type="checkbox" class="mt-1 rounded text-ascott-green" />
+                  <p class="text-sm text-gray-600">I consent to The Ascott Limited (<b>Ascott</b>) and its subsidiaries, their authorised agents and service providers (Ascott Group) processing my Personal Data for purpose of providing apartment (s) / room(s) and services to me in accordance with the <a href="#" class="text-ascott-green underline">Ascott Data Protection Policy</a>. I confirm that such consent (i) does not supersede any other marketing consents which I may have previously provided to the Ascott Group and are in addition to any rights which the Ascott Group may have at law on personal data; and (ii) continues until such consents are withdrawn.</p>
                 </div>
-                <p class="text-xs text-gray-500 mb-4 ml-6">
-                  (i) you are an EU resident, or are making a reservation for a property located in the EU, and you have read and acknowledged the statement above. 
-                  <br>
-                  (ii) you are not an EU resident, and you are making a reservation for a property located outside the EU, and you consent to the collection and processing of your personal data by the Ascott Group in accordance with the Ascott Data Protection Policy. For travel agents or parties making reservations or bookings on behalf of other individuals (Intermediaries), by checking this box, you agree with and consent to the <a href="#" class="text-ascott-green underline">conditions applicable to Intermediaries</a> and the Ascott Data Protection Policy.
-                </p>
-                <div class="text-xs text-gray-500 mb-4 ml-6">
+                <p class="text-xs text-gray-500 ml-6">(i) you are an EU resident, or are making a reservation for a property located in the EU, and you have read and acknowledged the statement above.<br/>(ii) you are not an EU resident, and you are making a reservation for a property located outside the EU, and you consent to the collection and processing of your personal data by the Ascott Group in accordance with the Ascott Data Protection Policy. For travel agents or parties making reservations or bookings on behalf of other individuals (Intermediaries), by checking this box, you agree with and consent to the <a href="#" class="text-ascott-green underline">conditions applicable to Intermediaries</a> and the Ascott Data Protection Policy.</p>
+                <div class="text-xs text-gray-500 ml-6">
                   <p>If you are an EU resident, or if you are making a reservation for a property located within the EU, the personal data collected in this form are processed by the residence that you make your reservation at, which is a member of the Ascott Group, for purposes of processing your reservation in order to provide you with the services you had requested, as well as other purposes stated in the Ascott Data Protection Policy, on a contractual legal basis. Your personal data will be shared with members of the Ascott Group and disclosed to authorised third parties, agents, service providers and business partners of the Ascott Group as described in the Ascott Data Protection Policy. When your personal data is transferred to a non-EU country, the processing will be subject to the signature of the European Commission Model Contractual Clauses. For further information, please refer to the <a href="#" class="text-ascott-green underline">Ascott Data Protection Policy</a> or contact the <a href="#" class="text-ascott-green underline">relevant Data Protection officer</a>.</p>
                 </div>
-                <div class="flex items-start space-x-2 mt-4">
-                  <input type="checkbox" class="rounded text-ascott-green mt-1">
-                  <p class="text-sm text-gray-600">
-                      I would like to join Ascott’s mailing list and receive information about events, offers and seasonal promotions. By checking this box, I consent to the Ascott Group processing my Personal Data for market research, customized website advertising, promotional and marketing programmes and to contact me about their products, services and promotions via email, text messaging, telephone call, postal mail and/or social media, in accordance with the Ascott Data Protection Policy. I understand that I am free to update my preferences including to unsubscribe from Ascott’s mailing list by changing my subscription preferences in my Ascott Star Rewards profile. I confirm that such consent (i) does not supersede any other marketing consents which I may have previously provided to the Ascott Group and are in addition to any rights which the Ascott Group may have at law on personal data; and (ii) continues until such consents are withdrawn.
-                  </p>
+                <div class="flex items-start gap-2">
+                  <input type="checkbox" class="mt-1 rounded text-ascott-green" />
+                  <p class="text-sm text-gray-600">I would like to join Ascott’s mailing list and receive information about events, offers and seasonal promotions. By checking this box, I consent to the Ascott Group processing my Personal Data for market research, customized website advertising, promotional and marketing programmes and to contact me about their products, services and promotions via email, text messaging, telephone call, postal mail and/or social media, in accordance with the Ascott Data Protection Policy. I understand that I am free to update my preferences including to unsubscribe from Ascott’s mailing list by changing my subscription preferences in my Ascott Star Rewards profile. I confirm that such consent (i) does not supersede any other marketing consents which I may have previously provided to the Ascott Group and are in addition to any rights which the Ascott Group may have at law on personal data; and (ii) continues until such consents are withdrawn.</p>
                 </div>
               </div>
+
               <% if (mode !== 'hosted') { %>
-                <h3 class="text-xl font-bold mt-8 mb-4">Credit Card Details</h3>
-                <div id="dropin-container" class="border border-gray-300 p-4 rounded-lg bg-gray-50"></div>
+                <h3 class="text-lg sm:text-xl font-bold mt-6 sm:mt-8 mb-2 sm:mb-4">Credit Card Details</h3>
+                <div id="dropin-container" class="border border-gray-300 p-3 sm:p-4 rounded-lg bg-gray-50"></div>
               <% } %>
-              <div class="mt-6 flex justify-end">
-                  <button type="submit" class="bg-ascott-green hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full" onclick="handleOnSubmitPayment(event)">Proceed to Confirmation</button>
+
+              <div class="mt-6 flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button type="submit" class="bg-ascott-green hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full w-full sm:w-auto" onclick="handleOnSubmitPayment(event)">Proceed to Confirmation</button>
               </div>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Right Side: Pricing Summary -->
-    <div class="w-1/3 pl-8">
-      <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex justify-between items-center pb-4 border-b border-gray-200">
-          <h4 class="text-lg font-semibold text-gray-800">Payment Details</h4>
-          <span class="text-gray-600 text-sm"><%= currency %> <%= currency === 'SGD' ? '140.00' : '459.83' %></span>
-        </div>
-        
-        <div class="mt-4 space-y-2 text-sm text-gray-600">
-          <div class="flex justify-between">
-            <span>Fees and taxes</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Service Charge</span>
-            <span><%= currency %> <%= currency === 'SGD' ? '12.15' : '100.00' %></span>
-          </div>
-          <div class="flex justify-between">
-            <span>Goods and Services Tax</span>
-            <span><%= currency %> <%= currency === 'SGD' ? '12.03' : '100.00' %></span>
-          </div>
-        </div>
-        
-        <div class="mt-4 pt-4 border-t border-gray-200">
-          <div class="flex justify-between items-center text-lg font-bold">
-            <span>Total Payable Amount</span>
-            <span><%= currency %> <%= currency === 'SGD' ? '164.68' : '659.83' %></span>
-          </div>
-          <p class="text-sm text-gray-500">Incl. Tax</p>
-          <a href="#" class="text-sm text-ascott-green underline mt-1 block">Show breakdown</a>
+            </div>
+          </form>
         </div>
       </div>
+
+      <!-- Pricing Summary -->
+      <aside class="w-full lg:w-1/3">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+          <div class="flex justify-between items-center pb-4 border-b border-gray-200">
+            <h4 class="text-base sm:text-lg font-semibold text-gray-800">Payment Details</h4>
+            <span class="text-gray-700 text-sm sm:text-base font-medium"><%= currency %> <%= currency === 'SGD' ? '140.00' : '459.83' %></span>
+          </div>
+
+          <div class="mt-4 space-y-2 text-sm text-gray-700">
+            <div class="flex justify-between"><span>Fees and taxes</span></div>
+            <div class="flex justify-between"><span>Service Charge</span><span><%= currency %> <%= currency === 'SGD' ? '12.15' : '100.00' %></span></div>
+            <div class="flex justify-between"><span>Goods and Services Tax</span><span><%= currency %> <%= currency === 'SGD' ? '12.03' : '100.00' %></span></div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="flex justify-between items-center text-lg font-bold">
+              <span>Total Payable Amount</span>
+              <span><%= currency %> <%= currency === 'SGD' ? '164.68' : '659.83' %></span>
+            </div>
+            <p class="text-sm text-gray-500">Incl. Tax</p>
+            <a href="#" class="text-sm text-ascott-green underline mt-1 block">Show breakdown</a>
+          </div>
+        </div>
+      </aside>
     </div>
-  </div>
-  <script>
-    function updateEmail(selectedElement){
-      const url = new URL(window.location.href);
-      url.searchParams.set('shopperReference', selectedElement.value);
-      url.searchParams.set('mode', '<%= mode %>');
-      url.searchParams.set('CURRENCY', '<%= currency %>');
-      window.location.href = url.href;
-    }
 
-    function updateCurrency(selectElement) {
-      const selectedCurrency = selectElement.value;
-      const url = new URL(window.location.href);
-      url.searchParams.set('CURRENCY', selectedCurrency);
-      window.location.href = url.href;
-    }
+    <!-- Helpers -->
+    <script>
+      function updateEmail(selectedElement){
+        const url = new URL(window.location.href);
+        url.searchParams.set('shopperReference', selectedElement.value);
+        url.searchParams.set('mode', '<%= mode %>');
+        url.searchParams.set('CURRENCY', '<%= currency %>');
+        window.location.href = url.href;
+      }
+      function updateCurrency(selectElement) {
+        const selectedCurrency = selectElement.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('CURRENCY', selectedCurrency);
+        window.location.href = url.href;
+      }
+      function updateBookingType(selectElement) {
+        const selectedType = selectElement.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('mode', selectedType);
+        window.location.href = url.href;
+      }
+    </script>
 
-    function updateBookingType(selectElement) {
-      const selectedType = selectElement.value;
-      const url = new URL(window.location.href);
-      url.searchParams.set('mode', selectedType);
-      window.location.href = url.href;
-    }
-  </script>
-  <script>
+    <script>
       document.addEventListener('DOMContentLoaded', () => {
         const bookButton = document.getElementById('bookButton');
         const modal = document.getElementById('booking-modal');
         const closeModalButton = document.getElementById('closeModal');
         const body = document.body;
-
         if (bookButton && modal && closeModalButton) {
-            bookButton.addEventListener('click', () => {
-                modal.classList.remove('hidden');
-                body.style.overflow = 'hidden';
-            });
-
-            closeModalButton.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                body.style.overflow = 'auto';
-            });
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    body.style.overflow = 'auto';
-                }
-            });
+          bookButton.addEventListener('click', () => { modal.classList.remove('hidden'); body.style.overflow = 'hidden'; });
+          closeModalButton.addEventListener('click', () => { modal.classList.add('hidden'); body.style.overflow = 'auto'; });
+          modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.add('hidden'); body.style.overflow = 'auto'; } });
         }
       });
     </script>
+
+    <!-- Adyen init + responsive-safe submit -->
     <script>
-      const { AdyenCheckout, Dropin } = window.AdyenWeb;
+      const { AdyenCheckout, Dropin } = window.AdyenWeb || {};
       let redirectHostedPaymentLink = null;
       let dropin = null;
 
       const handleOnSubmitPayment = (e) => {
         e.preventDefault();
-        console.log(dropin);
-        if(mode===""){
-          if(dropin!==null){
-            dropin.submit();
-          }
-        }
-        else{
-          window.location = redirectHostedPaymentLink;
-        }
+        if (mode === '' || mode === 'embedded') {
+          if (dropin && typeof dropin.submit === 'function') { dropin.submit(); }
+        } else { window.location = redirectHostedPaymentLink; }
       }
 
       const removePaymentMethod = async (id) => {
         const response = await fetch(`/api/deletePaymentMethods/${id}`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body:JSON.stringify({
-            isLive:false,
-            merchantPrefix:"test",
-            merchantAccount:"<%= merchantAccount %>",
-            shopperReference:"d-sg-hotels__"+decodeURIComponent(shopperReference)
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isLive:false, merchantPrefix:"test", merchantAccount:"<%= merchantAccount %>", shopperReference:"d-sg-hotels__"+decodeURIComponent(shopperReference) })
         });
         return response.json();
       };
 
       window.addEventListener("load", async function () {
-        console.log("mode",mode);
-        // Grab config values directly or set defaults
         const env = "test"; // or "live"
         const isLive = env === "live";
-        const merchantPrefix = "YOUR_MERCHANT_PREFIX"; // replace with your merchant prefix
+        const merchantPrefix = "YOUR_MERCHANT_PREFIX"; // replace
 
         let body = {
-            isLive,
-            merchantPrefix,
-            amount: { value: currency === "SGD" ? 16468 : 65983, currency: currency },
-            reference: `${Math.random().toString(36).substring(2, 6).toUpperCase()}_${new Date().toISOString()}`,
-            returnUrl: `${window.location.origin}/redirect`,
-            countryCode: country,
-            merchantAccount: "<%= merchantAccount %>",
-            storePaymentMethodMode: "enabled",
-            shopperReference: "d-sg-hotels__"+decodeURIComponent(shopperReference)
-          };
-        //if mode is not null, include a new field in body mode
-        if (mode === 'hosted') {
-          body.mode = mode;
-        }
+          isLive,
+          merchantPrefix,
+          amount: { value: currency === "SGD" ? 16468 : 65983, currency: currency },
+          reference: `${Math.random().toString(36).substring(2, 6).toUpperCase()}_${new Date().toISOString()}`,
+          returnUrl: `${window.location.origin}/redirect`,
+          countryCode: country,
+          merchantAccount: "<%= merchantAccount %>",
+          storePaymentMethodMode: "enabled",
+          shopperReference: "d-sg-hotels__"+decodeURIComponent(shopperReference)
+        };
+        if (mode === 'hosted') { body.mode = mode; }
 
-        const response = await fetch("/api/sessions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
+        const response = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         const session = await response.json();
         let session_id = session.id;
 
         const configuration = {
           environment: env,
-          clientKey: clientKey, // must be set globally or imported
+          clientKey: clientKey,
           showPayButton: false,
-          session: {
-            id: session.id,
-            sessionData: session.sessionData,
-          },
-          onPaymentCompleted: async(result) => {
-
-            //send api request to backend
-            /*const response = await fetch(`/api/sessionoutcome/${session_id}?sessionResult=${result.sessionResult}`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              }
-            });
-            
-            console.log("session outcome");
-            console.log(response);*/
-
-            window.location.href = "/status?status=success";
-          },
-          onError: (err) => {
-            window.location.href = "/status?status=error";
-          },
+          session: { id: session.id, sessionData: session.sessionData },
+          onPaymentCompleted: async(result) => { window.location.href = "/status?status=success"; },
+          onError: (err) => { window.location.href = "/status?status=error"; },
         };
 
         const dropinConfiguration = {
           showRemovePaymentMethodButton:true,
           onDisableStoredPaymentMethod: async (storedPaymentMethodId, resolve, reject) => {
-            // Handle disabling stored payment method
-            let removePaymentMethodOutcome= await removePaymentMethod(storedPaymentMethodId);
-            console.log(removePaymentMethodOutcome);
-
-            //removePaymentMethod httpSTatuscode == 204, resolve
-            if(removePaymentMethodOutcome === 204){
-              resolve();
-            }
-            else{
-              reject();
-            }
+            let outcome = await removePaymentMethod(storedPaymentMethodId);
+            if(outcome === 204){ resolve(); } else { reject(); }
           },
         };
 
-        if(mode !== "hosted"){
-           const checkout = await AdyenCheckout(configuration);
-          // Create an instance of Drop-in and mount it
-          dropin = new Dropin(checkout,dropinConfiguration).mount("#dropin-container");
-        }
-        else{
-          //set redirectHostedPaymentLink to the hosted payment link
+        if(mode !== "hosted" && window.AdyenWeb){
+          const checkout = await AdyenCheckout(configuration);
+          dropin = new Dropin(checkout, dropinConfiguration).mount("#dropin-container");
+        } else {
           redirectHostedPaymentLink = session.url;
         }
       });

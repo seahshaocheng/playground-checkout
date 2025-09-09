@@ -127,48 +127,6 @@ app.get('/ascott/booking-payment',(req,res)=>{
 })
 //end ascott customisation
 
-//Hotels Tokenisation example
-const forwardAPIHandler = async(newShopperReference,originalStoredPaymentMethodId,originalShopperReference) => {
-  const randomUuid = uuidv4();
-        const forwardBody = {
-          merchantAccount,
-          shopperReference:originalShopperReference,
-          storedPaymentMethodId: originalStoredPaymentMethodId,
-          baseUrl: isLive ? "https://pal-test.adyen.com" : "https://pal-test.adyen.com",
-          request: {
-            httpMethod: "POST",
-            urlSuffix: "pal/servlet/Recurring/v30/storeToken",
-            credentials: process.env.ADYEN_API_KEY_TEST, // or use secure key vault
-            headers: {
-              "X-Api-Key": process.env.ADYEN_API_KEY_TEST,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              card:{
-                "number": "{{number}}",
-                "expiryMonth": "{{expiryMonth}}",
-                "expiryYear": "{{expiryYear}}",
-                "holderName": "{{holderName}}"
-              },
-              reference:newShopperReference,
-              merchantAccount,
-              shopperReference:`${newShopperReference}`,
-              recurring: {
-                contract:"ONECLICK"
-              }
-            })
-          }}
-          
-      console.log("Retrieved shopper token for reservation");
-      const forwardResult = await forward(forwardBody,false, merchantPrefix,version);
-      console.log(rest.merchantReference);
-      console.log(forwardResult);
-      const convertedForwardResult = JSON.parse(forwardResult.response.body);
-      console.log(convertedForwardResult.recurringDetailReference);
-
-      return convertedForwardResult;
-}
-
 
 app.post('/api/hotel/initatePayment', async (req, res) => {
   try {

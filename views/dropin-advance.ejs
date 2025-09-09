@@ -123,6 +123,8 @@
       });
 
       const paymentMethods = await paymentMethodsRes.json();
+      const url = new URL(window.location.href);
+      const baseUrl = `${url.protocol}//${url.host}`;
 
       // 2. Create Drop-in config
       const configuration = {
@@ -142,12 +144,15 @@
               reference,
               ...state.data,
               shopperInteraction:"Ecommerce",
-              returnUrl: window.location.href,
+              returnUrl: `${baseUrl}/redirect`,
               browserInfo: state.data.browserInfo,
               channel: "Web",
               origin: window.location.origin
             })
           });
+
+          console.log("response from /api/payments: ")
+          console.log(res);
 
           const result = await res.json();
 

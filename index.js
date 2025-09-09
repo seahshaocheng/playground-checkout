@@ -129,6 +129,8 @@ app.get('/ascott/booking-payment',(req,res)=>{
 
 
 app.post('/api/hotel/initatePayment', async (req, res) => {
+  console.log("initating payment");
+  console.log(req.body);
   try {
     const {
       isLive = false,
@@ -402,7 +404,7 @@ app.all('/redirect', async (req, res) => {
           ''    // merchantPrefix
         );
         actualResultCode = result.resultCode;
-        res.json(result); // Or handle result.action.type for redirects, etc.
+        //res.json(result); // Or handle result.action.type for redirects, etc.
     }
     if (actualResultCode) {
       switch (actualResultCode) {

@@ -187,7 +187,7 @@
         onSubmit: async (state, dropin) => {
           console.log("the state data at this stage is: ")
           console.log(state.data);
-          const res = await fetch('/api/hotel/initatePayment', {
+          const res = await fetch('/api/payments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -201,7 +201,7 @@
                   nativeThreeDS: "preferred"
                 }
               },
-              returnUrl: `${baseUrl}/redirectPayments`,
+              returnUrl: `${baseUrl}/redirect`,
               browserInfo: state.data.browserInfo,
               channel: "Web",
               origin: window.location.origin,

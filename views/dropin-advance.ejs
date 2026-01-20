@@ -126,6 +126,12 @@
       const url = new URL(window.location.href);
       const baseUrl = `${url.protocol}//${url.host}`;
 
+      const translations = {
+        "en-US": {
+          "cc.dat.914": "Expiry Date is before checkout date"
+        }
+      }
+
       // 2. Create Drop-in config
       const configuration = {
         environment: env,
@@ -133,7 +139,11 @@
         paymentMethodsResponse: paymentMethods,
         amount,
         countryCode: "SG",
+        locale: "en-US",
+        translations: translations,
         onSubmit: async (state, dropin) => {
+          console.log("onSubmit called with state:");
+          console.log(JSON.stringify(state, null, 2));
           const res = await fetch('/api/payments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -200,15 +210,23 @@
       const dropinConfiguration = {
         paymentMethodsConfiguration: {
           card: { 
+            holderNameRequired: true,
             enableStoreDetails: true,
             hasHolderName:true,
+            minimumExpiryDate:"03/28",
             onFieldValid:async(value, actions)=>{
+              console.log("on field valid value",value);
+              // use this event to check for issuerBin and check with tier upgrade logic
+            },
+            onChange:async(value, actions)=>{
               console.log("value",value);
+              //use this event to check if holderName has changed and check with tier upgrade logic
             }
           },
         },
       }
 
+      console.log("dropinConfiguration",dropinConfiguration);
       // Create an instance of Drop-in and mount it to the container you created.
       const dropin = new Dropin(checkout,dropinConfiguration).mount('#dropin-container');
     });

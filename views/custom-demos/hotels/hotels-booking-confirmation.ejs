@@ -223,7 +223,7 @@
       window.location.href = url.href;
     }
     const onClickToPayment = () => {
-      const url = new URL('/ascott/booking-payment', window.location.origin);
+      const url = new URL('/hotels/booking-payment', window.location.origin);
       url.searchParams.set('mode', mode);
       // set both param casings to be safe with downstream routes
       url.searchParams.set('CURRENCY', currency);

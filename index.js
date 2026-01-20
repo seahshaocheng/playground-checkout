@@ -41,7 +41,7 @@ const handleCurrencyToCountryCode = (currency) => {
   }
 }
 
-const handleAscottMerchantAccountCode = (currency) => {
+const handlehotelsMerchantAccountCode = (currency) => {
   //default singapore
   switch (currency) {
     case 'SGD':
@@ -89,43 +89,43 @@ app.get('/custom-card',(req,res)=>{
   res.render('custom-card', { sdkVersion, env, clientKey });
 })
 
-//Ascott Customisation
-app.get('/ascott/booking',(req,res)=>{
+//hotels Customisation
+app.get('/hotels/booking',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   const mode = req.query.mode || null;
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
-  const merchantAccount = handleAscottMerchantAccountCode(currency);
+  const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
-  res.render('custom-demos/ascott/ascott-booking', { sdkVersion, env, clientKey,mode,currency,country,shopperReference,merchantAccount });
+  res.render('custom-demos/hotels/hotels-booking', { sdkVersion, env, clientKey,mode,currency,country,shopperReference,merchantAccount });
 })
 
-app.get('/ascott/booking-confirmation',(req,res)=>{
+app.get('/hotels/booking-confirmation',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   const mode = req.query.mode || null;
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
-  const merchantAccount = handleAscottMerchantAccountCode(currency);
+  const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
-  res.render('custom-demos/ascott/ascott-booking-confirmation', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
+  res.render('custom-demos/hotels/hotels-booking-confirmation', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
 })
 
-app.get('/ascott/booking-payment',(req,res)=>{
+app.get('/hotels/booking-payment',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
   const mode = req.query.mode || null;
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
-  const merchantAccount = handleAscottMerchantAccountCode(currency);
+  const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
-  res.render('custom-demos/ascott/ascott-booking-payment', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
+  res.render('custom-demos/hotels/hotels-booking-payment', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
 })
-//end ascott customisation
+//end hotels customisation
 
 
 app.post('/api/hotel/initatePayment', async (req, res) => {
@@ -372,6 +372,8 @@ app.post('/api/payments/details', async (req, res) => {
 
   try {
     const result = await submitAdditionalDetails(rest, isLive, merchantPrefix, version);
+    console.log("the payment details result")
+    console.log(result);
     res.json(result);
   } catch (error) {
     res.status(500).json(error.response?.data || { error: error.message });
@@ -404,6 +406,8 @@ app.all('/redirect', async (req, res) => {
           ''    // merchantPrefix
         );
         actualResultCode = result.resultCode;
+
+    console.log("the result code is", result);
         //res.json(result); // Or handle result.action.type for redirects, etc.
     }
     if (actualResultCode) {

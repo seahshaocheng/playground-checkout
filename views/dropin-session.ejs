@@ -91,7 +91,7 @@
         body: JSON.stringify({
           isLive,
           merchantPrefix,
-          amount: { value: 0, currency: "SGD" },
+          amount: { value: 100, currency: "SGD" },
           reference: "DROPIN_ORDER_DEMO",
           returnUrl: window.location.href,
           countryCode:"SG",
@@ -112,8 +112,14 @@
           alert("Payment completed! 🎉");
           console.log(result);
         },
+        onSubmit(state,component,actions) {
+          console.log("onSubmit called with state:", state);
+          console.log("run frontend to backend for membership/CRS etc");
+          actions.resolve();
+        },
         onError: (err) => {
           alert("Payment failed 😢");
+          console.log("Error:", err);
           console.error(err);
         }
       };

@@ -71,7 +71,11 @@ const intiatePayment = async (data,isLive=false,merchantPrefix="",version=latest
         'X-API-Key': config.apikey,
     };
 
+    console.log("Post to Adyen Gateway Data");
+    console.log(JSON.stringify(data, null, 2));
+
     try {
+        //JAVA library to send request
         const response = await axios.post(url, data, { headers });
         return response.data;
     } catch (error) {

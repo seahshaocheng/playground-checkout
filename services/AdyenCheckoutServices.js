@@ -98,6 +98,23 @@ const intiatePayment = async (data, isLive = false, _merchantPrefix = "", versio
         delete data.browserInfo;
     }
 
+    //Zip specific fields
+    if(data.paymentMethod && data.paymentMethod.type && data.paymentMethod.type.includes("zip")){
+        //
+        data.deliveryAddress={
+            //generate random address for testing in Australia
+            street: "Test Street",
+            postalCode: "2000",
+            city: "Sydney",
+            houseNumberOrName: "1",
+            country: "AU",
+            stateOrProvince: "NSW"
+
+        }
+
+        delete data.riskData;
+    }
+
     console.log("Post to Adyen Gateway Data");
     console.log(JSON.stringify(data, null, 2));
 

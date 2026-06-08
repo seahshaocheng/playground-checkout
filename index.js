@@ -39,18 +39,21 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 // Health check
 
+const CURRENCY_TO_COUNTRY_CODE = {
+  SGD: 'SG',
+  MYR: 'MY',
+  HKD: 'HK',
+  AUD: 'AU',
+  USD: 'US',
+  EUR: 'DE',
+  GBP: 'GB',
+  JPY: 'JP',
+  CAD: 'CA'
+};
+
 const handleCurrencyToCountryCode = (currency) => {
-  //default singapore, switch case, if MYR = MY
-  switch (currency) {
-    case 'SGD':
-      return 'SG';
-    case 'MYR':
-      return 'MY';
-    case 'HKD':
-      return 'HK';
-    default:
-      return 'SG';
-  }
+  const normalizedCurrency = String(currency || '').toUpperCase();
+  return CURRENCY_TO_COUNTRY_CODE[normalizedCurrency] || 'SG';
 }
 
 const handlehotelsMerchantAccountCode = (currency) => {
@@ -320,14 +323,21 @@ app.post('/api/hotel/completepayment', async (req, res) => {
 //Standard Integration Server Endpoints
 // POST /api/sessions
 app.post('/api/sessions', async (req, res) => {
+  console.log("Creating session with body:", req.body);
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
+
+  rest.merchantAccount = getMerchantAccountFromBody(isLive);
+  console.log("the currency is", rest.amount.currency);
+  rest.countryCode = handleCurrencyToCountryCode(rest.amount.currency);
+  console.log("Request body for sessions:");
+  console.log(JSON.stringify(rest, null, 2));
 
   rest.storePaymentMethodMode="askForConsent";
   rest.recurringProcessingModel = "Subscription"
 
   try {
     const result = await createSession(rest, isLive, merchantPrefix, version);
-    console.log("result",result);
+    console.log("result for session",result);
     res.json(result);
   } catch (error) {
     console.log("THis is the error");
@@ -415,7 +425,7 @@ app.post('/api/paymentMethods', async (req, res) => {
 app.post('/api/payments', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, ...rest } = req.body;
   rest.merchantAccount = getMerchantAccountFromBody(isLive);
-  rest.countryCode = handleCurrencyToCountryCode(rest.currency);
+  rest.countryCode = handleCurrencyToCountryCode(rest.amount.currency);
 
   try {
     const result = await intiatePayment(rest, isLive, merchantPrefix, version);

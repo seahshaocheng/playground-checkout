@@ -57,6 +57,7 @@
       <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
         <div class="form-box">
           <form id="dropinForm">
+            <%- include('shared-dropin-configuration-form') %>
             <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
           </form>
         </div>
@@ -112,9 +113,27 @@
       const env = environmentToggle.checked ? 'live' : 'test';
       const isLive = env === 'live';
       const clientKey = getClientKeyForEnv(env);
+      const amountValue = Number.parseInt(form.amount.value, 10);
+      const currency = (form.currency.value || "").trim().toUpperCase();
+      const reference = (form.reference.value || "").trim();
 
       if (!clientKey) {
         alert(`Missing client key for the ${env} environment.`);
+        return;
+      }
+
+      if (!Number.isInteger(amountValue) || amountValue <= 0) {
+        alert("Amount must be a positive integer in minor units.");
+        return;
+      }
+
+      if (!currency) {
+        alert("Currency is required.");
+        return;
+      }
+
+      if (!reference) {
+        alert("Reference is required.");
         return;
       }
 
@@ -126,10 +145,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             isLive,
-            amount: { value: 100, currency: "SGD" },
-            reference: "DROPIN_ORDER_DEMO",
+            amount: { value: amountValue, currency },
+            reference,
             returnUrl: `${window.location.origin}/redirect`,
-            countryCode:"SG",
             storePaymentMethodMode:"enabled",
             shopperReference: "unique-shopper-id-12345"
           })

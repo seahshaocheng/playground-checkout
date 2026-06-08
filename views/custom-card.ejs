@@ -14,8 +14,12 @@
     <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
 
     <script>
-      const clientKey = "<%= clientKey %>";
-      const env = "<%= env %>";
+      const initialEnv = "<%= env %>";
+      const sdkVersion = "<%= sdkVersion %>";
+      const clientKeys = {
+        test: "<%= testClientKey || clientKey %>",
+        live: "<%= liveClientKey || clientKey %>"
+      };
       const amount = 15632;
       const reference = "Traveloka-Demo-Transaction";
     </script>
@@ -130,6 +134,12 @@
     </div>
 
     <div class="container">
+      <div class="d-flex justify-content-end mb-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
+          <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
+        </div>
+      </div>
       <div class="row">
         <!-- Left: Payment Methods -->
         <div class="col-md-8 mb-4">
@@ -229,12 +239,35 @@
     <script>
       const { AdyenCheckout, CustomCard, PayNow, Dropin } = window.AdyenWeb;
       let paymentMethods = null;
+      const environmentToggle = document.getElementById("environmentToggle");
+      const environmentToggleLabel = document.getElementById("environmentToggleLabel");
+
+      const getCurrentEnv = () => environmentToggle.checked ? 'live' : 'test';
+      const getCurrentIsLive = () => getCurrentEnv() === 'live';
+      const getCurrentClientKey = () => clientKeys[getCurrentEnv()] || clientKeys.test;
+
+      const updateEnvironmentLabel = (isLive) => {
+        environmentToggleLabel.textContent = isLive ? 'Live' : 'Test';
+      };
+
+      environmentToggle.checked = initialEnv === 'live';
+      updateEnvironmentLabel(environmentToggle.checked);
+
+      environmentToggle.addEventListener('change', () => {
+        const nextEnv = environmentToggle.checked ? 'live' : 'test';
+        updateEnvironmentLabel(environmentToggle.checked);
+        const pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.set('env', nextEnv);
+        pageUrl.searchParams.set('version', sdkVersion);
+        window.location.assign(pageUrl.toString());
+      });
 
       const getPaymentMethods = async () => {
         const res = await fetch('/api/paymentMethods', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            isLive: getCurrentIsLive(),
             amount:{
               value:1000000,
               currency:"SGD"
@@ -267,6 +300,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            isLive: getCurrentIsLive(),
             amount: { value: amount, currency: "SGD" },
             reference,
             ...state.data,
@@ -299,7 +333,10 @@
         const res = await fetch('/api/payments/details', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...state.data })
+          body: JSON.stringify({
+            isLive: getCurrentIsLive(),
+            ...state.data
+          })
         });
 
         const result = await res.json();
@@ -315,6 +352,8 @@
       }
 
       window.addEventListener("load", async function () {
+        const env = getCurrentEnv();
+        const clientKey = getCurrentClientKey();
         const checkout = await AdyenCheckout({
           locale: "en_US",
           environment: env,

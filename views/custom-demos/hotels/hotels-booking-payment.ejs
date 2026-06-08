@@ -13,7 +13,11 @@
     <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
 
     <script>
-      const clientKey = "<%= clientKey %>";
+      const initialEnv = "<%= env %>";
+      const clientKeys = {
+        test: "<%= testClientKey || clientKey %>",
+        live: "<%= liveClientKey || clientKey %>"
+      };
       const mode = "<%= mode %>";
       const currency = "<%= currency %>";
       const country = "<%= country %>";
@@ -46,6 +50,11 @@
           </div>
         </div>
         <div class="hidden md:flex items-center gap-3">
+          <div class="flex items-center gap-2 rounded border border-gray-300 px-3 py-2">
+            <span class="text-sm text-gray-600">Test</span>
+            <input id="environment-toggle" type="checkbox" class="h-4 w-4" <%= env === 'live' ? 'checked' : '' %> onchange="updateEnvironment(this)">
+            <span class="text-sm text-gray-600">Live</span>
+          </div>
           <!-- Country/Currency -->
           <div class="relative inline-block text-left">
             <select id="country-currency-selector" class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-3 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-emerald-200" onchange="updateCurrency(this)">
@@ -77,6 +86,10 @@
       <!-- Mobile filters panel -->
       <div id="mobile-filters" class="md:hidden hidden border-t border-gray-200 bg-white">
         <div class="max-w-7xl mx-auto px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="flex items-center justify-between rounded border border-gray-300 px-3 py-2">
+            <span class="text-sm text-gray-600">Environment</span>
+            <input id="environment-toggle-mobile" type="checkbox" class="h-4 w-4" <%= env === 'live' ? 'checked' : '' %> onchange="updateEnvironment(this)">
+          </div>
           <select id="country-currency-selector-m" class="bg-white border border-gray-300 px-3 py-2 rounded" onchange="updateCurrency(this)">
             <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
             <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
@@ -93,17 +106,17 @@
     <div class="bg-white shadow-md rounded-b-lg overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between overflow-x-auto no-scrollbar">
-          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/hotels/booking?mode=<%= mode %>&CURRENCY=<%= currency %>'">
+          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/hotels/booking?env=<%= env %>&mode=<%= mode %>&CURRENCY=<%= currency %>'">
             <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">1</div>
             <span class="text-ascott-green font-semibold text-sm sm:text-base">Room(s) and Rates</span>
           </div>
           <div class="flex-1 h-0.5 bg-ascott-green mx-2 hidden sm:block"></div>
-          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/hotels/booking-confirmation?mode=<%= mode %>&CURRENCY=<%= currency %>'">
+          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/hotels/booking-confirmation?env=<%= env %>&mode=<%= mode %>&CURRENCY=<%= currency %>'">
             <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">2</div>
             <span class="text-ascott-green font-semibold text-sm sm:text-base">Booking Summary</span>
           </div>
           <div class="flex-1 h-0.5 bg-ascott-green mx-2 hidden sm:block"></div>
-          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/hotels/booking-payment?mode=<%= mode %>&CURRENCY=<%= currency %>'">
+          <div class="flex items-center gap-2 whitespace-nowrap" onclick="window.location.href='/hotels/booking-payment?env=<%= env %>&mode=<%= mode %>&CURRENCY=<%= currency %>'">
             <div class="w-8 h-8 flex items-center justify-center rounded-full bg-ascott-green text-white font-bold">3</div>
             <span class="text-ascott-green font-semibold text-sm sm:text-base">Enter Guest Details</span>
           </div>
@@ -241,8 +254,15 @@
 
     <!-- Helpers -->
     <script>
+      function updateEnvironment(selectedElement) {
+        const selectedEnv = selectedElement.checked ? 'live' : 'test';
+        const url = new URL(window.location.href);
+        url.searchParams.set('env', selectedEnv);
+        window.location.href = url.href;
+      }
       function updateEmail(selectedElement){
         const url = new URL(window.location.href);
+        url.searchParams.set('env', initialEnv);
         url.searchParams.set('shopperReference', selectedElement.value);
         url.searchParams.set('mode', '<%= mode %>');
         url.searchParams.set('CURRENCY', '<%= currency %>');
@@ -251,12 +271,14 @@
       function updateCurrency(selectElement) {
         const selectedCurrency = selectElement.value;
         const url = new URL(window.location.href);
+        url.searchParams.set('env', initialEnv);
         url.searchParams.set('CURRENCY', selectedCurrency);
         window.location.href = url.href;
       }
       function updateBookingType(selectElement) {
         const selectedType = selectElement.value;
         const url = new URL(window.location.href);
+        url.searchParams.set('env', initialEnv);
         url.searchParams.set('mode', selectedType);
         window.location.href = url.href;
       }
@@ -290,22 +312,26 @@
       }
 
       const removePaymentMethod = async (id) => {
+        const isLive = initialEnv === 'live';
         const response = await fetch(`/api/deletePaymentMethods/${id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isLive:false, merchantPrefix:"test", merchantAccount:"<%= merchantAccount %>", shopperReference:"d-sg-hotels__"+decodeURIComponent(shopperReference) })
+          body: JSON.stringify({
+            isLive,
+            merchantAccount:"<%= merchantAccount %>",
+            shopperReference:"d-sg-hotels__"+decodeURIComponent(shopperReference)
+          })
         });
         return response.json();
       };
 
       window.addEventListener("load", async function () {
-        const env = "test"; // or "live"
+        const env = initialEnv;
         const isLive = env === "live";
-        const merchantPrefix = "YOUR_MERCHANT_PREFIX"; // replace
+        const selectedClientKey = clientKeys[env] || clientKeys.test;
 
         let body = {
           isLive,
-          merchantPrefix,
           amount: { value: currency === "SGD" ? 16468 : 65983, currency: currency },
           reference: `${Math.random().toString(36).substring(2, 6).toUpperCase()}_${new Date().toISOString()}`,
           returnUrl: `${window.location.origin}/redirect`,
@@ -322,7 +348,7 @@
 
         const configuration = {
           environment: env,
-          clientKey: clientKey,
+          clientKey: selectedClientKey,
           showPayButton: false,
           session: { id: session.id, sessionData: session.sessionData },
           onPaymentCompleted: async(result) => { window.location.href = "/status?status=success"; },

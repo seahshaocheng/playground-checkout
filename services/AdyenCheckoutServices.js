@@ -3,24 +3,41 @@ require('dotenv').config();
 
 const latestVersion = 'v71';
 
-const configHandler= (isLive,merchantPrefix,version) => {
+const getLiveMerchantAccount = () => {
+    return process.env.ADYEN_LIVE_MERCHANTACCOUNT || process.env.ADYEN_LIVE_MERCHANT_ACCOUNT;
+};
+
+const getTestMerchantAccount = () => {
+    return process.env.ADYEN_TEST_MERCHANTACCOUNT || process.env.ADYEN_TEST_MERCHANT_ACCOUNT;
+};
+
+const getLivePrefix = () => {
+    return process.env.ADYEN_LIVE_PREFIX;
+};
+
+const configHandler = (isLive, version) => {
+    const livePrefix = getLivePrefix();
+    if (isLive && !livePrefix) {
+        throw new Error('Missing ADYEN_LIVE_PREFIX for live Adyen requests.');
+    }
+
     const url = isLive
-        ? `https://${merchantPrefix}-checkout-live.adyenpayments.com/checkout/${version}`
+        ? `https://${livePrefix}-checkout-live.adyenpayments.com/checkout/${version}`
         : `https://checkout-test.adyen.com/checkout/${version}`;
 
     const apikey = isLive? process.env.ADYEN_API_KEY_LIVE : process.env.ADYEN_API_KEY_TEST;
 
     const merchantAccount = isLive
-        ? process.env.ADYEN_LIVE_MERCHANT_ACCOUNT
-        : process.env.ADYEN_TEST_MERCHANTACCOUNT;
+        ? getLiveMerchantAccount()
+        : getTestMerchantAccount();
     return { url, apikey,merchantAccount };
 }
 
 
 //Adyen Sessions API
-const createSession = async (data,isLive=false,merchantPrefix="",version=latestVersion) => {
+const createSession = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
 
-    const config = configHandler(isLive,merchantPrefix,version);
+    const config = configHandler(isLive, version);
     const url = `${config.url}/sessions`;
     const headers = {
         'Content-Type': 'application/json',
@@ -44,17 +61,21 @@ const createSession = async (data,isLive=false,merchantPrefix="",version=latestV
 }
 
 //Adyen Advanced Flow
-const getPaymentMethods = async (data,isLive=false,merchantPrefix="",version=latestVersion) => {
+const getPaymentMethods = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
     
-    const config = configHandler(isLive,merchantPrefix,version);
+    const config = configHandler(isLive, version);
     const url = `${config.url}/paymentMethods`;
     const headers = {
         'Content-Type': 'application/json',
         'X-API-Key': config.apikey,
     };
 
+    console.log("Post to Adyen Gateway Data");
+    console.log(JSON.stringify(data, null, 2));
+
     try {
         const response = await axios.post(url, data, { headers });
+        console.log("Response ",response);
         return response.data;
     } catch (error) {
         console.error('Error getting payment methods:', error.response.data);
@@ -62,14 +83,20 @@ const getPaymentMethods = async (data,isLive=false,merchantPrefix="",version=lat
     }
 }
 
-const intiatePayment = async (data,isLive=false,merchantPrefix="",version=latestVersion) => {
+const intiatePayment = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
     
-    const config = configHandler(isLive,merchantPrefix,version);
+    const config = configHandler(isLive, version);
     const url = `${config.url}/payments`;
     const headers = {
         'Content-Type': 'application/json',
         'X-API-Key': config.apikey,
     };
+
+    //drop browserInfo from data if it exist
+    if (data.browserInfo) {
+        console.log("Removing browserInfo from data");
+        delete data.browserInfo;
+    }
 
     console.log("Post to Adyen Gateway Data");
     console.log(JSON.stringify(data, null, 2));
@@ -84,9 +111,9 @@ const intiatePayment = async (data,isLive=false,merchantPrefix="",version=latest
     }
 }
 
-const submitAdditionalDetails = async (data,isLive=false,merchantPrefix="",version=latestVersion) => {
+const submitAdditionalDetails = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
    
-        const config = configHandler(isLive,merchantPrefix,version);
+    const config = configHandler(isLive, version);
         const url = `${config.url}/payments/details`;
         const headers = {
             'Content-Type': 'application/json',
@@ -102,8 +129,8 @@ const submitAdditionalDetails = async (data,isLive=false,merchantPrefix="",versi
         }
 }
 
-const checkSessionOutcome = async (data,isLive=false,merchantPrefix="",version = latestVersion) => {
-    const config = configHandler(isLive,merchantPrefix,version);
+const checkSessionOutcome = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
+    const config = configHandler(isLive, version);
     const url = `${config.url}/sessions/${data.sessionId}?sessionResult=${data.sessionResult}`;
     const headers = {
         'Content-Type': 'application/json',
@@ -120,8 +147,8 @@ const checkSessionOutcome = async (data,isLive=false,merchantPrefix="",version =
 }
 
 
-const forward = async (data,isLive=false,merchantPrefix="",version = latestVersion) => {
-    const config = configHandler(isLive,merchantPrefix,version);
+const forward = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
+    const config = configHandler(isLive, version);
     const url = `${config.url}/forward`;
     const headers = {
         'Content-Type': 'application/json',
@@ -138,8 +165,8 @@ const forward = async (data,isLive=false,merchantPrefix="",version = latestVersi
 }
 
 //remove storedPaymentMethod
-const removeStoredPaymentMethod = async(data,isLive=false,merchantPrefix="",version = latestVersion) => {
-    const config = configHandler(isLive,merchantPrefix,version);
+const removeStoredPaymentMethod = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
+    const config = configHandler(isLive, version);
     const url = `${config.url}/storedPaymentMethods/${data.storedPaymentMethodId}?merchantAccount=${data.merchantAccount}&shopperReference=${data.shopperReference}`;
     const headers = {
         'Content-Type': 'application/json',

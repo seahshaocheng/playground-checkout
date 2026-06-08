@@ -15,7 +15,12 @@
 
   <!-- Inject client key -->
   <script>
-    const clientKey = "<%= clientKey %>";
+    const initialEnv = "<%= env %>";
+    const sdkVersion = "<%= sdkVersion %>";
+    const clientKeys = {
+      test: "<%= testClientKey || clientKey %>",
+      live: "<%= liveClientKey || clientKey %>"
+    };
   </script>
 
   <style>
@@ -40,25 +45,18 @@
 </head>
 <body>
   <div class="container">
+    <div class="d-flex justify-content-end mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
+        <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
+      </div>
+    </div>
     <h1 class="text-center">Adyen Drop-in Demo</h1>
     <div class="row">
       <!-- Configuration on top (mobile) / right (desktop) -->
       <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
         <div class="form-box">
           <form id="dropinForm">
-            <div class="mb-3">
-              <label for="env" class="form-label">Environment</label>
-              <select id="env" name="env" class="form-select">
-                <option value="test">Test</option>
-                <option value="live">Live</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label for="merchantPrefix" class="form-label">Merchant Prefix (Live only)</label>
-              <input type="text" id="merchantPrefix" name="merchantPrefix" class="form-control" placeholder="e.g. yourcompany" />
-            </div>
-
             <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
           </form>
         </div>
@@ -76,57 +74,115 @@
 
   <script>
     const form = document.getElementById("dropinForm");
-    const { AdyenCheckout, Dropin} = window.AdyenWeb;  
+    const environmentToggle = document.getElementById("environmentToggle");
+    const environmentToggleLabel = document.getElementById("environmentToggleLabel");
+    const { AdyenCheckout, Dropin} = window.AdyenWeb;
+    const dropinContainer = document.getElementById('dropin-container');
+
+    const updateEnvironmentLabel = (isLive) => {
+      environmentToggleLabel.textContent = isLive ? 'Live' : 'Test';
+    };
+
+    environmentToggle.checked = initialEnv === 'live';
+    updateEnvironmentLabel(environmentToggle.checked);
+
+    environmentToggle.addEventListener('change', () => {
+      const nextEnv = environmentToggle.checked ? 'live' : 'test';
+      updateEnvironmentLabel(environmentToggle.checked);
+      const pageUrl = new URL(window.location.href);
+      pageUrl.searchParams.set('env', nextEnv);
+      pageUrl.searchParams.set('version', sdkVersion);
+      window.location.assign(pageUrl.toString());
+    });
+
+    const getClientKeyForEnv = (env) => clientKeys[env] || clientKeys.test;
+
+    const extractErrorMessage = async (response) => {
+      try {
+        const payload = await response.json();
+        return payload.message || payload.error || payload.detail || JSON.stringify(payload);
+      } catch (error) {
+        return `${response.status} ${response.statusText}`.trim();
+      }
+    };
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const env = form.env.value;
+      const env = environmentToggle.checked ? 'live' : 'test';
       const isLive = env === 'live';
-      const merchantPrefix = form.merchantPrefix.value;
+      const clientKey = getClientKeyForEnv(env);
 
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isLive,
-          merchantPrefix,
-          amount: { value: 100, currency: "SGD" },
-          reference: "DROPIN_ORDER_DEMO",
-          returnUrl: window.location.href,
-          countryCode:"SG",
-          storePaymentMethodMode:"enabled"
-        })
-      });
+      if (!clientKey) {
+        alert(`Missing client key for the ${env} environment.`);
+        return;
+      }
 
-      const session = await response.json();
+      dropinContainer.innerHTML = "";
 
-      const configuration = {
-        environment: env,
-        clientKey: clientKey,
-        session: {
-          id: session.id,
-          sessionData: session.sessionData
-        },
-        onPaymentCompleted: (result) => {
-          alert("Payment completed! 🎉");
-          console.log(result);
-        },
-        onSubmit(state,component,actions) {
-          console.log("onSubmit called with state:", state);
-          console.log("run frontend to backend for membership/CRS etc");
-          actions.resolve();
-        },
-        onError: (err) => {
-          alert("Payment failed 😢");
-          console.log("Error:", err);
-          console.error(err);
+      try {
+        const response = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            isLive,
+            amount: { value: 100, currency: "SGD" },
+            reference: "DROPIN_ORDER_DEMO",
+            returnUrl: `${window.location.origin}/redirect`,
+            countryCode:"SG",
+            storePaymentMethodMode:"enabled",
+            shopperReference: "unique-shopper-id-12345"
+          })
+        });
+
+        if (!response.ok) {
+          const message = await extractErrorMessage(response);
+          throw new Error(`Session creation failed: ${message}`);
         }
-      };
 
-      const checkout = await AdyenCheckout(configuration);
-      // Create an instance of Drop-in and mount it to the container you created.
-      const dropin = new Dropin(checkout).mount('#dropin-container');
+        const session = await response.json();
+        console.log("Session response:", session);
+
+        //optional card configutation
+        	const cardConfiguration = {
+            hasHolderName: true, // Show the cardholder name field.
+            holderNameRequired: false, // Mark the cardholder name field as required.
+          };
+
+        //optionl drop-in configuration
+        const dropinConfiguration = {
+          paymentMethodsConfiguration: {
+            card: cardConfiguration
+          }
+        };
+
+        const configuration = {
+          environment: env,
+          clientKey,
+          session: {
+            id: session.id,
+            sessionData: session.sessionData
+          },
+          onPaymentCompleted: (result, component) => {
+            alert(`Payment result: ${result.resultCode || 'completed'}`);
+          },
+          onPaymentFailed: (result, component) => {
+            alert(`Payment failed: ${result.resultCode || 'Unknown error'}`);
+            console.log('Payment failed:', result);
+          },
+          onError: (err) => {
+            const message = err?.message || err?.name || 'Unknown error';
+            alert(`Checkout error: ${message}`);
+            console.error('Error:', err);
+          }
+        };
+
+        const checkout = await AdyenCheckout(configuration);
+        new Dropin(checkout, dropinConfiguration).mount('#dropin-container');
+      } catch (error) {
+        alert(error.message || 'Failed to start checkout.');
+        console.error('Failed to initialize drop-in:', error);
+      }
     });
   </script>
 </body>

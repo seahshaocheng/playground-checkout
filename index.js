@@ -20,6 +20,16 @@ const PORT = process.env.PORT || 3005;
 
 let hotelOrders = [];
 
+const getLiveMerchantAccount = () => {
+  return process.env.ADYEN_LIVE_MERCHANTACCOUNT || process.env.ADYEN_LIVE_MERCHANT_ACCOUNT;
+};
+
+const getMerchantAccountFromBody = (isLive) => {
+  return isLive
+    ? getLiveMerchantAccount()
+    : (process.env.ADYEN_TEST_MERCHANTACCOUNT || process.env.ADYEN_TEST_MERCHANT_ACCOUNT);
+};
+
 app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -36,6 +46,8 @@ const handleCurrencyToCountryCode = (currency) => {
       return 'SG';
     case 'MYR':
       return 'MY';
+    case 'HKD':
+      return 'HK';
     default:
       return 'SG';
   }
@@ -65,28 +77,52 @@ app.get('/dropin-session', (req, res) => {
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('dropin-session', { sdkVersion, env, clientKey });
+  res.render('dropin-session', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
+  });
 });
 
 app.get('/dropin-advanced', (req, res) => {
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('dropin-advance', { sdkVersion, env, clientKey });
+  res.render('dropin-advance', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
+  });
 });
 
 app.get('/dropin-advance-booking',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
   const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('dropin-advance-booking', { sdkVersion, env, clientKey });
+  res.render('dropin-advance-booking', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
+  });
 })
 
 app.get('/custom-card',(req,res)=>{
   const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.ADYEN_ENV || 'test';
+  const env = req.query.env || 'test';
   const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('custom-card', { sdkVersion, env, clientKey });
+  res.render('custom-card', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
+  });
 })
 
 //hotels Customisation
@@ -99,7 +135,18 @@ app.get('/hotels/booking',(req,res)=>{
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
-  res.render('custom-demos/hotels/hotels-booking', { sdkVersion, env, clientKey,mode,currency,country,shopperReference,merchantAccount });
+  res.render('custom-demos/hotels/hotels-booking', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY,
+    mode,
+    currency,
+    country,
+    shopperReference,
+    merchantAccount
+  });
 })
 
 app.get('/hotels/booking-confirmation',(req,res)=>{
@@ -111,7 +158,18 @@ app.get('/hotels/booking-confirmation',(req,res)=>{
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
-  res.render('custom-demos/hotels/hotels-booking-confirmation', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
+  res.render('custom-demos/hotels/hotels-booking-confirmation', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY,
+    mode,
+    currency,
+    country,
+    merchantAccount,
+    shopperReference
+  });
 })
 
 app.get('/hotels/booking-payment',(req,res)=>{
@@ -123,7 +181,18 @@ app.get('/hotels/booking-payment',(req,res)=>{
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
-  res.render('custom-demos/hotels/hotels-booking-payment', { sdkVersion, env, clientKey,mode,currency,country,merchantAccount,shopperReference });
+  res.render('custom-demos/hotels/hotels-booking-payment', {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY,
+    mode,
+    currency,
+    country,
+    merchantAccount,
+    shopperReference
+  });
 })
 //end hotels customisation
 
@@ -141,22 +210,9 @@ app.post('/api/hotel/initatePayment', async (req, res) => {
       ...rest
     } = req.body;
 
-    const adyenEnv = isLive ? 'live' : 'test';
-
-    // Optional: prepend merchantPrefix to merchantAccount if needed
-    const merchantAccount = isLive && merchantPrefix
-      ? process.env.ADYEN_LIVE_MERCHANTACCOUNT
-      : process.env.ADYEN_TEST_MERCHANTACCOUNT;
-
-    const baseRequest = {
-      ...rest,
-      shopperInteraction: shopperInteraction || 'Ecommerce',
-      channel: 'Web'
-    };
+    const merchantAccount = getMerchantAccountFromBody(isLive);
 
     console.log(req.body);
-    let result=null;
-
     if (isMember && rest.paymentMethod.storedPaymentMethodId !== undefined) {
       console.log('Forwarding payment request as ContAuth for member...');
   
@@ -226,9 +282,7 @@ app.post('/api/hotel/completepayment', async (req, res) => {
       const storedPaymentMethodId = rest?.paymentMethod?.storedPaymentMethodId;
       const wantsToStoreCard = rest?.storePaymentMethod; // or your custom flag
 
-      const merchantAccount = isLive && merchantPrefix
-        ? process.env.ADYEN_LIVE_MERCHANTACCOUNT
-        : process.env.ADYEN_TEST_MERCHANTACCOUNT;
+      const merchantAccount = getMerchantAccountFromBody(isLive);
 
       const baseUrl = isLive
         ? 'https://pal-live.adyen.com'
@@ -344,7 +398,11 @@ app.get('/api/sessionoutcome/:id', async (req, res) => {
 app.post('/api/paymentMethods', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, isMember, ...rest } = req.body;
   console.log("Calling /payment/methods");
-  rest.merchantAccount=process.env.ADYEN_TEST_MERCHANTACCOUNT;
+  rest.merchantAccount = getMerchantAccountFromBody(isLive);
+  console.log("the currency is", rest.amount.currency);
+  rest.countryCode = handleCurrencyToCountryCode(rest.amount.currency);
+  console.log("Request body for payment methods:");
+  console.log(JSON.stringify(rest, null, 2));
   try {
     const result = await getPaymentMethods(rest, isLive, merchantPrefix, version);
     res.json(result);
@@ -356,10 +414,13 @@ app.post('/api/paymentMethods', async (req, res) => {
 // POST /api/payments
 app.post('/api/payments', async (req, res) => {
   const { isLive = false, merchantPrefix = "", version, ...rest } = req.body;
-  rest.merchantAccount = process.env.ADYEN_TEST_MERCHANTACCOUNT;
+  rest.merchantAccount = getMerchantAccountFromBody(isLive);
+  rest.countryCode = handleCurrencyToCountryCode(rest.currency);
 
   try {
     const result = await intiatePayment(rest, isLive, merchantPrefix, version);
+    console.log("the payment result")
+    console.log(result);
     res.json(result);
   } catch (error) {
     res.status(500).json(error.response?.data || { error: error.message });
@@ -387,12 +448,15 @@ app.get('/status', (req, res) => {
 
 app.all('/redirect', async (req, res) => {
   try {
+    const isLive = req.method === 'POST' ? Boolean(req.body?.isLive) : false;
+    const merchantPrefix = req.method === 'POST' ? (req.body?.merchantPrefix || '') : '';
+    const version = req.method === 'POST' ? req.body?.version : undefined;
    
     let actualResultCode = null; 
     //check if there is session result in query, if there is make a get session result call to adyen
     if(req.query.sessionResult){
       const sessionResult = req.query.sessionResult;
-      const sessionOutcome = await checkSessionOutcome({ sessionId: req.query.sessionId, sessionResult });
+      const sessionOutcome = await checkSessionOutcome({ sessionId: req.query.sessionId, sessionResult }, isLive, merchantPrefix, version);
       console.log(sessionOutcome);
       actualResultCode = sessionOutcome.payments?.[0].resultCode;
     }else{
@@ -400,10 +464,12 @@ app.all('/redirect', async (req, res) => {
         if (!redirectResult) {
           return res.status(400).json({ error: 'Missing redirectResult parameter.' });
         }
+        console.log("submitting additional details with redirectResult:", redirectResult);
         const result = await submitAdditionalDetails(
           { details: { redirectResult } }, // Format expected by Adyen
-          false, // isLive
-          ''    // merchantPrefix
+          isLive,
+          merchantPrefix,
+          version
         );
         actualResultCode = result.resultCode;
 
@@ -438,9 +504,10 @@ app.post('/api/deletePaymentMethods/:id', async (req, res) => {
   const {id} = req.params;
   const { merchantAccount, shopperReference } = req.body;
   const { isLive = false, merchantPrefix = "", version } = req.body;
+  const resolvedMerchantAccount = merchantAccount || getMerchantAccountFromBody(isLive);
 
   try {
-    const result = await removeStoredPaymentMethod({ storedPaymentMethodId: id, merchantAccount, shopperReference }, isLive, merchantPrefix, version);
+    const result = await removeStoredPaymentMethod({ storedPaymentMethodId: id, merchantAccount: resolvedMerchantAccount, shopperReference }, isLive, merchantPrefix, version);
     console.log("DELETEING TOKENc")
     console.log(result);
     res.send(result.status);

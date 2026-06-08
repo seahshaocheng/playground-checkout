@@ -14,7 +14,12 @@
   <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
 
   <script>
-    const clientKey = "<%= clientKey %>";
+    const initialEnv = "<%= env %>";
+    const sdkVersion = "<%= sdkVersion %>";
+    const clientKeys = {
+      test: "<%= testClientKey || clientKey %>",
+      live: "<%= liveClientKey || clientKey %>"
+    };
   </script>
 
   <style>
@@ -62,6 +67,12 @@
 
   <!-- Main Container -->
   <div class="container">
+    <div class="d-flex justify-content-end mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
+        <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
+      </div>
+    </div>
     <h1 class="text-center">Adyen Drop-in Demo (Advanced Flow)</h1>
 
     <div class="row">
@@ -69,19 +80,6 @@
       <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
         <div class="form-box">
           <form id="dropinForm">
-            <div class="mb-3">
-              <label for="env" class="form-label">Environment</label>
-              <select id="env" name="env" class="form-select">
-                <option value="test">Test</option>
-                <option value="live">Live</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label for="merchantPrefix" class="form-label">Merchant Prefix (Live only)</label>
-              <input type="text" id="merchantPrefix" name="merchantPrefix" class="form-control" placeholder="e.g. yourcompany" />
-            </div>
-
             <div class="mb-3">
               <label for="amount" class="form-label">Amount (in minor units)</label>
               <input type="number" id="amount" name="amount" class="form-control" placeholder="e.g. 1000" value="1000" />
@@ -145,13 +143,31 @@
     });
 
     const form = document.getElementById("dropinForm");
+    const environmentToggle = document.getElementById("environmentToggle");
+    const environmentToggleLabel = document.getElementById("environmentToggleLabel");
+
+    const updateEnvironmentLabel = (isLive) => {
+      environmentToggleLabel.textContent = isLive ? 'Live' : 'Test';
+    };
+
+    environmentToggle.checked = initialEnv === 'live';
+    updateEnvironmentLabel(environmentToggle.checked);
+
+    environmentToggle.addEventListener('change', () => {
+      const nextEnv = environmentToggle.checked ? 'live' : 'test';
+      updateEnvironmentLabel(environmentToggle.checked);
+      const pageUrl = new URL(window.location.href);
+      pageUrl.searchParams.set('env', nextEnv);
+      pageUrl.searchParams.set('version', sdkVersion);
+      window.location.assign(pageUrl.toString());
+    });
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const env = form.env.value;
+      const env = environmentToggle.checked ? 'live' : 'test';
       const isLive = env === 'live';
-      const merchantPrefix = form.merchantPrefix.value;
+      const clientKey = clientKeys[env] || clientKeys.test;
       const amountValue = parseInt(form.amount.value);
       const currency = form.currency.value;
       const reference = form.reference.value;
@@ -163,7 +179,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           isLive,
-          merchantPrefix,
           amount,
           countryCode: "SG",
           shopperLocale: "en_SG",
@@ -192,7 +207,6 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               isLive,
-              merchantPrefix,
               amount,
               reference,
               ...state.data,
@@ -227,7 +241,6 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               isLive,
-              merchantPrefix,
               details: state.data.details,
               paymentData: state.data.paymentData,
               isMember,

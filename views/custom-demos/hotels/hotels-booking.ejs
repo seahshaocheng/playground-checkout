@@ -24,6 +24,8 @@
   const mode = "<%= mode %>";
   const currency = "<%= currency %>";
   const country = "<%= country %>";
+  const env = "<%= env %>";
+  const isLive = env === 'live';
 </script>
 <body class="bg-gray-100">
   <!-- Top Navigation Bar -->
@@ -39,6 +41,11 @@
       </div>
       <!-- Desktop controls -->
       <div class="hidden md:flex items-center gap-3">
+        <div class="flex items-center gap-2 rounded border border-gray-300 px-3 py-2">
+          <span class="text-sm text-gray-600">Test</span>
+          <input id="environment-toggle" type="checkbox" class="h-4 w-4" <%= env === 'live' ? 'checked' : '' %> onchange="updateEnvironment(this)">
+          <span class="text-sm text-gray-600">Live</span>
+        </div>
         <select id="country-currency-selector" class="bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-emerald-200" onchange="updateCurrency(this)">
           <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
           <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
@@ -62,6 +69,10 @@
     <!-- Mobile filters panel -->
     <div id="mobile-filters" class="md:hidden hidden border-t border-gray-200 bg-white">
       <div class="max-w-7xl mx-auto px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="flex items-center justify-between rounded border border-gray-300 px-3 py-2">
+          <span class="text-sm text-gray-600">Environment</span>
+          <input id="environment-toggle-mobile" type="checkbox" class="h-4 w-4" <%= env === 'live' ? 'checked' : '' %> onchange="updateEnvironment(this)">
+        </div>
         <select class="bg-white border border-gray-300 px-3 py-2 rounded" onchange="updateCurrency(this)">
           <option value="SGD" <%= currency === 'SGD' ? 'selected' : '' %>>Singapore (SGD)</option>
           <option value="MYR" <%= currency === 'MYR' ? 'selected' : '' %>>Malaysia (MYR)</option>
@@ -206,9 +217,15 @@
   <script>
     let shopperReference = null;
     function updateEmail(el){ shopperReference = el.value; }
-    function updateCurrency(el){ const url = new URL(window.location.href); url.searchParams.set('CURRENCY', el.value); window.location.href = url.href; }
-    function updateBookingType(el){ const url = new URL(window.location.href); url.searchParams.set('mode', el.value); window.location.href = url.href; }
-    function onClickInternalLink(link){ const url = new URL('/'+link, window.location.origin); url.searchParams.set('mode', mode); url.searchParams.set('CURRENCY', currency); url.searchParams.set('currency', currency); url.searchParams.set('shopperReference', shopperReference); window.location = url.href; }
+    function updateEnvironment(el){
+      const nextEnv = el.checked ? 'live' : 'test';
+      const url = new URL(window.location.href);
+      url.searchParams.set('env', nextEnv);
+      window.location.href = url.href;
+    }
+    function updateCurrency(el){ const url = new URL(window.location.href); url.searchParams.set('env', env); url.searchParams.set('CURRENCY', el.value); window.location.href = url.href; }
+    function updateBookingType(el){ const url = new URL(window.location.href); url.searchParams.set('env', env); url.searchParams.set('mode', el.value); window.location.href = url.href; }
+    function onClickInternalLink(link){ const url = new URL('/'+link, window.location.origin); url.searchParams.set('env', env); url.searchParams.set('mode', mode); url.searchParams.set('CURRENCY', currency); url.searchParams.set('currency', currency); url.searchParams.set('shopperReference', shopperReference); window.location = url.href; }
 
     document.addEventListener('DOMContentLoaded', () => {
       const bookButton = document.getElementById('bookButton');

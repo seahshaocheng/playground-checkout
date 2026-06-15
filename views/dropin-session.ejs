@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Adyen Drop-in Demo</title>
+  <title>Adyen Drop-in Explorer</title>
 
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/css/workbench-theme.css" />
 
-  <!-- Adyen SDK CSS/JS -->
   <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
   <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
 
-  <!-- Inject client key -->
   <script>
     const initialEnv = "<%= env %>";
     const sdkVersion = "<%= sdkVersion %>";
@@ -21,82 +19,1960 @@
       test: "<%= testClientKey || clientKey %>",
       live: "<%= liveClientKey || clientKey %>"
     };
+    const maskedApiKeys = {
+      test: "<%= maskedTestApiKey %>",
+      live: "<%= maskedLiveApiKey %>"
+    };
   </script>
 
   <style>
-    .container {
-      margin-top: 3rem;
+    :root {
+      --bg-0: #07111f;
+      --bg-1: #0d1729;
+      --bg-2: #111f35;
+      --panel: rgba(10, 19, 34, 0.88);
+      --panel-strong: rgba(9, 16, 29, 0.96);
+      --panel-soft: rgba(15, 28, 49, 0.72);
+      --panel-border: rgba(137, 168, 216, 0.18);
+      --panel-border-strong: rgba(122, 169, 255, 0.3);
+      --text-0: #edf4ff;
+      --text-1: #a8b8d8;
+      --text-2: #6d809d;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --warning: #f59e0b;
+      --danger: #fb7185;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      --radius-xl: 22px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      --sans: "Segoe UI", "Inter", system-ui, sans-serif;
     }
 
-    .form-box {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 2rem;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text-0);
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 26%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 42%, #08101c 100%);
+    }
+
+    .session-page-shell {
+      width: 100%;
+      min-height: 100vh;
+      padding: 0.75rem;
+    }
+
+    .explorer-shell {
+      min-height: calc(100vh - 1.5rem);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0.75rem;
+    }
+
+    .explorer-topbar,
+    .explorer-panel,
+    #session-result-panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .explorer-topbar {
+      padding: 0.9rem 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .explorer-title-cluster {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .explorer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      background: rgba(56, 189, 248, 0.08);
+      color: var(--accent);
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .explorer-badge::before {
+      content: "";
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 999px;
+      background: currentColor;
+      box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.18);
+    }
+
+    .explorer-heading {
+      min-width: 0;
+    }
+
+    .explorer-heading h1 {
+      margin: 0;
+      font-size: clamp(1.1rem, 2vw, 1.65rem);
+      letter-spacing: 0.01em;
+    }
+
+    .explorer-heading p {
+      margin: 0.2rem 0 0;
+      color: var(--text-1);
+      font-size: 0.92rem;
+    }
+
+    .explorer-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip-button,
+    .btn-explorer {
+      border-radius: 999px;
+      border: 1px solid var(--panel-border-strong);
+      background: rgba(17, 31, 53, 0.9);
+      color: var(--text-0);
+    }
+
+    .chip-button {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.84rem;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .chip-button:hover,
+    .chip-button:focus-visible,
+    .btn-explorer:hover,
+    .btn-explorer:focus-visible {
+      background: rgba(27, 46, 76, 0.96);
+      border-color: rgba(56, 189, 248, 0.44);
+      transform: translateY(-1px);
+    }
+
+    .btn-explorer {
+      padding: 0.55rem 0.95rem;
+      font-weight: 600;
+    }
+
+    .explorer-workbench {
+      display: grid;
+      grid-template-columns: minmax(360px, var(--left-pane-size, 48%)) 12px minmax(360px, 1fr);
+      min-height: 0;
+    }
+
+    .explorer-panel {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 1rem 1rem 0.85rem;
+      border-bottom: 1px solid rgba(137, 168, 216, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      margin: 0.22rem 0 0;
+      color: var(--text-1);
+      font-size: 0.9rem;
+    }
+
+    .panel-header-meta {
+      display: inline-flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(19, 34, 58, 0.95);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      color: var(--text-1);
+      font-size: 0.76rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .panel-body {
+      min-height: 0;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .preview-shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+      gap: 0.9rem;
+      flex: 1;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .terminal-pill-row {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .terminal-pill {
+      padding: 0.38rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(12, 24, 42, 0.95);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      color: var(--text-1);
+      font-family: var(--mono);
+      font-size: 0.74rem;
+    }
+
+    .preview-stage {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 0.75rem;
+      background: linear-gradient(180deg, rgba(8, 18, 34, 0.95), rgba(14, 26, 46, 0.92));
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem;
+    }
+
+    .preview-stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 0.25rem;
+    }
+
+    .preview-stage-title {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .preview-stage-copy {
+      margin: 0.18rem 0 0;
+      font-size: 0.83rem;
+      color: var(--text-1);
     }
 
     #dropin-container {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      min-height: 28rem;
+      height: 100%;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 247, 250, 0.95));
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      padding: 1rem;
+      overflow: auto;
+    }
+
+    .preview-empty-state {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      border: 1px dashed rgba(56, 189, 248, 0.26);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(239, 246, 255, 0.88), rgba(232, 242, 255, 0.72));
+      color: #0f172a;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .preview-empty-state strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-empty-state span {
+      display: block;
+      max-width: 28rem;
+      color: #334155;
+      line-height: 1.55;
+    }
+
+    .preview-data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .preview-data-card {
+      padding: 0.85rem 0.9rem;
+      border-radius: 14px;
+      background: rgba(12, 24, 42, 0.9);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      min-width: 0;
+    }
+
+    .preview-data-card label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-2);
+    }
+
+    .preview-data-card strong {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--text-0);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .resize-handle {
+      display: grid;
+      place-items: center;
+      cursor: col-resize;
+      user-select: none;
+      position: relative;
+    }
+
+    .resize-handle::before {
+      content: "";
+      width: 4px;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.1), rgba(56, 189, 248, 0.45), rgba(56, 189, 248, 0.1));
+    }
+
+    .resize-handle::after {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 64px;
+      border-radius: 999px;
+      background: rgba(14, 26, 46, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+    }
+
+    .inspector-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 0;
+      flex: 1;
+      gap: 0.85rem;
+    }
+
+    .view-tabs {
+      display: inline-flex;
+      background: rgba(12, 24, 42, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      border-radius: 999px;
+      padding: 0.2rem;
+      gap: 0.2rem;
+      width: fit-content;
+    }
+
+    .inspector-header-tools {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .follow-live-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      background: rgba(12, 24, 42, 0.94);
+      color: var(--text-1);
+    }
+
+    .follow-live-switch .form-check-input {
+      cursor: pointer;
+      background-color: rgba(137, 168, 216, 0.32);
+      border-color: rgba(137, 168, 216, 0.52);
+    }
+
+    .follow-live-switch .form-check-input:checked {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .follow-live-switch .form-check-label {
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 0.03rem;
+    }
+
+    .view-tab {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.5rem 0.85rem;
+      background: transparent;
+      color: var(--text-1);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .view-tab.active {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(34, 197, 94, 0.18));
+      color: var(--text-0);
+    }
+
+    .status-strip {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(12, 24, 42, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      color: var(--text-1);
+      font-size: 0.78rem;
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 999px;
+      background: rgba(137, 168, 216, 0.35);
+    }
+
+    .status-pill.waiting::before {
+      background: rgba(137, 168, 216, 0.38);
+    }
+
+    .status-pill.active::before {
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.14);
+    }
+
+    .status-pill.done::before {
+      background: var(--accent-2);
+    }
+
+    .status-pill.error::before {
+      background: var(--danger);
+    }
+
+    .inspector-view {
+      display: none;
+      min-height: 0;
+    }
+
+    .inspector-view.active {
+      display: block;
+      min-height: 0;
+    }
+
+    .sequence-actors,
+    .sequence-step {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .sequence-actors {
+      margin-bottom: 1rem;
+    }
+
+    .sequence-actor {
+      position: relative;
+      padding: 0.85rem 0.8rem 1rem;
+      border-radius: 16px;
+      background: rgba(16, 31, 52, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-0);
+    }
+
+    .sequence-actor small {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--text-1);
+      font-weight: 500;
+    }
+
+    .sequence-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-height: 0;
+    }
+
+    .sequence-scroll,
+    .timeline-scroll {
+      min-height: 0;
+      max-height: calc(100vh - 23rem);
+      overflow: auto;
+      padding-right: 0.2rem;
+    }
+
+    .sequence-scroll,
+    .timeline-scroll,
+    .helper-card .activity-list,
+    .detail-code,
+    .json-view {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(56, 189, 248, 0.45) rgba(8, 18, 34, 0.72);
+    }
+
+    .sequence-scroll::-webkit-scrollbar,
+    .timeline-scroll::-webkit-scrollbar,
+    .helper-card .activity-list::-webkit-scrollbar,
+    .detail-code::-webkit-scrollbar,
+    .json-view::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .sequence-scroll::-webkit-scrollbar-track,
+    .timeline-scroll::-webkit-scrollbar-track,
+    .helper-card .activity-list::-webkit-scrollbar-track,
+    .detail-code::-webkit-scrollbar-track,
+    .json-view::-webkit-scrollbar-track {
+      background: rgba(8, 18, 34, 0.72);
+      border-radius: 999px;
+    }
+
+    .sequence-scroll::-webkit-scrollbar-thumb,
+    .timeline-scroll::-webkit-scrollbar-thumb,
+    .helper-card .activity-list::-webkit-scrollbar-thumb,
+    .detail-code::-webkit-scrollbar-thumb,
+    .json-view::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.84), rgba(34, 197, 94, 0.75));
+      border-radius: 999px;
+      border: 2px solid rgba(8, 18, 34, 0.65);
+    }
+
+    #dropin-container {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(14, 116, 144, 0.45) rgba(201, 218, 233, 0.55);
+    }
+
+    #dropin-container::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    #dropin-container::-webkit-scrollbar-track {
+      background: rgba(201, 218, 233, 0.55);
+      border-radius: 999px;
+    }
+
+    #dropin-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(14, 116, 144, 0.65), rgba(56, 189, 248, 0.72));
+      border-radius: 999px;
+      border: 2px solid rgba(201, 218, 233, 0.55);
+    }
+
+    .sequence-step {
+      align-items: start;
+    }
+
+    .sequence-card {
+      position: relative;
+      border-radius: 16px;
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      background: rgba(14, 26, 46, 0.95);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+      overflow: hidden;
+    }
+
+    .sequence-step[data-status="active"] .sequence-card {
+      border-color: rgba(56, 189, 248, 0.44);
+      box-shadow: 0 20px 40px rgba(56, 189, 248, 0.12);
+    }
+
+    .sequence-step[data-status="done"] .sequence-card {
+      border-color: rgba(34, 197, 94, 0.28);
+    }
+
+    .sequence-step[data-status="error"] .sequence-card {
+      border-color: rgba(251, 113, 133, 0.34);
+    }
+
+    .sequence-card-header {
+      padding: 0.85rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(137, 168, 216, 0.08);
+    }
+
+    .sequence-card-header strong,
+    .timeline-card strong {
+      display: block;
+      font-size: 0.94rem;
+    }
+
+    .sequence-card-header small,
+    .timeline-card small {
+      color: var(--text-1);
+      line-height: 1.45;
+      display: block;
+      margin-top: 0.18rem;
+    }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-radius: 999px;
+      padding: 0.34rem 0.6rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      background: rgba(8, 18, 34, 0.86);
+      color: var(--text-1);
+      white-space: nowrap;
+    }
+
+    .state-badge.active {
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.34);
+    }
+
+    .state-badge.done {
+      color: var(--accent-2);
+      border-color: rgba(34, 197, 94, 0.28);
+    }
+
+    .state-badge.error {
+      color: var(--danger);
+      border-color: rgba(251, 113, 133, 0.28);
+    }
+
+    .sequence-card-body,
+    .timeline-card-body {
+      padding: 0.85rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .sequence-summary,
+    .timeline-summary {
+      font-size: 0.87rem;
+      color: var(--text-1);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .detail-disclosure {
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      border-radius: 14px;
+      background: rgba(10, 20, 36, 0.9);
+      overflow: hidden;
+    }
+
+    .detail-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      color: var(--text-0);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .detail-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .detail-disclosure summary span {
+      color: var(--text-1);
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-family: var(--mono);
+    }
+
+    .detail-disclosure[open] summary {
+      border-bottom: 1px solid rgba(137, 168, 216, 0.08);
+    }
+
+    .detail-code {
+      margin: 0;
+      padding: 0.85rem 0.9rem 1rem;
+      background: rgba(5, 12, 22, 0.94);
+      color: #d9e8ff;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 18rem;
+      overflow: auto;
+    }
+
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .timeline-card {
+      display: grid;
+      grid-template-columns: 5.2rem minmax(0, 1fr);
+      gap: 0.85rem;
+      align-items: start;
+    }
+
+    .timeline-time {
+      padding-top: 0.4rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .timeline-card-body-wrap {
+      border-radius: 16px;
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      background: rgba(14, 26, 46, 0.95);
+      overflow: hidden;
+    }
+
+    .timeline-card-header {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(137, 168, 216, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .helper-panel {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 0.85rem;
+    }
+
+    .helper-card {
+      padding: 0.9rem 1rem;
+      border-radius: 16px;
+      background: rgba(12, 24, 42, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      min-width: 0;
+    }
+
+    .helper-card h3 {
+      margin: 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-2);
+    }
+
+    .helper-card p {
+      margin: 0.45rem 0 0;
+      color: var(--text-1);
+      line-height: 1.5;
+      font-size: 0.88rem;
+    }
+
+    .helper-card .activity-list {
+      margin-top: 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 11rem;
+      overflow: auto;
+    }
+
+    .activity-entry {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.7rem;
+      align-items: start;
+      padding: 0.75rem 0.8rem;
+      border-radius: 14px;
+      background: rgba(8, 18, 34, 0.92);
+      border: 1px solid rgba(137, 168, 216, 0.1);
+    }
+
+    .activity-entry-time {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      color: var(--accent);
+      white-space: nowrap;
+      padding-top: 0.1rem;
+    }
+
+    .activity-entry-body strong {
+      display: block;
+      font-size: 0.88rem;
+    }
+
+    .activity-entry-body span {
+      display: block;
+      margin-top: 0.15rem;
+      color: var(--text-1);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .activity-entry-warning .activity-entry-time {
+      color: var(--warning);
+    }
+
+    .activity-entry-error .activity-entry-time {
+      color: var(--danger);
+    }
+
+    .activity-log-empty {
+      padding: 0.9rem;
+      border-radius: 14px;
+      border: 1px dashed rgba(137, 168, 216, 0.16);
+      color: var(--text-1);
+      font-size: 0.85rem;
+      background: rgba(8, 18, 34, 0.84);
+    }
+
+    #session-result-panel {
+      overflow: hidden;
+    }
+
+    #session-result-panel .card-body {
+      padding: 1rem 1.1rem;
+      background: transparent;
+    }
+
+    .table.explorer-table {
+      color: var(--text-0);
+      margin-bottom: 0;
+    }
+
+    .table.explorer-table > :not(caption) > * > * {
+      background: rgba(10, 20, 36, 0.86);
+      border-color: rgba(137, 168, 216, 0.1);
+      color: inherit;
+      vertical-align: top;
+    }
+
+    .table.explorer-table thead th {
+      color: var(--text-1);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .json-view {
+      margin: 0;
+      padding: 0.9rem;
+      border-radius: 14px;
+      background: rgba(5, 12, 22, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      color: #d9e8ff;
+      max-height: 20rem;
+      overflow: auto;
+      font-family: var(--mono);
+      font-size: 0.77rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, rgba(9, 16, 29, 0.98), rgba(11, 20, 35, 0.98));
+      color: var(--text-0);
+      border: 1px solid rgba(137, 168, 216, 0.16);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header,
+    .modal-footer {
+      border-color: rgba(137, 168, 216, 0.12);
+    }
+
+    .form-box {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .config-copy {
+      margin: 0 0 1rem;
+      color: var(--text-1);
+      line-height: 1.5;
+    }
+
+    .form-label,
+    .form-check-label {
+      color: var(--text-1);
+    }
+
+    .form-control,
+    .form-select {
+      background: rgba(8, 18, 34, 0.86);
+      border-color: rgba(137, 168, 216, 0.16);
+      color: var(--text-0);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      background: rgba(8, 18, 34, 0.96);
+      border-color: rgba(56, 189, 248, 0.38);
+      box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.12);
+      color: var(--text-0);
+    }
+
+    .form-control::placeholder {
+      color: #6f87a9;
+    }
+
+    .btn-close {
+      filter: invert(1) grayscale(1);
+    }
+
+    .modal-backdrop.show {
+      opacity: 0.72;
+    }
+
+    .runtime-note {
+      color: var(--text-1);
+      font-size: 0.84rem;
+    }
+
+    .viewport-banner {
+      display: none;
+      margin-top: 0.65rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(137, 168, 216, 0.2);
+      background: rgba(8, 18, 34, 0.9);
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--text-0);
+    }
+
+    .viewport-banner.is-visible {
+      display: block;
+    }
+
+    .viewport-banner.is-info {
+      border-color: rgba(56, 189, 248, 0.36);
+      background: rgba(14, 42, 68, 0.88);
+      color: #d3f0ff;
+    }
+
+    .viewport-banner.is-success {
+      border-color: rgba(34, 197, 94, 0.34);
+      background: rgba(18, 50, 33, 0.9);
+      color: #d4fbe3;
+    }
+
+    .viewport-banner.is-warning {
+      border-color: rgba(245, 158, 11, 0.34);
+      background: rgba(63, 43, 14, 0.9);
+      color: #ffe8bf;
+    }
+
+    .viewport-banner.is-error {
+      border-color: rgba(251, 113, 133, 0.36);
+      background: rgba(67, 20, 29, 0.9);
+      color: #ffd8df;
+    }
+
+    @media (max-width: 1199.98px) {
+      .helper-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 991.98px) {
+      .explorer-topbar,
+      .panel-header,
+      .preview-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .inspector-header-tools {
+        justify-content: flex-start;
+      }
+
+      .explorer-workbench {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+
+      .resize-handle {
+        display: none;
+      }
+
+      .sequence-scroll,
+      .timeline-scroll {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .session-page-shell {
+        padding: 0.45rem;
+      }
+
+      .explorer-shell {
+        min-height: calc(100vh - 0.9rem);
+      }
+
+      .preview-data-grid,
+      .sequence-actors,
+      .sequence-step,
+      .timeline-card {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-time {
+        padding-top: 0;
+      }
+
+      #dropin-container {
+        min-height: 22rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="d-flex justify-content-end mb-3">
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
-        <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
-      </div>
-    </div>
-    <h1 class="text-center">Adyen Drop-in Demo</h1>
-    <div class="row">
-      <!-- Configuration on top (mobile) / right (desktop) -->
-      <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
-        <div class="form-box">
-          <form id="dropinForm">
-            <%- include('shared-dropin-configuration-form') %>
-            <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
-          </form>
+  <div class="container-fluid session-page-shell">
+    <div class="explorer-shell">
+      <header class="explorer-topbar">
+        <div class="explorer-title-cluster">
+          <div class="explorer-badge">Live Explorer</div>
+          <div class="explorer-heading">
+            <h1>Adyen Drop-in Session Workbench</h1>
+            <p>Web IDE style inspector for the browser, demo server, and Adyen session lifecycle.</p>
+          </div>
         </div>
-      </div>
+        <div class="explorer-toolbar">
+          <a id="home-link" href="/" class="btn btn-explorer">Home</a>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
+            <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
+          </div>
+          <button id="open-config-modal" type="button" class="btn btn-explorer">Open Config</button>
+        </div>
+      </header>
 
-      <!-- Drop-in always on bottom (mobile) / left (desktop) -->
-      <div class="col-md-8 order-2 order-md-1">
-        <div id="dropin-container"></div>
+      <main class="explorer-workbench" id="explorer-workbench">
+        <section class="explorer-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Live Preview</h2>
+              <p class="panel-subtitle">Run the shopper-facing Drop-in in place while the right pane inspects the technical flow.</p>
+            </div>
+            <div class="panel-header-meta">
+              <div class="meta-pill">SDK <span id="sdk-version-chip"><%= sdkVersion %></span></div>
+              <div class="meta-pill">Env <span id="env-chip"><%= env %></span></div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="preview-shell">
+              <div class="preview-toolbar">
+                <div class="terminal-pill-row">
+                  <div class="terminal-pill">/dropin-session</div>
+                  <div class="terminal-pill">POST /api/sessions</div>
+                  <div class="terminal-pill">GET /api/sessions/:id</div>
+                </div>
+                <div class="runtime-note" id="runtime-note">Waiting for configuration to render a Drop-in session.</div>
+              </div>
+              <div id="viewport-banner" class="viewport-banner" role="status" aria-live="polite"></div>
+
+              <div class="preview-stage">
+                <div class="preview-stage-header">
+                  <div>
+                    <h3 class="preview-stage-title">Shopper Viewport</h3>
+                    <p class="preview-stage-copy">The embedded payment surface updates live as the current session changes state.</p>
+                  </div>
+                </div>
+                <div id="dropin-container">
+                  <div class="preview-empty-state" id="preview-empty-state">
+                    <div>
+                      <strong>No active Drop-in session</strong>
+                      <span>Open the configuration lightbox to create a session. Once started, this panel becomes the live checkout preview and the inspector will populate with request, response, and event details.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="preview-data-grid">
+                <div class="preview-data-card">
+                  <label>Session Id</label>
+                  <strong id="preview-session-id">Waiting</strong>
+                </div>
+                <div class="preview-data-card">
+                  <label>Current Result</label>
+                  <strong id="preview-result-code">No result yet</strong>
+                </div>
+                <div class="preview-data-card">
+                  <label>Selected Method</label>
+                  <strong id="preview-method">Not chosen</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="resize-handle" id="resize-handle" aria-hidden="true"></div>
+
+        <aside class="explorer-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Integration Inspector</h2>
+              <p class="panel-subtitle">Switch between sequence and timeline views. Each step exposes browser config, server payloads, masked headers, and Adyen responses.</p>
+            </div>
+            <div class="inspector-header-tools">
+              <div class="view-tabs" role="tablist" aria-label="Inspector view selector">
+                <button type="button" class="view-tab active" id="tab-sequence" data-view="sequence">Sequence</button>
+                <button type="button" class="view-tab" id="tab-timeline" data-view="timeline">Timeline</button>
+              </div>
+              <div class="form-check form-switch follow-live-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="followLiveToggle" checked>
+                <label class="form-check-label" for="followLiveToggle" id="followLiveLabel">Follow Live: On</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="inspector-shell">
+              <div class="status-strip" id="status-strip"></div>
+
+              <div id="sequence-view" class="inspector-view active">
+                <div class="sequence-actors">
+                  <div class="sequence-actor">Shopper Browser<small>Drop-in config + UI events</small></div>
+                  <div class="sequence-actor">Demo Server<small>Express request/response</small></div>
+                  <div class="sequence-actor">Adyen Platform<small>Session payloads + outcomes</small></div>
+                </div>
+                <div class="sequence-scroll">
+                  <div id="sequence-steps" class="sequence-steps"></div>
+                </div>
+              </div>
+
+              <div id="timeline-view" class="inspector-view">
+                <div class="timeline-scroll">
+                  <div id="timeline-list" class="timeline-list"></div>
+                </div>
+              </div>
+
+              <div class="helper-panel">
+                <section class="helper-card">
+                  <h3>Current Focus</h3>
+                  <p id="flow-detail-copy">Open the configuration lightbox to begin. The inspector will attach concrete browser and server details to each lifecycle step as activity unfolds.</p>
+                </section>
+                <section class="helper-card">
+                  <h3>Recent Activity</h3>
+                  <div class="activity-list" id="activity-log">
+                    <div class="activity-log-empty">No events yet. Shopper interactions, Adyen callbacks, and session fetches will appear here as they happen.</div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <section id="session-result-panel" class="card d-none">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+            <h5 class="mb-0">Latest Session Result</h5>
+            <button id="open-session-result-modal" type="button" class="btn btn-outline-info btn-sm">Open in Lightbox</button>
+          </div>
+          <div class="table-responsive mb-3">
+            <table class="table table-sm explorer-table align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Field</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody id="session-result-table-body"></tbody>
+            </table>
+          </div>
+          <h6>JSON</h6>
+          <pre id="session-result-json" class="json-view"></pre>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dropinConfigModal" tabindex="-1" aria-labelledby="dropinConfigModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title" id="dropinConfigModalLabel">Configure Drop-in Session</h5>
+            <p class="config-copy mb-0">Define the shopper request, then launch or relaunch the live explorer.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-box">
+            <form id="dropinForm">
+              <%- include('shared-dropin-configuration-form') %>
+              <div class="mb-3">
+                <label for="shopperReference" class="form-label">Shopper Reference</label>
+                <input type="text" id="shopperReference" name="shopperReference" class="form-control" placeholder="e.g. unique-shopper-id-12345" value="unique-shopper-id-12345" />
+              </div>
+
+              <div class="mb-3">
+                <label for="shopperEmail" class="form-label">Shopper Email</label>
+                <input type="email" id="shopperEmail" name="shopperEmail" class="form-control" placeholder="e.g. shopper@example.com" value="" />
+              </div>
+
+              <div class="mb-3">
+                <label for="storePaymentMethodMode" class="form-label">Store Payment Method Mode</label>
+                <select id="storePaymentMethodMode" name="storePaymentMethodMode" class="form-select">
+                  <option value="enabled" selected>enabled</option>
+                  <option value="askForConsent">askForConsent</option>
+                  <option value="disabled">disabled</option>
+                </select>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+          <button type="submit" form="dropinForm" class="btn btn-info" id="start-dropin-button">Start Drop-in</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS (optional) -->
+  <div class="modal fade" id="sessionResultModal" tabindex="-1" aria-labelledby="sessionResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sessionResultModalLabel">Session Result Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive mb-3">
+            <table class="table table-sm explorer-table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Field</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody id="session-result-table-body-modal"></tbody>
+            </table>
+          </div>
+          <h6>JSON</h6>
+          <pre id="session-result-json-modal" class="json-view"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    const form = document.getElementById("dropinForm");
-    const environmentToggle = document.getElementById("environmentToggle");
-    const environmentToggleLabel = document.getElementById("environmentToggleLabel");
-    const { AdyenCheckout, Dropin} = window.AdyenWeb;
+    const form = document.getElementById('dropinForm');
+    const environmentToggle = document.getElementById('environmentToggle');
+    const environmentToggleLabel = document.getElementById('environmentToggleLabel');
+    const homeLink = document.getElementById('home-link');
+    const envChip = document.getElementById('env-chip');
+    const runtimeNote = document.getElementById('runtime-note');
+    const viewportBanner = document.getElementById('viewport-banner');
     const dropinContainer = document.getElementById('dropin-container');
+    const previewEmptyState = document.getElementById('preview-empty-state');
+    const previewSessionId = document.getElementById('preview-session-id');
+    const previewResultCode = document.getElementById('preview-result-code');
+    const previewMethod = document.getElementById('preview-method');
+    const activityLog = document.getElementById('activity-log');
+    const sequenceStepsElement = document.getElementById('sequence-steps');
+    const timelineListElement = document.getElementById('timeline-list');
+    const sequenceScrollElement = document.querySelector('.sequence-scroll');
+    const timelineScrollElement = document.querySelector('.timeline-scroll');
+    const followLiveToggle = document.getElementById('followLiveToggle');
+    const followLiveLabel = document.getElementById('followLiveLabel');
+    const statusStrip = document.getElementById('status-strip');
+    const flowDetailCopy = document.getElementById('flow-detail-copy');
+    const sessionResultPanel = document.getElementById('session-result-panel');
+    const sessionResultTableBody = document.getElementById('session-result-table-body');
+    const sessionResultJson = document.getElementById('session-result-json');
+    const sessionResultTableBodyModal = document.getElementById('session-result-table-body-modal');
+    const sessionResultJsonModal = document.getElementById('session-result-json-modal');
+    const sessionResultModalElement = document.getElementById('sessionResultModal');
+    const openSessionResultModalButton = document.getElementById('open-session-result-modal');
+    const openConfigModalButton = document.getElementById('open-config-modal');
+    const configModalElement = document.getElementById('dropinConfigModal');
+    const startButton = document.getElementById('start-dropin-button');
+    const workbench = document.getElementById('explorer-workbench');
+    const resizeHandle = document.getElementById('resize-handle');
+    const sequenceView = document.getElementById('sequence-view');
+    const timelineView = document.getElementById('timeline-view');
+    const { AdyenCheckout, Dropin } = window.AdyenWeb;
 
-    const updateEnvironmentLabel = (isLive) => {
-      environmentToggleLabel.textContent = isLive ? 'Live' : 'Test';
+    const configModal = bootstrap.Modal.getOrCreateInstance(configModalElement);
+    const sessionResultModal = bootstrap.Modal.getOrCreateInstance(sessionResultModalElement);
+
+    let currentDropin = null;
+    let sessionRequestController = null;
+    let latestInitializationId = 0;
+    let lastInteractionSignature = null;
+    let hasRenderedInteractionLog = false;
+    let activeInspectorView = 'sequence';
+    let hasActiveSession = false;
+    let currentListenerState = null;
+    let currentSelectedMethod = null;
+    let isFollowLiveEnabled = true;
+    let suppressManualPauseUntil = 0;
+
+    const flowSteps = [
+      {
+        id: 'session-request',
+        title: 'POST /api/sessions',
+        description: 'The browser packages the checkout request and sends it to the demo server.',
+        actor: 'browser',
+        from: 1,
+        column: 1
+      },
+      {
+        id: 'session-create',
+        title: 'Server calls Adyen /sessions',
+        description: 'The demo server enriches the payload, attaches merchant data, and forwards it with a masked API key header.',
+        actor: 'server',
+        from: 2,
+        column: 2
+      },
+      {
+        id: 'session-response',
+        title: 'Session returns to browser',
+        description: 'The Adyen session payload comes back and becomes the basis of the Drop-in runtime.',
+        actor: 'adyen',
+        from: 3,
+        column: 3
+      },
+      {
+        id: 'dropin-mounted',
+        title: 'Drop-in mounts in the browser',
+        description: 'AdyenCheckout initializes the explorer preview with the active session and payment method configuration.',
+        actor: 'browser',
+        from: 1,
+        column: 1
+      },
+      {
+        id: 'payment-submit',
+        title: 'Shopper submits payment',
+        description: 'Drop-in hands control to the Adyen session orchestration and emits client-side events.',
+        actor: 'browser',
+        from: 1,
+        column: 1
+      },
+      {
+        id: 'payment-outcome',
+        title: 'Outcome or next action',
+        description: 'Adyen returns either an action payload or a completed result code.',
+        actor: 'adyen',
+        from: 3,
+        column: 3
+      },
+      {
+        id: 'session-fetch',
+        title: 'Fetch latest session state',
+        description: 'The browser asks the demo server to retrieve the current session resource for inspection.',
+        actor: 'server',
+        from: 2,
+        column: 2
+      }
+    ];
+
+    const flowState = Object.fromEntries(flowSteps.map((step) => [step.id, 'waiting']));
+    const stepTelemetry = Object.fromEntries(flowSteps.map((step) => [step.id, []]));
+    const timelineEvents = [];
+
+    const emptyActivityMarkup = '<div class="activity-log-empty">No events yet. Shopper interactions, Adyen callbacks, and session fetches will appear here as they happen.</div>';
+    const emptyTimelineMarkup = '<div class="activity-log-empty">Timeline view is empty until the explorer records its first request or event.</div>';
+
+    const escapeHtml = (value) => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const formatJson = (value) => {
+      if (value === undefined) {
+        return 'Unavailable';
+      }
+
+      if (typeof value === 'string') {
+        return value;
+      }
+
+      return JSON.stringify(value, null, 2);
     };
 
-    environmentToggle.checked = initialEnv === 'live';
-    updateEnvironmentLabel(environmentToggle.checked);
+    const summarizePayload = (value) => {
+      if (value === undefined || value === null) {
+        return 'No payload captured';
+      }
 
-    environmentToggle.addEventListener('change', () => {
-      const nextEnv = environmentToggle.checked ? 'live' : 'test';
-      updateEnvironmentLabel(environmentToggle.checked);
-      const pageUrl = new URL(window.location.href);
-      pageUrl.searchParams.set('env', nextEnv);
-      pageUrl.searchParams.set('version', sdkVersion);
-      window.location.assign(pageUrl.toString());
-    });
+      if (typeof value === 'string') {
+        return value.length > 64 ? `${value.slice(0, 61)}...` : value;
+      }
+
+      if (Array.isArray(value)) {
+        return `${value.length} items`;
+      }
+
+      if (typeof value === 'object') {
+        const keys = Object.keys(value);
+        return keys.length ? keys.join(', ') : 'Empty object';
+      }
+
+      return String(value);
+    };
+
+    const maskValue = (value) => {
+      if (!value) {
+        return 'Unavailable';
+      }
+
+      const normalized = String(value);
+      if (normalized.length <= 8) {
+        return `${normalized.slice(0, 2)}***${normalized.slice(-2)}`;
+      }
+
+      return `${normalized.slice(0, 4)}${'*'.repeat(Math.max(4, normalized.length - 8))}${normalized.slice(-4)}`;
+    };
+
+    const sanitizeState = (state) => {
+      const paymentMethod = state?.data?.paymentMethod || {};
+      return {
+        isValid: Boolean(state?.isValid),
+        paymentMethodType: paymentMethod.type || null,
+        knownFields: Object.keys(paymentMethod).filter((key) => !key.startsWith('encrypted')),
+        hasBrowserInfo: Boolean(state?.data?.browserInfo),
+        storePaymentMethod: state?.data?.storePaymentMethod ?? null
+      };
+    };
+
+    const updateRuntimeNote = (text) => {
+      runtimeNote.textContent = text;
+    };
+
+    const hideViewportBanner = () => {
+      viewportBanner.className = 'viewport-banner';
+      viewportBanner.textContent = '';
+    };
+
+    const showViewportBanner = (message, tone = 'info') => {
+      viewportBanner.className = `viewport-banner is-visible is-${tone}`;
+      viewportBanner.textContent = message;
+    };
+
+    const updatePreviewSummary = ({ sessionId, resultCode, method }) => {
+      if (sessionId !== undefined) {
+        previewSessionId.textContent = sessionId || 'Waiting';
+      }
+
+      if (resultCode !== undefined) {
+        previewResultCode.textContent = resultCode || 'No result yet';
+      }
+
+      if (method !== undefined) {
+        previewMethod.textContent = method || 'Not chosen';
+      }
+    };
+
+    const renderStatusStrip = () => {
+      statusStrip.innerHTML = flowSteps.map((step) => {
+        const status = flowState[step.id] || 'waiting';
+        return `<div class="status-pill ${status}">${escapeHtml(step.title)}</div>`;
+      }).join('');
+    };
+
+    const renderDetailBlocks = (details) => {
+      if (!details || details.length === 0) {
+        return '<div class="activity-log-empty">No captured technical details for this step yet.</div>';
+      }
+
+      return `<div class="detail-list">${details.map((detail, index) => `
+        <details class="detail-disclosure" ${index === 0 ? 'open' : ''}>
+          <summary>
+            <div>${escapeHtml(detail.label)}</div>
+            <span>${escapeHtml(detail.meta || summarizePayload(detail.value))}</span>
+          </summary>
+          <pre class="detail-code">${escapeHtml(formatJson(detail.value))}</pre>
+        </details>
+      `).join('')}</div>`;
+    };
+
+    const stepSummaries = Object.fromEntries(flowSteps.map((step) => [step.id, step.description]));
+
+    const getStepSummary = (stepId) => stepSummaries[stepId] || 'Waiting for technical details.';
+
+    const setStepSummary = (stepId, summary) => {
+      if (summary) {
+        stepSummaries[stepId] = summary;
+      }
+    };
+
+    const updateFollowLiveLabel = () => {
+      followLiveLabel.textContent = `Follow Live: ${isFollowLiveEnabled ? 'On' : 'Off'}`;
+    };
+
+    const setFollowLive = (enabled) => {
+      isFollowLiveEnabled = enabled;
+      followLiveToggle.checked = enabled;
+      updateFollowLiveLabel();
+    };
+
+    const markProgrammaticScroll = () => {
+      suppressManualPauseUntil = Date.now() + 650;
+    };
+
+    const getSequenceTargetCard = () => {
+      const activeCard = sequenceStepsElement.querySelector('.sequence-step[data-status="active"] .sequence-card');
+      if (activeCard) {
+        return activeCard;
+      }
+
+      const progressedSteps = Array.from(sequenceStepsElement.querySelectorAll('.sequence-step'))
+        .filter((step) => step.getAttribute('data-status') !== 'waiting');
+      const latestStep = progressedSteps[progressedSteps.length - 1];
+      return latestStep?.querySelector('.sequence-card') || null;
+    };
+
+    const shouldPauseSequenceFollow = () => {
+      if (!sequenceScrollElement) {
+        return false;
+      }
+
+      const targetCard = getSequenceTargetCard();
+      if (!targetCard) {
+        return sequenceScrollElement.scrollTop > 24;
+      }
+
+      const containerRect = sequenceScrollElement.getBoundingClientRect();
+      const cardRect = targetCard.getBoundingClientRect();
+      return cardRect.top < containerRect.top + 8 || cardRect.bottom > containerRect.bottom - 8;
+    };
+
+    const shouldPauseTimelineFollow = () => {
+      if (!timelineScrollElement) {
+        return false;
+      }
+
+      return timelineScrollElement.scrollTop > 24;
+    };
+
+    const pauseFollowLiveIfNeeded = (reason) => {
+      if (!isFollowLiveEnabled || Date.now() < suppressManualPauseUntil) {
+        return;
+      }
+
+      const shouldPause = reason === 'sequence'
+        ? shouldPauseSequenceFollow()
+        : shouldPauseTimelineFollow();
+
+      if (shouldPause) {
+        setFollowLive(false);
+      }
+    };
+
+    const renderFlowSteps = () => {
+      sequenceStepsElement.innerHTML = flowSteps.map((step) => {
+        const status = flowState[step.id] || 'waiting';
+        const detailMarkup = renderDetailBlocks(stepTelemetry[step.id]);
+
+        return `
+          <div class="sequence-step" data-step-id="${step.id}" data-status="${status}" data-from="${step.from}">
+            <div class="sequence-card" style="grid-column: ${step.column};">
+              <div class="sequence-card-header">
+                <div>
+                  <strong>${escapeHtml(step.title)}</strong>
+                  <small>${escapeHtml(step.description)}</small>
+                </div>
+                <div class="state-badge ${status}">${escapeHtml(status)}</div>
+              </div>
+              <div class="sequence-card-body">
+                <p class="sequence-summary">${escapeHtml(getStepSummary(step.id))}</p>
+                ${detailMarkup}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      scrollSequenceToCurrentActivity();
+    };
+
+    const renderTimeline = () => {
+      if (timelineEvents.length === 0) {
+        timelineListElement.innerHTML = emptyTimelineMarkup;
+        scrollTimelineToCurrentActivity();
+        return;
+      }
+
+      timelineListElement.innerHTML = timelineEvents.map((event) => `
+        <article class="timeline-card">
+          <div class="timeline-time">${escapeHtml(event.time)}</div>
+          <div class="timeline-card-body-wrap">
+            <div class="timeline-card-header">
+              <div>
+                <strong>${escapeHtml(event.title)}</strong>
+                <small>${escapeHtml(event.subtitle)}</small>
+              </div>
+              <div class="state-badge ${escapeHtml(event.tone)}">${escapeHtml(event.source)}</div>
+            </div>
+            <div class="timeline-card-body">
+              <p class="timeline-summary">${escapeHtml(event.summary)}</p>
+              ${renderDetailBlocks(event.details || [])}
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      scrollTimelineToCurrentActivity();
+    };
+
+    const scrollSequenceToCurrentActivity = () => {
+      if (!sequenceScrollElement || !isFollowLiveEnabled) {
+        return;
+      }
+
+      markProgrammaticScroll();
+
+      requestAnimationFrame(() => {
+        const latestCard = getSequenceTargetCard();
+        if (latestCard) {
+          latestCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    };
+
+    const scrollTimelineToCurrentActivity = () => {
+      if (!timelineScrollElement || !isFollowLiveEnabled) {
+        return;
+      }
+
+      markProgrammaticScroll();
+
+      requestAnimationFrame(() => {
+        timelineScrollElement.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    };
+
+    const recordStepDetails = (stepId, details) => {
+      if (!(stepId in stepTelemetry)) {
+        return;
+      }
+
+      stepTelemetry[stepId] = details.filter(Boolean);
+      renderFlowSteps();
+    };
+
+    const appendTimelineEvent = ({ title, subtitle, summary, source, tone = 'active', details = [] }) => {
+      const timestamp = new Intl.DateTimeFormat([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(new Date());
+
+      timelineEvents.unshift({
+        time: timestamp,
+        title,
+        subtitle,
+        summary,
+        source,
+        tone,
+        details
+      });
+
+      while (timelineEvents.length > 18) {
+        timelineEvents.pop();
+      }
+
+      renderTimeline();
+    };
+
+    const setFlowDetail = (copy) => {
+      flowDetailCopy.textContent = copy;
+    };
+
+    const resetFlowSteps = (startIndex = 0) => {
+      for (let index = startIndex; index < flowSteps.length; index += 1) {
+        flowState[flowSteps[index].id] = 'waiting';
+      }
+
+      renderStatusStrip();
+      renderFlowSteps();
+    };
+
+    const setFlowStepStatus = (stepId, status, summary) => {
+      if (!(stepId in flowState)) {
+        return;
+      }
+
+      if (status === 'active') {
+        Object.keys(flowState).forEach((id) => {
+          if (flowState[id] === 'active') {
+            flowState[id] = 'done';
+          }
+        });
+      }
+
+      flowState[stepId] = status;
+      setStepSummary(stepId, summary);
+      setFlowDetail(summary || getStepSummary(stepId));
+      renderStatusStrip();
+      renderFlowSteps();
+    };
+
+    const addActivityEntry = (title, detail, tone = 'info') => {
+      const entry = document.createElement('div');
+      const timestamp = new Intl.DateTimeFormat([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(new Date());
+
+      if (!hasRenderedInteractionLog) {
+        activityLog.innerHTML = '';
+        hasRenderedInteractionLog = true;
+      }
+
+      entry.className = `activity-entry ${tone === 'warning' ? 'activity-entry-warning' : ''} ${tone === 'error' ? 'activity-entry-error' : ''}`.trim();
+      entry.innerHTML = `
+        <div class="activity-entry-time">${escapeHtml(timestamp)}</div>
+        <div class="activity-entry-body">
+          <strong>${escapeHtml(title)}</strong>
+          <span>${escapeHtml(detail)}</span>
+        </div>
+      `;
+
+      activityLog.prepend(entry);
+
+      while (activityLog.children.length > 10) {
+        activityLog.removeChild(activityLog.lastElementChild);
+      }
+    };
+
+    const resetExperience = () => {
+      Object.keys(flowState).forEach((id) => {
+        flowState[id] = 'waiting';
+        stepTelemetry[id] = [];
+        stepSummaries[id] = flowSteps.find((step) => step.id === id)?.description || '';
+      });
+
+      timelineEvents.length = 0;
+      renderTimeline();
+      renderStatusStrip();
+      renderFlowSteps();
+      setFlowDetail('Open the configuration lightbox to begin. The inspector will attach concrete browser and server details to each lifecycle step as activity unfolds.');
+      activityLog.innerHTML = emptyActivityMarkup;
+      hasRenderedInteractionLog = false;
+      lastInteractionSignature = null;
+      currentListenerState = null;
+      currentSelectedMethod = null;
+      updatePreviewSummary({ sessionId: 'Waiting', resultCode: 'No result yet', method: 'Not chosen' });
+      updateRuntimeNote('Waiting for configuration to render a Drop-in session.');
+      hideViewportBanner();
+      sessionResultPanel.classList.add('d-none');
+      previewEmptyState.classList.remove('d-none');
+    };
+
+    const setInspectorView = (viewName) => {
+      activeInspectorView = viewName;
+      document.querySelectorAll('.view-tab').forEach((button) => {
+        button.classList.toggle('active', button.dataset.view === viewName);
+      });
+      sequenceView.classList.toggle('active', viewName === 'sequence');
+      timelineView.classList.toggle('active', viewName === 'timeline');
+
+      if (viewName === 'sequence') {
+        scrollSequenceToCurrentActivity();
+      }
+
+      if (viewName === 'timeline') {
+        scrollTimelineToCurrentActivity();
+      }
+    };
+
+    const logInteractionOnce = (signature, title, detail, tone = 'info') => {
+      if (lastInteractionSignature === signature) {
+        return;
+      }
+
+      lastInteractionSignature = signature;
+      addActivityEntry(title, detail, tone);
+    };
+
+    const updateEnvironmentLabel = (isLive) => {
+      const envLabel = isLive ? 'Live' : 'Test';
+      environmentToggleLabel.textContent = envLabel;
+      envChip.textContent = envLabel.toLowerCase();
+
+      if (homeLink) {
+        homeLink.textContent = isLive ? 'Home (LIVE)' : 'Home';
+        homeLink.classList.toggle('btn-warning', isLive);
+        homeLink.classList.toggle('text-dark', isLive);
+      }
+    };
 
     const getClientKeyForEnv = (env) => clientKeys[env] || clientKeys.test;
+
+    const buildSessionRequestBody = ({ isLive, amountValue, currency, reference, shopperReference, shopperEmail, storePaymentMethodMode }) => {
+      const sessionRequestBody = {
+        isLive,
+        amount: { value: amountValue, currency },
+        reference,
+        returnUrl: `${window.location.origin}/redirect`
+      };
+
+      if (storePaymentMethodMode) {
+        sessionRequestBody.storePaymentMethodMode = storePaymentMethodMode;
+      }
+
+      if (shopperReference) {
+        sessionRequestBody.shopperReference = shopperReference;
+      }
+
+      if (shopperEmail) {
+        sessionRequestBody.shopperEmail = shopperEmail;
+      }
+
+      return sessionRequestBody;
+    };
+
+    const buildServerForwardBody = (requestBody) => {
+      const forwarded = JSON.parse(JSON.stringify(requestBody));
+      forwarded.merchantAccount = requestBody.isLive ? 'Configured live merchant account' : 'Configured test merchant account';
+      forwarded.countryCode = String(requestBody.amount?.currency || '').toUpperCase() === 'SGD' ? 'SG' : 'Derived from currency';
+      forwarded.recurringProcessingModel = 'Subscription';
+      if (!['enabled', 'askForConsent', 'disabled'].includes(forwarded.storePaymentMethodMode)) {
+        forwarded.storePaymentMethodMode = 'askForConsent';
+      }
+      delete forwarded.isLive;
+      return forwarded;
+    };
+
+    const buildDropinConfiguration = () => {
+      const cardConfiguration = {
+        hasHolderName: true,
+        holderNameRequired: false
+      };
+
+      const paypalConfiguration = {
+        intent: 'tokenize'
+      };
+
+      return {
+        paymentMethodsConfiguration: {
+          card: cardConfiguration,
+          paypal: paypalConfiguration
+        }
+      };
+    };
+
+    const captureBrowserConfiguration = ({ env, clientKey, session, dropinConfiguration }) => {
+      const browserConfiguration = {
+        environment: env,
+        clientKey: maskValue(clientKey),
+        session: {
+          id: session.id,
+          sessionData: maskValue(session.sessionData)
+        },
+        dropinConfiguration
+      };
+
+      const details = [
+        { label: 'Drop-in configuration', value: browserConfiguration, meta: 'browser config' }
+      ];
+
+      if (currentListenerState) {
+        details.push({ label: 'Latest listener state', value: currentListenerState, meta: 'onChange snapshot' });
+      }
+
+      recordStepDetails('dropin-mounted', details);
+      appendTimelineEvent({
+        title: 'Drop-in configuration prepared',
+        subtitle: 'Shopper browser',
+        summary: 'The explorer assembled the final AdyenCheckout configuration and payment method settings.',
+        source: 'browser',
+        tone: 'active',
+        details
+      });
+    };
 
     const extractErrorMessage = async (response) => {
       try {
@@ -107,72 +1983,375 @@
       }
     };
 
-    form.addEventListener("submit", async function (e) {
+    const stringifyFieldValue = (value) => {
+      if (value === null || value === undefined) {
+        return '';
+      }
+
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+
+      return String(value);
+    };
+
+    const renderSessionResult = (sessionData) => {
+      const entries = Object.entries(sessionData || {});
+
+      sessionResultTableBody.innerHTML = '';
+      sessionResultTableBodyModal.innerHTML = '';
+
+      if (entries.length === 0) {
+        const emptyRow = '<tr><td colspan="2" class="text-muted">No session data returned.</td></tr>';
+        sessionResultTableBody.innerHTML = emptyRow;
+        sessionResultTableBodyModal.innerHTML = emptyRow;
+      } else {
+        entries.forEach(([key, value]) => {
+          const row = document.createElement('tr');
+          const keyCell = document.createElement('td');
+          const valueCell = document.createElement('td');
+
+          keyCell.textContent = key;
+          valueCell.textContent = stringifyFieldValue(value);
+
+          row.appendChild(keyCell);
+          row.appendChild(valueCell);
+          sessionResultTableBody.appendChild(row);
+          sessionResultTableBodyModal.appendChild(row.cloneNode(true));
+        });
+      }
+
+      const prettyJson = JSON.stringify(sessionData || {}, null, 2);
+      sessionResultJson.textContent = prettyJson;
+      sessionResultJsonModal.textContent = prettyJson;
+      sessionResultPanel.classList.remove('d-none');
+    };
+
+    const attachResizeBehavior = () => {
+      if (!resizeHandle || window.innerWidth < 992) {
+        return;
+      }
+
+      let isResizing = false;
+
+      const handlePointerMove = (event) => {
+        if (!isResizing) {
+          return;
+        }
+
+        const rect = workbench.getBoundingClientRect();
+        const offset = event.clientX - rect.left;
+        const min = 320;
+        const max = rect.width - 360;
+        const next = Math.min(Math.max(offset, min), max);
+        workbench.style.setProperty('--left-pane-size', `${next}px`);
+      };
+
+      const stopResize = () => {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', stopResize);
+      };
+
+      resizeHandle.addEventListener('pointerdown', (event) => {
+        isResizing = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', stopResize);
+        event.preventDefault();
+      });
+    };
+
+    document.querySelectorAll('.view-tab').forEach((button) => {
+      button.addEventListener('click', () => setInspectorView(button.dataset.view));
+    });
+
+    followLiveToggle.addEventListener('change', () => {
+      setFollowLive(followLiveToggle.checked);
+
+      if (isFollowLiveEnabled) {
+        if (activeInspectorView === 'sequence') {
+          scrollSequenceToCurrentActivity();
+        } else {
+          scrollTimelineToCurrentActivity();
+        }
+      }
+    });
+
+    sequenceScrollElement?.addEventListener('scroll', () => {
+      pauseFollowLiveIfNeeded('sequence');
+    }, { passive: true });
+
+    timelineScrollElement?.addEventListener('scroll', () => {
+      pauseFollowLiveIfNeeded('timeline');
+    }, { passive: true });
+
+    openSessionResultModalButton.addEventListener('click', () => {
+      sessionResultModal.show();
+    });
+
+    openConfigModalButton.addEventListener('click', () => {
+      configModal.show();
+    });
+
+    environmentToggle.checked = initialEnv === 'live';
+    setFollowLive(true);
+    updateEnvironmentLabel(environmentToggle.checked);
+    renderStatusStrip();
+    renderFlowSteps();
+    renderTimeline();
+    attachResizeBehavior();
+    setInspectorView(activeInspectorView);
+
+    environmentToggle.addEventListener('change', () => {
+      const nextEnv = environmentToggle.checked ? 'live' : 'test';
+      updateEnvironmentLabel(environmentToggle.checked);
+      const pageUrl = new URL(window.location.href);
+      pageUrl.searchParams.set('env', nextEnv);
+      pageUrl.searchParams.set('version', sdkVersion);
+      window.location.assign(pageUrl.toString());
+    });
+
+    dropinContainer.addEventListener('click', (event) => {
+      const paymentMethod = event.target.closest('.adyen-checkout__payment-method');
+      if (paymentMethod) {
+        const label = paymentMethod.querySelector('.adyen-checkout__payment-method__name, .adyen-checkout__payment-method__radio')?.textContent?.trim() || 'Payment method';
+        currentSelectedMethod = label;
+        logInteractionOnce(`payment-method:${label}`, 'Payment method selected', `${label} is now active inside Drop-in.`);
+        updatePreviewSummary({ method: label });
+        setFlowStepStatus('dropin-mounted', 'active', `The shopper is interacting with the ${label} payment method inside Drop-in.`);
+        recordStepDetails('dropin-mounted', [
+          ...(stepTelemetry['dropin-mounted'] || []),
+          { label: 'Selected payment method', value: { label }, meta: label }
+        ]);
+        appendTimelineEvent({
+          title: 'Payment method selected',
+          subtitle: 'Shopper browser event',
+          summary: `${label} became the active payment method in the browser UI.`,
+          source: 'browser',
+          tone: 'active',
+          details: [
+            { label: 'Interaction event', value: { type: 'paymentMethodSelected', label }, meta: label }
+          ]
+        });
+      }
+
+      const payButton = event.target.closest('.adyen-checkout__button--pay, button[type="submit"]');
+      if (payButton && dropinContainer.contains(payButton)) {
+        resetFlowSteps(4);
+        setFlowStepStatus('payment-submit', 'active', 'Drop-in is handing the shopper payment data to Adyen through the active session.');
+        recordStepDetails('payment-submit', [
+          { label: 'Submission context', value: { selectedPaymentMethod: currentSelectedMethod, listenerState: currentListenerState }, meta: currentSelectedMethod || 'pay click' }
+        ]);
+        addActivityEntry('Payment submitted', 'Drop-in started the payment call for the selected method.');
+        appendTimelineEvent({
+          title: 'Payment submission started',
+          subtitle: 'Shopper browser event',
+          summary: 'The shopper confirmed payment and Drop-in began the payment submission.',
+          source: 'browser',
+          tone: 'active',
+          details: [
+            { label: 'Submission context', value: { selectedPaymentMethod: currentSelectedMethod, listenerState: currentListenerState }, meta: currentSelectedMethod || 'pay click' }
+          ]
+        });
+      }
+    });
+
+    dropinContainer.addEventListener('input', (event) => {
+      if (!event.target.closest('.adyen-checkout__input, .adyen-checkout__field, .adyen-checkout__dropdown')) {
+        return;
+      }
+
+      const fieldName = event.target.getAttribute('name') || event.target.getAttribute('id') || event.target.getAttribute('autocomplete') || 'checkout field';
+      logInteractionOnce(`input:${fieldName}`, 'Shopper updated details', `Drop-in is keeping browser-side payment data current after editing ${fieldName}.`);
+      setFlowStepStatus('dropin-mounted', 'active', `Drop-in is validating browser-side state after ${fieldName} changed.`);
+      recordStepDetails('dropin-mounted', [
+        ...(stepTelemetry['dropin-mounted'] || []),
+        { label: 'Last input event', value: { fieldName }, meta: fieldName }
+      ]);
+    });
+
+    const dropinObserver = new MutationObserver(() => {
+      if (dropinContainer.querySelector('.adyen-checkout__action')) {
+        setFlowStepStatus('payment-outcome', 'active', 'Adyen requested an extra shopper step, such as a redirect or challenge, and Drop-in is now presenting it.');
+        addActivityEntry('Additional action rendered', 'The checkout flow moved into an Adyen action step inside the browser.', 'warning');
+        appendTimelineEvent({
+          title: 'Additional action rendered',
+          subtitle: 'Adyen action step',
+          summary: 'Drop-in is presenting an additional action such as 3DS challenge or redirect.',
+          source: 'adyen',
+          tone: 'active'
+        });
+      }
+    });
+
+    dropinObserver.observe(dropinContainer, { childList: true, subtree: true });
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      latestInitializationId += 1;
+      const initializationId = latestInitializationId;
 
       const env = environmentToggle.checked ? 'live' : 'test';
       const isLive = env === 'live';
       const clientKey = getClientKeyForEnv(env);
       const amountValue = Number.parseInt(form.amount.value, 10);
-      const currency = (form.currency.value || "").trim().toUpperCase();
-      const reference = (form.reference.value || "").trim();
+      const currency = (form.currency.value || '').trim().toUpperCase();
+      const reference = (form.reference.value || '').trim();
+      const shopperReference = (form.shopperReference?.value || '').trim();
+      const shopperEmail = (form.shopperEmail?.value || '').trim();
+      const storePaymentMethodMode = (form.storePaymentMethodMode?.value || '').trim();
 
       if (!clientKey) {
         alert(`Missing client key for the ${env} environment.`);
         return;
       }
 
-      if (!Number.isInteger(amountValue) || amountValue <= 0) {
-        alert("Amount must be a positive integer in minor units.");
+      if (!Number.isInteger(amountValue) || amountValue < 0) {
+        alert('Amount must be an integer in minor units (0 or greater).');
         return;
       }
 
       if (!currency) {
-        alert("Currency is required.");
+        alert('Currency is required.');
         return;
       }
 
       if (!reference) {
-        alert("Reference is required.");
+        alert('Reference is required.');
         return;
       }
 
-      dropinContainer.innerHTML = "";
+      if (sessionRequestController) {
+        sessionRequestController.abort();
+      }
+
+      if (currentDropin) {
+        currentDropin.unmount();
+        currentDropin = null;
+      }
+
+      hasActiveSession = false;
+      dropinContainer.innerHTML = '';
+      resetExperience();
+      sessionRequestController = new AbortController();
+      startButton.disabled = true;
+      configModal.hide();
+      updateRuntimeNote('Creating a new Adyen session and preparing the explorer runtime.');
+      showViewportBanner('Session initialization started. Building a new Drop-in runtime now.', 'info');
 
       try {
+        const sessionRequestBody = buildSessionRequestBody({
+          isLive,
+          amountValue,
+          currency,
+          reference,
+          shopperReference,
+          shopperEmail,
+          storePaymentMethodMode
+        });
+
+        const serverForwardBody = buildServerForwardBody(sessionRequestBody);
+        const serverHeaders = {
+          'Content-Type': 'application/json',
+          'X-API-Key': maskedApiKeys[env] || 'Unavailable'
+        };
+
+        recordStepDetails('session-request', [
+          { label: 'Browser request body', value: sessionRequestBody, meta: `${currency} ${amountValue}` },
+          { label: 'Config lightbox state', value: { amountValue, currency, reference, shopperReference, shopperEmail, storePaymentMethodMode }, meta: 'form state' }
+        ]);
+        appendTimelineEvent({
+          title: 'Browser prepared session request',
+          subtitle: 'POST /api/sessions',
+          summary: 'The browser assembled the session request body from the configuration lightbox.',
+          source: 'browser',
+          tone: 'active',
+          details: [
+            { label: 'Request body', value: sessionRequestBody, meta: `${currency} ${amountValue}` }
+          ]
+        });
+
         const response = await fetch('/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            isLive,
-            amount: { value: amountValue, currency },
-            reference,
-            returnUrl: `${window.location.origin}/redirect`,
-            storePaymentMethodMode:"enabled",
-            shopperReference: "unique-shopper-id-12345"
-          })
+          body: JSON.stringify(sessionRequestBody),
+          signal: sessionRequestController.signal
+        });
+
+        setFlowStepStatus('session-request', 'done', 'The browser posted the checkout configuration to the demo server.');
+        recordStepDetails('session-create', [
+          { label: 'Forwarded request body', value: serverForwardBody, meta: 'server payload' },
+          { label: 'Forwarded request headers', value: serverHeaders, meta: 'masked headers' }
+        ]);
+        setFlowStepStatus('session-create', 'active', 'The demo server is calling Adyen /sessions with the enriched payload and masked API key header.');
+        addActivityEntry('Session requested', 'The page sent the shopper details to /api/sessions so the server can create an Adyen session.');
+        appendTimelineEvent({
+          title: 'Demo server forwarded session request',
+          subtitle: 'Express -> Adyen /sessions',
+          summary: 'The server added merchant and recurring context before calling the Adyen Checkout API.',
+          source: 'server',
+          tone: 'active',
+          details: [
+            { label: 'Forwarded request body', value: serverForwardBody, meta: 'server payload' },
+            { label: 'Request headers', value: serverHeaders, meta: 'masked headers' }
+          ]
         });
 
         if (!response.ok) {
           const message = await extractErrorMessage(response);
+          setFlowStepStatus('session-create', 'error', `Session creation failed before Drop-in could start: ${message}`);
+          recordStepDetails('session-create', [
+            { label: 'Forwarded request body', value: serverForwardBody, meta: 'server payload' },
+            { label: 'Request headers', value: serverHeaders, meta: 'masked headers' },
+            { label: 'Error response', value: { error: message }, meta: 'server error' }
+          ]);
+          addActivityEntry('Session creation failed', message, 'error');
+          appendTimelineEvent({
+            title: 'Session creation failed',
+            subtitle: 'Server error',
+            summary: message,
+            source: 'server',
+            tone: 'error',
+            details: [
+              { label: 'Error response', value: { error: message }, meta: 'server error' }
+            ]
+          });
           throw new Error(`Session creation failed: ${message}`);
         }
 
+        if (initializationId !== latestInitializationId) {
+          return;
+        }
+
         const session = await response.json();
-        console.log("Session response:", session);
-
-        //optional card configutation
-        	const cardConfiguration = {
-            hasHolderName: true, // Show the cardholder name field.
-            holderNameRequired: false, // Mark the cardholder name field as required.
-          };
-
-        //optionl drop-in configuration
-        const dropinConfiguration = {
-          paymentMethodsConfiguration: {
-            card: cardConfiguration
-          }
-        };
+        const dropinConfiguration = buildDropinConfiguration();
+        console.log('Session response:', session);
+        updatePreviewSummary({ sessionId: session.id });
+        setFlowStepStatus('session-create', 'done', 'The demo server received the Adyen session response and returned it to the browser.');
+        setFlowStepStatus('session-response', 'active', `Adyen returned session ${session.id}, which the browser can now use to initialize Drop-in.`);
+        recordStepDetails('session-create', [
+          { label: 'Forwarded request body', value: serverForwardBody, meta: 'server payload' },
+          { label: 'Request headers', value: serverHeaders, meta: 'masked headers' },
+          { label: 'Server response', value: session, meta: session.id || 'session response' }
+        ]);
+        recordStepDetails('session-response', [
+          { label: 'Adyen session response', value: session, meta: session.id || 'session response' }
+        ]);
+        addActivityEntry('Session ready', `Adyen session ${session.id} came back to the browser with sessionData.`);
+        appendTimelineEvent({
+          title: 'Adyen session returned',
+          subtitle: 'Session payload',
+          summary: `Adyen returned session ${session.id} and the browser is ready to mount Drop-in.`,
+          source: 'adyen',
+          tone: 'done',
+          details: [
+            { label: 'Adyen session response', value: session, meta: session.id || 'session response' }
+          ]
+        });
 
         const configuration = {
           environment: env,
@@ -181,25 +2360,221 @@
             id: session.id,
             sessionData: session.sessionData
           },
-          onPaymentCompleted: (result, component) => {
-            alert(`Payment result: ${result.resultCode || 'completed'}`);
+          onChange: (state) => {
+            currentListenerState = sanitizeState(state);
+            recordStepDetails('dropin-mounted', [
+              { label: 'Drop-in configuration', value: { environment: env, clientKey: maskValue(clientKey), sessionId: session.id, dropinConfiguration }, meta: 'browser config' },
+              { label: 'Event listener state', value: currentListenerState, meta: 'onChange snapshot' },
+              currentSelectedMethod ? { label: 'Selected payment method', value: { label: currentSelectedMethod }, meta: currentSelectedMethod } : null
+            ]);
+            appendTimelineEvent({
+              title: 'Drop-in state updated',
+              subtitle: 'onChange listener',
+              summary: 'The browser received a fresh Drop-in state snapshot.',
+              source: 'browser',
+              tone: 'active',
+              details: [
+                { label: 'Event listener state', value: currentListenerState, meta: 'onChange snapshot' }
+              ]
+            });
           },
-          onPaymentFailed: (result, component) => {
-            alert(`Payment failed: ${result.resultCode || 'Unknown error'}`);
+          onPaymentCompleted: async (result) => {
+            setFlowStepStatus('payment-submit', 'done', 'Adyen accepted the shopper submission and resolved the payment attempt.');
+            setFlowStepStatus('payment-outcome', 'active', `Adyen returned ${result.resultCode || 'a completed state'} to the browser.`);
+            recordStepDetails('payment-outcome', [
+              { label: 'Payment completion payload', value: result, meta: result.resultCode || 'completed' }
+            ]);
+            appendTimelineEvent({
+              title: 'Payment completed callback',
+              subtitle: 'Browser callback',
+              summary: `The browser received ${result.resultCode || 'a completed state'} from Adyen.`,
+              source: 'browser',
+              tone: 'done',
+              details: [
+                { label: 'onPaymentCompleted payload', value: result, meta: result.resultCode || 'completed' }
+              ]
+            });
+            updatePreviewSummary({ resultCode: result.resultCode || 'completed' });
+            showViewportBanner(`Payment result: ${result.resultCode || 'completed'}`, 'success');
+            addActivityEntry('Payment completed', `Adyen returned ${result.resultCode || 'completed'} to the browser.`);
+
+            try {
+              const getSessionUrl = new URL(`/api/sessions/${session.id}`, window.location.origin);
+              getSessionUrl.searchParams.set('isLive', String(isLive));
+
+              if (result?.sessionResult) {
+                getSessionUrl.searchParams.set('sessionResult', result.sessionResult);
+              }
+
+              const sessionFetchHeaders = {
+                'Content-Type': 'application/json',
+                'X-API-Key': maskedApiKeys[env] || 'Unavailable'
+              };
+
+              recordStepDetails('session-fetch', [
+                { label: 'Server fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'GET /api/sessions/:id' },
+                { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' }
+              ]);
+
+              const sessionResponse = await fetch(getSessionUrl.toString(), {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+              });
+
+              setFlowStepStatus('payment-outcome', 'done', 'The browser received the Adyen outcome and is now asking the server for the latest session snapshot.');
+              setFlowStepStatus('session-fetch', 'active', 'The demo server is retrieving the latest session resource for inspection.');
+              addActivityEntry('Fetching latest session', 'The demo calls GET /api/sessions/:id to show the final state returned by Adyen.');
+              appendTimelineEvent({
+                title: 'Latest session requested',
+                subtitle: 'GET /api/sessions/:id',
+                summary: 'The browser requested the freshest session resource from the demo server.',
+                source: 'server',
+                tone: 'active',
+                details: [
+                  { label: 'Fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'session lookup' },
+                  { label: 'Fetch headers', value: sessionFetchHeaders, meta: 'masked headers' }
+                ]
+              });
+
+              if (!sessionResponse.ok) {
+                const message = await extractErrorMessage(sessionResponse);
+                setFlowStepStatus('session-fetch', 'error', `The latest session lookup failed: ${message}`);
+                recordStepDetails('session-fetch', [
+                  { label: 'Server fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'GET /api/sessions/:id' },
+                  { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' },
+                  { label: 'Fetch error', value: { error: message }, meta: 'server error' }
+                ]);
+                addActivityEntry('Session lookup failed', message, 'error');
+                throw new Error(`Get session failed: ${message}`);
+              }
+
+              const latestSession = await sessionResponse.json();
+              renderSessionResult(latestSession);
+              recordStepDetails('session-fetch', [
+                { label: 'Server fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'GET /api/sessions/:id' },
+                { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' },
+                { label: 'Latest session response', value: latestSession, meta: latestSession.status || 'session payload' }
+              ]);
+              setFlowStepStatus('session-fetch', 'done', 'The latest Adyen session payload is now visible in the result panel below the explorer.');
+              addActivityEntry('Session state rendered', 'The page updated the result panel with the latest session payload from the server.');
+              appendTimelineEvent({
+                title: 'Latest session rendered',
+                subtitle: 'Server response',
+                summary: 'The explorer rendered the final session state returned by the demo server.',
+                source: 'server',
+                tone: 'done',
+                details: [
+                  { label: 'Latest session response', value: latestSession, meta: latestSession.status || 'session payload' }
+                ]
+              });
+              console.log('Latest Adyen session from server:', latestSession);
+            } catch (sessionError) {
+              setFlowStepStatus('session-fetch', 'error', sessionError.message || 'Unable to retrieve the latest session state.');
+              console.error('Failed to retrieve latest session after payment completion:', sessionError);
+            }
+          },
+          onPaymentFailed: (result) => {
+            setFlowStepStatus('payment-submit', 'done', 'The payment request reached Adyen but did not authorise successfully.');
+            setFlowStepStatus('payment-outcome', 'error', `Adyen returned ${result.resultCode || 'a failure'} for this attempt.`);
+            recordStepDetails('payment-outcome', [
+              { label: 'Payment failure payload', value: result, meta: result.resultCode || 'failure' }
+            ]);
+            appendTimelineEvent({
+              title: 'Payment failed callback',
+              subtitle: 'Browser callback',
+              summary: `The payment failed with ${result.resultCode || 'an unknown error'}.`,
+              source: 'browser',
+              tone: 'error',
+              details: [
+                { label: 'onPaymentFailed payload', value: result, meta: result.resultCode || 'failure' }
+              ]
+            });
+            updatePreviewSummary({ resultCode: result.resultCode || 'Failure' });
+            showViewportBanner(`Payment failed: ${result.resultCode || 'Unknown error'}`, 'error');
+            addActivityEntry('Payment failed', `Adyen returned ${result.resultCode || 'Unknown error'}.`, 'error');
             console.log('Payment failed:', result);
           },
           onError: (err) => {
             const message = err?.message || err?.name || 'Unknown error';
-            alert(`Checkout error: ${message}`);
+            setFlowStepStatus('payment-outcome', 'error', `Drop-in reported an integration error: ${message}`);
+            recordStepDetails('payment-outcome', [
+              { label: 'Drop-in error', value: { message }, meta: 'integration error' }
+            ]);
+            appendTimelineEvent({
+              title: 'Drop-in error',
+              subtitle: 'Browser callback',
+              summary: message,
+              source: 'browser',
+              tone: 'error',
+              details: [
+                { label: 'Error object', value: { message }, meta: 'integration error' }
+              ]
+            });
+            showViewportBanner(`Checkout error: ${message}`, 'error');
+            addActivityEntry('Checkout error', message, 'error');
             console.error('Error:', err);
           }
         };
 
+        captureBrowserConfiguration({ env, clientKey, session, dropinConfiguration });
         const checkout = await AdyenCheckout(configuration);
-        new Dropin(checkout, dropinConfiguration).mount('#dropin-container');
+        if (initializationId !== latestInitializationId) {
+          return;
+        }
+
+        setFlowStepStatus('session-response', 'done', 'The browser has everything it needs to bootstrap Drop-in for this session.');
+        setFlowStepStatus('dropin-mounted', 'active', 'AdyenCheckout is initializing the Drop-in components in the browser.');
+        currentDropin = new Dropin(checkout, dropinConfiguration);
+        currentDropin.mount('#dropin-container');
+        setFlowStepStatus('dropin-mounted', 'done', 'Drop-in is mounted and waiting for shopper interaction.');
+        addActivityEntry('Drop-in mounted', 'The browser rendered Drop-in and the shopper can now choose a payment method.');
+        appendTimelineEvent({
+          title: 'Drop-in mounted',
+          subtitle: 'Live preview',
+          summary: 'The Adyen Drop-in component is now mounted in the live preview panel.',
+          source: 'browser',
+          tone: 'done',
+          details: [
+            { label: 'Mounted session', value: { sessionId: session.id }, meta: session.id }
+          ]
+        });
+        hasActiveSession = true;
+        previewEmptyState.classList.add('d-none');
+        hideViewportBanner();
+        updateRuntimeNote(`Live session ${session.id} is mounted. Use Open Config to relaunch with new parameters.`);
       } catch (error) {
-        alert(error.message || 'Failed to start checkout.');
+        if (error.name === 'AbortError') {
+          return;
+        }
+
+        addActivityEntry('Initialization failed', error.message || 'Failed to start checkout.', 'error');
+        appendTimelineEvent({
+          title: 'Explorer initialization failed',
+          subtitle: 'Setup error',
+          summary: error.message || 'Failed to start checkout.',
+          source: 'browser',
+          tone: 'error',
+          details: [
+            { label: 'Failure', value: { message: error.message || 'Failed to start checkout.' }, meta: 'initialization error' }
+          ]
+        });
+        showViewportBanner(error.message || 'Failed to start checkout.', 'error');
         console.error('Failed to initialize drop-in:', error);
+      } finally {
+        if (initializationId === latestInitializationId) {
+          startButton.disabled = false;
+        }
+
+        if (sessionRequestController?.signal?.aborted || initializationId === latestInitializationId) {
+          sessionRequestController = null;
+        }
+      }
+    });
+
+    resetExperience();
+    queueMicrotask(() => {
+      if (!hasActiveSession) {
+        configModal.show();
       }
     });
   </script>

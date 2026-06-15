@@ -3,15 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Adyen Drop-in Demo (Advanced Flow)</title>
+  <title>Adyen Advanced Flow Workbench</title>
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
 
-  <!-- Adyen SDK -->
   <link rel="stylesheet" href="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.css" />
   <script src="https://checkoutshopper-<%= env %>.adyen.com/checkoutshopper/sdk/<%= sdkVersion %>/adyen.js"></script>
+  <link rel="stylesheet" href="/css/workbench-theme.css" />
 
   <script>
     const initialEnv = "<%= env %>";
@@ -23,67 +22,1223 @@
   </script>
 
   <style>
-    .container {
-      margin-top: 3rem;
+    .explorer-shell {
+      min-height: calc(100vh - 1.5rem);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 0.75rem;
     }
 
-    .form-box {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 2rem;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    .explorer-workbench {
+      display: grid;
+      grid-template-columns: minmax(360px, var(--left-pane-size, 48%)) 12px minmax(360px, 1fr);
+      min-height: 0;
+    }
+
+    .explorer-panel {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 1rem 1rem 0.85rem;
+      border-bottom: 1px solid rgba(137, 168, 216, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      margin: 0.22rem 0 0;
+      color: var(--text-1);
+      font-size: 0.9rem;
+    }
+
+    .panel-header-meta {
+      display: inline-flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(19, 34, 58, 0.95);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      color: var(--text-1);
+      font-size: 0.76rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .panel-body {
+      min-height: 0;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .preview-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 0;
+      gap: 0.9rem;
+      flex: 1;
+    }
+
+    .runtime-note {
+      color: var(--text-1);
+      font-size: 0.84rem;
+    }
+
+    .preview-stage {
+      min-height: 0;
+      background: linear-gradient(180deg, rgba(8, 18, 34, 0.95), rgba(14, 26, 46, 0.92));
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 0.75rem;
+    }
+
+    .preview-stage-title {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .preview-stage-copy {
+      margin: 0.18rem 0 0;
+      font-size: 0.83rem;
+      color: var(--text-1);
     }
 
     #dropin-container {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      min-height: 28rem;
+      height: 100%;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 247, 250, 0.95));
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      padding: 1rem;
+      overflow: auto;
+    }
+
+    .preview-empty-state {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      border: 1px dashed rgba(56, 189, 248, 0.26);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(239, 246, 255, 0.88), rgba(232, 242, 255, 0.72));
+      color: #0f172a;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .preview-empty-state strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-empty-state span {
+      color: #334155;
+      line-height: 1.55;
+    }
+
+    .preview-data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .preview-data-card {
+      padding: 0.85rem 0.9rem;
+      border-radius: 14px;
+      background: rgba(12, 24, 42, 0.9);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      min-width: 0;
+    }
+
+    .preview-data-card label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-2);
+    }
+
+    .preview-data-card strong {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--text-0);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .resize-handle {
+      display: grid;
+      place-items: center;
+      cursor: col-resize;
+      user-select: none;
+      position: relative;
+    }
+
+    .resize-handle::before {
+      content: "";
+      width: 4px;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.1), rgba(56, 189, 248, 0.45), rgba(56, 189, 248, 0.1));
+    }
+
+    .resize-handle::after {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 64px;
+      border-radius: 999px;
+      background: rgba(14, 26, 46, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+    }
+
+    .inspector-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 0;
+      flex: 1;
+      gap: 0.85rem;
+    }
+
+    .view-tabs {
+      display: inline-flex;
+      background: rgba(12, 24, 42, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      border-radius: 999px;
+      padding: 0.2rem;
+      gap: 0.2rem;
+      width: fit-content;
+    }
+
+    .view-tab {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.5rem 0.85rem;
+      background: transparent;
+      color: var(--text-1);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .view-tab.active {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(34, 197, 94, 0.18));
+      color: var(--text-0);
+    }
+
+    .follow-live-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      background: rgba(12, 24, 42, 0.94);
+      color: var(--text-1);
+    }
+
+    .status-strip {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(12, 24, 42, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      color: var(--text-1);
+      font-size: 0.78rem;
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 999px;
+      background: rgba(137, 168, 216, 0.35);
+    }
+
+    .status-pill.active::before {
+      background: var(--accent);
+    }
+
+    .status-pill.done::before {
+      background: var(--accent-2);
+    }
+
+    .status-pill.error::before {
+      background: var(--danger);
+    }
+
+    .inspector-view {
+      display: none;
+      min-height: 0;
+    }
+
+    .inspector-view.active {
+      display: block;
+      min-height: 0;
+    }
+
+    .sequence-actors,
+    .sequence-step {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .sequence-actors {
+      margin-bottom: 0.9rem;
+    }
+
+    .sequence-actor {
+      padding: 0.85rem 0.8rem 1rem;
+      border-radius: 16px;
+      background: rgba(16, 31, 52, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-0);
+    }
+
+    .sequence-actor small {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--text-1);
+      font-weight: 500;
+    }
+
+    .sequence-scroll,
+    .timeline-scroll {
+      min-height: 0;
+      max-height: calc(100vh - 23rem);
+      overflow: auto;
+      padding-right: 0.2rem;
+    }
+
+    .sequence-steps,
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .sequence-card,
+    .timeline-card-body-wrap {
+      border-radius: 16px;
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      background: rgba(14, 26, 46, 0.95);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+      overflow: hidden;
+    }
+
+    .sequence-card-header,
+    .timeline-card-header {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(137, 168, 216, 0.08);
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .sequence-card-body,
+    .timeline-card-body {
+      padding: 0.85rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.34rem 0.6rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      background: rgba(8, 18, 34, 0.86);
+      color: var(--text-1);
+      white-space: nowrap;
+    }
+
+    .detail-disclosure {
+      border: 1px solid rgba(137, 168, 216, 0.12);
+      border-radius: 14px;
+      background: rgba(10, 20, 36, 0.9);
+      overflow: hidden;
+    }
+
+    .detail-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      color: var(--text-0);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .detail-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .detail-code {
+      margin: 0;
+      padding: 0.85rem 0.9rem 1rem;
+      background: rgba(5, 12, 22, 0.94);
+      color: #d9e8ff;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 16rem;
+      overflow: auto;
+    }
+
+    .timeline-card {
+      display: grid;
+      grid-template-columns: 5.2rem minmax(0, 1fr);
+      gap: 0.85rem;
+      align-items: start;
+    }
+
+    .timeline-time,
+    .activity-entry-time {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      white-space: nowrap;
+      padding-top: 0.4rem;
+    }
+
+    .helper-panel {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .helper-card {
+      padding: 0.9rem 1rem;
+      border-radius: 16px;
+      background: rgba(12, 24, 42, 0.94);
+      border: 1px solid rgba(137, 168, 216, 0.12);
+    }
+
+    .helper-card h3 {
+      margin: 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-2);
+    }
+
+    .helper-card p {
+      margin: 0.45rem 0 0;
+      color: var(--text-1);
+      line-height: 1.5;
+      font-size: 0.88rem;
+    }
+
+    .activity-list {
+      margin-top: 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 12rem;
+      overflow: auto;
+    }
+
+    .activity-entry {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.7rem;
+      align-items: start;
+      padding: 0.75rem 0.8rem;
+      border-radius: 14px;
+      background: rgba(8, 18, 34, 0.92);
+      border: 1px solid rgba(137, 168, 216, 0.1);
+    }
+
+    .activity-entry-body strong {
+      display: block;
+      font-size: 0.88rem;
+    }
+
+    .activity-entry-body span {
+      display: block;
+      margin-top: 0.15rem;
+      color: var(--text-1);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .activity-log-empty {
+      padding: 0.9rem;
+      border-radius: 14px;
+      border: 1px dashed rgba(137, 168, 216, 0.16);
+      color: var(--text-1);
+      font-size: 0.85rem;
+      background: rgba(8, 18, 34, 0.84);
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, rgba(9, 16, 29, 0.98), rgba(11, 20, 35, 0.98));
+      color: var(--text-0);
+      border: 1px solid rgba(137, 168, 216, 0.16);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header,
+    .modal-footer {
+      border-color: rgba(137, 168, 216, 0.12);
+    }
+
+    .form-label,
+    .form-check-label {
+      color: var(--text-1);
+    }
+
+    .form-control,
+    .form-select {
+      background: rgba(8, 18, 34, 0.86);
+      border-color: rgba(137, 168, 216, 0.16);
+      color: var(--text-0);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      background: rgba(8, 18, 34, 0.96);
+      border-color: rgba(56, 189, 248, 0.38);
+      box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.12);
+      color: var(--text-0);
+    }
+
+    .form-control::placeholder {
+      color: #6f87a9;
+    }
+
+    .btn-close {
+      filter: invert(1) grayscale(1);
+    }
+
+    .scrollable-theme {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(56, 189, 248, 0.45) rgba(8, 18, 34, 0.72);
+    }
+
+    .scrollable-theme::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .scrollable-theme::-webkit-scrollbar-track {
+      background: rgba(8, 18, 34, 0.72);
+      border-radius: 999px;
+    }
+
+    .scrollable-theme::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.84), rgba(34, 197, 94, 0.75));
+      border-radius: 999px;
+      border: 2px solid rgba(8, 18, 34, 0.65);
+    }
+
+    @media (max-width: 991.98px) {
+      .explorer-workbench {
+        grid-template-columns: 1fr;
+      }
+
+      .resize-handle {
+        display: none;
+      }
+
+      .sequence-scroll,
+      .timeline-scroll {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .preview-data-grid,
+      .sequence-actors,
+      .sequence-step,
+      .timeline-card {
+        grid-template-columns: 1fr;
+      }
+
+      #dropin-container {
+        min-height: 22rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="d-flex justify-content-end mb-3">
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
-        <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
-      </div>
-    </div>
-    <h1 class="text-center">Adyen Drop-in Demo (Advanced Flow)</h1>
+  <div class="container-fluid workbench-page-shell">
+    <div class="explorer-shell">
+      <header class="workbench-topbar">
+        <div class="workbench-title-cluster">
+          <div class="workbench-badge">Live Explorer</div>
+          <div class="workbench-heading">
+            <h1>Adyen Advanced Flow Workbench</h1>
+            <p>Web IDE style inspector for browser events, demo server calls, and Adyen advanced payment lifecycle.</p>
+          </div>
+        </div>
+        <div class="workbench-toolbar">
+          <a id="home-link" href="/" class="btn-workbench">Home</a>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="environmentToggle">
+            <label class="form-check-label" for="environmentToggle" id="environmentToggleLabel">Test</label>
+          </div>
+          <button id="open-config-modal" type="button" class="btn-workbench">Open Config</button>
+        </div>
+      </header>
 
-    <div class="row">
-      <!-- Configuration Form -->
-      <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0">
-        <div class="form-box">
+      <main class="explorer-workbench" id="explorer-workbench">
+        <section class="workbench-panel explorer-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Live Preview</h2>
+              <p class="panel-subtitle">Run advanced Drop-in and inspect request/response steps from the same viewport.</p>
+            </div>
+            <div class="panel-header-meta">
+              <div class="meta-pill">SDK <span id="sdk-version-chip"><%= sdkVersion %></span></div>
+              <div class="meta-pill">Env <span id="env-chip"><%= env %></span></div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="preview-shell">
+              <div class="workbench-chip-row">
+                <div class="workbench-chip">/dropin-advanced</div>
+                <div class="workbench-chip">POST /api/paymentMethods</div>
+                <div class="workbench-chip">POST /api/payments</div>
+                <div class="workbench-chip">POST /api/payments/details</div>
+              </div>
+
+              <div class="runtime-note" id="runtime-note">Open config and launch advanced flow to start lifecycle tracing.</div>
+              <div id="viewport-banner" class="workbench-banner" role="status" aria-live="polite"></div>
+
+              <div class="preview-stage">
+                <div>
+                  <h3 class="preview-stage-title">Shopper Viewport</h3>
+                  <p class="preview-stage-copy">The left panel runs the actual Drop-in while the right panel tracks every lifecycle transition.</p>
+                </div>
+                <div id="dropin-container" class="scrollable-theme">
+                  <div class="preview-empty-state" id="preview-empty-state">
+                    <div>
+                      <strong>No active advanced session</strong>
+                      <span>Start from config to fetch payment methods, mount Drop-in, and trace each payment callback with payload details.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="preview-data-grid">
+                <div class="preview-data-card">
+                  <label>Current Stage</label>
+                  <strong id="preview-stage">Idle</strong>
+                </div>
+                <div class="preview-data-card">
+                  <label>Result Code</label>
+                  <strong id="preview-result">No result yet</strong>
+                </div>
+                <div class="preview-data-card">
+                  <label>Selected Method</label>
+                  <strong id="preview-method">Not chosen</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="resize-handle" id="resize-handle" aria-hidden="true"></div>
+
+        <aside class="workbench-panel explorer-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Integration Inspector</h2>
+              <p class="panel-subtitle">Sequence and timeline views for browser, demo server, and Adyen callbacks.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+              <div class="view-tabs" role="tablist" aria-label="Inspector view selector">
+                <button type="button" class="view-tab active" data-view="sequence">Sequence</button>
+                <button type="button" class="view-tab" data-view="timeline">Timeline</button>
+              </div>
+              <div class="form-check form-switch follow-live-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="followLiveToggle" checked>
+                <label class="form-check-label" for="followLiveToggle" id="followLiveLabel">Follow Live: On</label>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="inspector-shell">
+              <div class="status-strip" id="status-strip"></div>
+
+              <div id="sequence-view" class="inspector-view active">
+                <div class="sequence-actors">
+                  <div class="sequence-actor">Shopper Browser<small>Drop-in interaction + callbacks</small></div>
+                  <div class="sequence-actor">Demo Server<small>Express endpoints + payloads</small></div>
+                  <div class="sequence-actor">Adyen Platform<small>Actions + result codes</small></div>
+                </div>
+                <div class="sequence-scroll scrollable-theme">
+                  <div id="sequence-steps" class="sequence-steps"></div>
+                </div>
+              </div>
+
+              <div id="timeline-view" class="inspector-view">
+                <div class="timeline-scroll scrollable-theme">
+                  <div id="timeline-list" class="timeline-list"></div>
+                </div>
+              </div>
+
+              <div class="helper-panel">
+                <section class="helper-card">
+                  <h3>Current Focus</h3>
+                  <p id="flow-detail-copy">Waiting for advanced flow initialization from the config lightbox.</p>
+                </section>
+                <section class="helper-card">
+                  <h3>Recent Activity</h3>
+                  <div id="activity-log" class="activity-list scrollable-theme">
+                    <div class="activity-log-empty">No events yet. Lifecycle events appear here in real time.</div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dropinConfigModal" tabindex="-1" aria-labelledby="dropinConfigModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title" id="dropinConfigModalLabel">Configure Advanced Flow</h5>
+            <p class="mb-0" style="color:var(--text-1)">Set amount and reference, then launch the live explorer.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
           <form id="dropinForm">
             <%- include('shared-dropin-configuration-form') %>
-
-            <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
           </form>
         </div>
-      </div>
-
-      <!-- Drop-in -->
-      <div class="col-md-8 order-2 order-md-1">
-        <div id="dropin-container"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+          <button type="submit" form="dropinForm" class="btn btn-info" id="start-dropin-button">Start Drop-in</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const { AdyenCheckout, Dropin} = window.AdyenWeb;  
+    const { AdyenCheckout, Dropin } = window.AdyenWeb;
+    const form = document.getElementById('dropinForm');
+    const environmentToggle = document.getElementById('environmentToggle');
+    const environmentToggleLabel = document.getElementById('environmentToggleLabel');
+    const homeLink = document.getElementById('home-link');
+    const envChip = document.getElementById('env-chip');
+    const openConfigModalButton = document.getElementById('open-config-modal');
+    const viewportBanner = document.getElementById('viewport-banner');
+    const runtimeNote = document.getElementById('runtime-note');
+    const previewEmptyState = document.getElementById('preview-empty-state');
+    const previewStage = document.getElementById('preview-stage');
+    const previewResult = document.getElementById('preview-result');
+    const previewMethod = document.getElementById('preview-method');
+    const dropinContainer = document.getElementById('dropin-container');
+    const statusStrip = document.getElementById('status-strip');
+    const sequenceStepsElement = document.getElementById('sequence-steps');
+    const timelineListElement = document.getElementById('timeline-list');
+    const flowDetailCopy = document.getElementById('flow-detail-copy');
+    const activityLog = document.getElementById('activity-log');
+    const followLiveToggle = document.getElementById('followLiveToggle');
+    const followLiveLabel = document.getElementById('followLiveLabel');
+    const sequenceView = document.getElementById('sequence-view');
+    const timelineView = document.getElementById('timeline-view');
+    const sequenceScrollElement = document.querySelector('.sequence-scroll');
+    const timelineScrollElement = document.querySelector('.timeline-scroll');
+    const workbench = document.getElementById('explorer-workbench');
+    const resizeHandle = document.getElementById('resize-handle');
+    const configModalElement = document.getElementById('dropinConfigModal');
+    const startButton = document.getElementById('start-dropin-button');
 
-    const form = document.getElementById("dropinForm");
-    const environmentToggle = document.getElementById("environmentToggle");
-    const environmentToggleLabel = document.getElementById("environmentToggleLabel");
+    const configModal = bootstrap.Modal.getOrCreateInstance(configModalElement);
+
+    const flowSteps = [
+      { id: 'payment-methods-request', title: 'POST /api/paymentMethods', description: 'Browser asks demo server for eligible methods.', column: 1 },
+      { id: 'payment-methods-response', title: 'Methods returned from Adyen', description: 'Server relays Adyen paymentMethods payload.', column: 3 },
+      { id: 'dropin-mounted', title: 'Drop-in mounted', description: 'Browser initializes AdyenCheckout and renders Drop-in.', column: 1 },
+      { id: 'payment-submit', title: 'Shopper submits payment', description: 'onSubmit sends payment payload to demo server.', column: 1 },
+      { id: 'payments-call', title: 'POST /api/payments', description: 'Server calls Adyen payments endpoint.', column: 2 },
+      { id: 'details-call', title: 'POST /api/payments/details', description: 'Additional details flow continues when action is required.', column: 2 },
+      { id: 'payment-outcome', title: 'Result/action delivered', description: 'Adyen action or final resultCode reaches browser.', column: 3 }
+    ];
+
+    const flowState = Object.fromEntries(flowSteps.map((step) => [step.id, 'waiting']));
+    const stepTelemetry = Object.fromEntries(flowSteps.map((step) => [step.id, []]));
+    const stepSummaries = Object.fromEntries(flowSteps.map((step) => [step.id, step.description]));
+    const timelineEvents = [];
+
+    let currentDropin = null;
+    let currentSelectedMethod = null;
+    let currentListenerState = null;
+    let activeInspectorView = 'sequence';
+    let isFollowLiveEnabled = true;
+    let suppressManualPauseUntil = 0;
+
+    const emptyActivityMarkup = '<div class="activity-log-empty">No events yet. Lifecycle events appear here in real time.</div>';
+    const emptyTimelineMarkup = '<div class="activity-log-empty">Timeline is empty until events are emitted.</div>';
+
+    const escapeHtml = (value) => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const formatJson = (value) => {
+      if (value === undefined) {
+        return 'Unavailable';
+      }
+
+      if (typeof value === 'string') {
+        return value;
+      }
+
+      return JSON.stringify(value, null, 2);
+    };
+
+    const summarizePayload = (value) => {
+      if (value === undefined || value === null) {
+        return 'No payload';
+      }
+
+      if (typeof value === 'string') {
+        return value.length > 64 ? `${value.slice(0, 61)}...` : value;
+      }
+
+      if (Array.isArray(value)) {
+        return `${value.length} items`;
+      }
+
+      if (typeof value === 'object') {
+        const keys = Object.keys(value);
+        return keys.length ? keys.join(', ') : 'Empty object';
+      }
+
+      return String(value);
+    };
+
+    const sanitizeState = (state) => {
+      const paymentMethod = state?.data?.paymentMethod || {};
+      return {
+        isValid: Boolean(state?.isValid),
+        paymentMethodType: paymentMethod.type || null,
+        knownFields: Object.keys(paymentMethod).filter((key) => !key.startsWith('encrypted')),
+        hasBrowserInfo: Boolean(state?.data?.browserInfo)
+      };
+    };
+
+    const setRuntimeNote = (text) => {
+      runtimeNote.textContent = text;
+    };
+
+    const hideBanner = () => {
+      viewportBanner.className = 'workbench-banner';
+      viewportBanner.textContent = '';
+    };
+
+    const showBanner = (message, tone = 'info') => {
+      viewportBanner.className = `workbench-banner is-visible is-${tone}`;
+      viewportBanner.textContent = message;
+    };
+
+    const updatePreview = ({ stage, result, method }) => {
+      if (stage !== undefined) {
+        previewStage.textContent = stage;
+      }
+      if (result !== undefined) {
+        previewResult.textContent = result;
+      }
+      if (method !== undefined) {
+        previewMethod.textContent = method;
+      }
+    };
+
+    const renderStatusStrip = () => {
+      statusStrip.innerHTML = flowSteps.map((step) => {
+        const status = flowState[step.id] || 'waiting';
+        return `<div class="status-pill ${status}">${escapeHtml(step.title)}</div>`;
+      }).join('');
+    };
+
+    const renderDetailBlocks = (details) => {
+      if (!details || details.length === 0) {
+        return '<div class="activity-log-empty">No technical payload captured for this step.</div>';
+      }
+
+      return details.map((detail, index) => `
+        <details class="detail-disclosure" ${index === 0 ? 'open' : ''}>
+          <summary>
+            <div>${escapeHtml(detail.label)}</div>
+            <span>${escapeHtml(detail.meta || summarizePayload(detail.value))}</span>
+          </summary>
+          <pre class="detail-code scrollable-theme">${escapeHtml(formatJson(detail.value))}</pre>
+        </details>
+      `).join('');
+    };
+
+    const renderFlowSteps = () => {
+      sequenceStepsElement.innerHTML = flowSteps.map((step) => {
+        const status = flowState[step.id] || 'waiting';
+        return `
+          <div class="sequence-step" data-step-id="${step.id}" data-status="${status}">
+            <div class="sequence-card" style="grid-column: ${step.column};">
+              <div class="sequence-card-header">
+                <div>
+                  <strong>${escapeHtml(step.title)}</strong>
+                  <small>${escapeHtml(step.description)}</small>
+                </div>
+                <div class="state-badge ${status}">${escapeHtml(status)}</div>
+              </div>
+              <div class="sequence-card-body">
+                <p class="mb-0" style="color: var(--text-1); font-size: 0.87rem; line-height:1.5;">${escapeHtml(stepSummaries[step.id] || step.description)}</p>
+                ${renderDetailBlocks(stepTelemetry[step.id])}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      scrollSequenceToCurrentActivity();
+    };
+
+    const renderTimeline = () => {
+      if (timelineEvents.length === 0) {
+        timelineListElement.innerHTML = emptyTimelineMarkup;
+        scrollTimelineToCurrentActivity();
+        return;
+      }
+
+      timelineListElement.innerHTML = timelineEvents.map((event) => `
+        <article class="timeline-card">
+          <div class="timeline-time">${escapeHtml(event.time)}</div>
+          <div class="timeline-card-body-wrap">
+            <div class="timeline-card-header">
+              <div>
+                <strong>${escapeHtml(event.title)}</strong>
+                <small>${escapeHtml(event.subtitle)}</small>
+              </div>
+              <div class="state-badge ${escapeHtml(event.tone)}">${escapeHtml(event.source)}</div>
+            </div>
+            <div class="timeline-card-body">
+              <p class="mb-0" style="color: var(--text-1); font-size:0.87rem; line-height:1.5;">${escapeHtml(event.summary)}</p>
+              ${renderDetailBlocks(event.details || [])}
+            </div>
+          </div>
+        </article>
+      `).join('');
+      scrollTimelineToCurrentActivity();
+    };
+
+    const addActivity = (title, detail) => {
+      if (activityLog.querySelector('.activity-log-empty')) {
+        activityLog.innerHTML = '';
+      }
+
+      const timestamp = new Intl.DateTimeFormat([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(new Date());
+
+      const entry = document.createElement('div');
+      entry.className = 'activity-entry';
+      entry.innerHTML = `
+        <div class="activity-entry-time">${escapeHtml(timestamp)}</div>
+        <div class="activity-entry-body">
+          <strong>${escapeHtml(title)}</strong>
+          <span>${escapeHtml(detail)}</span>
+        </div>
+      `;
+
+      activityLog.prepend(entry);
+
+      while (activityLog.children.length > 12) {
+        activityLog.removeChild(activityLog.lastElementChild);
+      }
+    };
+
+    const appendTimelineEvent = ({ title, subtitle, summary, source, tone = 'active', details = [] }) => {
+      const timestamp = new Intl.DateTimeFormat([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(new Date());
+
+      timelineEvents.unshift({
+        time: timestamp,
+        title,
+        subtitle,
+        summary,
+        source,
+        tone,
+        details
+      });
+
+      while (timelineEvents.length > 20) {
+        timelineEvents.pop();
+      }
+
+      renderTimeline();
+    };
+
+    const setFlowDetail = (copy) => {
+      flowDetailCopy.textContent = copy;
+    };
+
+    const setFlowStepStatus = (stepId, status, summary) => {
+      if (!(stepId in flowState)) {
+        return;
+      }
+
+      if (status === 'active') {
+        Object.keys(flowState).forEach((id) => {
+          if (flowState[id] === 'active') {
+            flowState[id] = 'done';
+          }
+        });
+      }
+
+      flowState[stepId] = status;
+      if (summary) {
+        stepSummaries[stepId] = summary;
+        setFlowDetail(summary);
+      }
+      renderStatusStrip();
+      renderFlowSteps();
+    };
+
+    const recordStepDetails = (stepId, details) => {
+      if (!(stepId in stepTelemetry)) {
+        return;
+      }
+
+      stepTelemetry[stepId] = details.filter(Boolean);
+      renderFlowSteps();
+    };
+
+    const resetExperience = () => {
+      Object.keys(flowState).forEach((id) => {
+        flowState[id] = 'waiting';
+        stepTelemetry[id] = [];
+        stepSummaries[id] = flowSteps.find((step) => step.id === id)?.description || '';
+      });
+      timelineEvents.length = 0;
+      renderStatusStrip();
+      renderFlowSteps();
+      renderTimeline();
+      activityLog.innerHTML = emptyActivityMarkup;
+      previewEmptyState.classList.remove('d-none');
+      updatePreview({ stage: 'Idle', result: 'No result yet', method: 'Not chosen' });
+      setRuntimeNote('Open config and launch advanced flow to start lifecycle tracing.');
+      setFlowDetail('Waiting for advanced flow initialization from the config lightbox.');
+      hideBanner();
+      currentSelectedMethod = null;
+      currentListenerState = null;
+    };
+
+    const markProgrammaticScroll = () => {
+      suppressManualPauseUntil = Date.now() + 650;
+    };
+
+    const setFollowLive = (enabled) => {
+      isFollowLiveEnabled = enabled;
+      followLiveToggle.checked = enabled;
+      followLiveLabel.textContent = `Follow Live: ${enabled ? 'On' : 'Off'}`;
+    };
+
+    const scrollSequenceToCurrentActivity = () => {
+      if (!sequenceScrollElement || !isFollowLiveEnabled) {
+        return;
+      }
+
+      markProgrammaticScroll();
+      requestAnimationFrame(() => {
+        const activeCard = sequenceStepsElement.querySelector('.sequence-step[data-status="active"] .sequence-card')
+          || sequenceStepsElement.querySelector('.sequence-step[data-status="done"] .sequence-card');
+        if (activeCard) {
+          activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    };
+
+    const scrollTimelineToCurrentActivity = () => {
+      if (!timelineScrollElement || !isFollowLiveEnabled) {
+        return;
+      }
+
+      markProgrammaticScroll();
+      requestAnimationFrame(() => {
+        timelineScrollElement.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    };
+
+    const setInspectorView = (viewName) => {
+      activeInspectorView = viewName;
+      document.querySelectorAll('.view-tab').forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.view === viewName);
+      });
+      sequenceView.classList.toggle('active', viewName === 'sequence');
+      timelineView.classList.toggle('active', viewName === 'timeline');
+      if (viewName === 'sequence') {
+        scrollSequenceToCurrentActivity();
+      } else {
+        scrollTimelineToCurrentActivity();
+      }
+    };
 
     const updateEnvironmentLabel = (isLive) => {
-      environmentToggleLabel.textContent = isLive ? 'Live' : 'Test';
+      const envLabel = isLive ? 'Live' : 'Test';
+      environmentToggleLabel.textContent = envLabel;
+      envChip.textContent = envLabel.toLowerCase();
+      homeLink.textContent = isLive ? 'Home (LIVE)' : 'Home';
+      homeLink.classList.toggle('btn-workbench-live', isLive);
     };
+
+    const getCurrentEnv = () => environmentToggle.checked ? 'live' : 'test';
+    const getCurrentIsLive = () => getCurrentEnv() === 'live';
+    const getCurrentClientKey = () => clientKeys[getCurrentEnv()] || clientKeys.test;
+
+    const extractErrorMessage = async (response) => {
+      try {
+        const payload = await response.json();
+        return payload.message || payload.error || payload.detail || JSON.stringify(payload);
+      } catch (error) {
+        return `${response.status} ${response.statusText}`.trim();
+      }
+    };
+
+    const attachResizeBehavior = () => {
+      if (!resizeHandle || window.innerWidth < 992) {
+        return;
+      }
+
+      let isResizing = false;
+
+      const handlePointerMove = (event) => {
+        if (!isResizing) {
+          return;
+        }
+
+        const rect = workbench.getBoundingClientRect();
+        const offset = event.clientX - rect.left;
+        const min = 320;
+        const max = rect.width - 360;
+        const next = Math.min(Math.max(offset, min), max);
+        workbench.style.setProperty('--left-pane-size', `${next}px`);
+      };
+
+      const stopResize = () => {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', stopResize);
+      };
+
+      resizeHandle.addEventListener('pointerdown', (event) => {
+        isResizing = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', stopResize);
+        event.preventDefault();
+      });
+    };
+
+    document.querySelectorAll('.view-tab').forEach((tab) => {
+      tab.addEventListener('click', () => setInspectorView(tab.dataset.view));
+    });
+
+    followLiveToggle.addEventListener('change', () => {
+      setFollowLive(followLiveToggle.checked);
+      if (isFollowLiveEnabled) {
+        if (activeInspectorView === 'sequence') {
+          scrollSequenceToCurrentActivity();
+        } else {
+          scrollTimelineToCurrentActivity();
+        }
+      }
+    });
+
+    sequenceScrollElement?.addEventListener('scroll', () => {
+      if (Date.now() < suppressManualPauseUntil || !isFollowLiveEnabled) {
+        return;
+      }
+      if (sequenceScrollElement.scrollTop > 24) {
+        setFollowLive(false);
+      }
+    }, { passive: true });
+
+    timelineScrollElement?.addEventListener('scroll', () => {
+      if (Date.now() < suppressManualPauseUntil || !isFollowLiveEnabled) {
+        return;
+      }
+      if (timelineScrollElement.scrollTop > 24) {
+        setFollowLive(false);
+      }
+    }, { passive: true });
+
+    openConfigModalButton.addEventListener('click', () => {
+      configModal.show();
+    });
 
     environmentToggle.checked = initialEnv === 'live';
     updateEnvironmentLabel(environmentToggle.checked);
+    setFollowLive(true);
+    setInspectorView(activeInspectorView);
+    attachResizeBehavior();
+    resetExperience();
 
     environmentToggle.addEventListener('change', () => {
       const nextEnv = environmentToggle.checked ? 'live' : 'test';
@@ -94,135 +1249,337 @@
       window.location.assign(pageUrl.toString());
     });
 
-    form.addEventListener("submit", async function (e) {
+    dropinContainer.addEventListener('click', (event) => {
+      const paymentMethod = event.target.closest('.adyen-checkout__payment-method');
+      if (paymentMethod) {
+        const label = paymentMethod.querySelector('.adyen-checkout__payment-method__name, .adyen-checkout__payment-method__radio')?.textContent?.trim() || 'Payment method';
+        currentSelectedMethod = label;
+        updatePreview({ method: label });
+        addActivity('Payment method selected', `${label} is now active.`);
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      hideBanner();
 
-      const env = environmentToggle.checked ? 'live' : 'test';
-      const isLive = env === 'live';
-      const clientKey = clientKeys[env] || clientKeys.test;
-      const amountValue = parseInt(form.amount.value);
-      const currency = form.currency.value;
-      const reference = form.reference.value;
+      const env = getCurrentEnv();
+      const isLive = getCurrentIsLive();
+      const clientKey = getCurrentClientKey();
+      const amountValue = Number.parseInt(form.amount.value, 10);
+      const currency = (form.currency.value || '').trim().toUpperCase();
+      const reference = (form.reference.value || '').trim();
 
-      const amount = { value: amountValue, currency };
-
-      // 1. Get paymentMethods
-      const paymentMethodsRes = await fetch('/api/paymentMethods', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isLive,
-          amount,
-          countryCode: "SG",
-          channel: "Web"
-        })
-      });
-
-      const paymentMethods = await paymentMethodsRes.json();
-      const url = new URL(window.location.href);
-      const baseUrl = `${url.protocol}//${url.host}`;
-
-      const translations = {
-        "en-US": {
-          "cc.dat.914": "Expiry Date is before checkout date"
-        }
+      if (!clientKey) {
+        showBanner(`Missing client key for ${env}.`, 'error');
+        return;
       }
 
-      // 2. Create Drop-in config
-      const configuration = {
-        environment: env,
-        clientKey: clientKey,
-        paymentMethodsResponse: paymentMethods,
+      if (!Number.isInteger(amountValue) || amountValue < 0 || !currency || !reference) {
+        showBanner('Amount, currency, and reference are required.', 'warning');
+        return;
+      }
+
+      if (currentDropin) {
+        currentDropin.unmount();
+        currentDropin = null;
+      }
+
+      configModal.hide();
+      dropinContainer.innerHTML = '';
+      resetExperience();
+      previewEmptyState.classList.add('d-none');
+      setRuntimeNote('Fetching payment methods and initializing advanced flow runtime.');
+      updatePreview({ stage: 'Initializing' });
+      startButton.disabled = true;
+
+      const amount = { value: amountValue, currency };
+      const paymentMethodsRequestBody = {
+        isLive,
         amount,
-        countryCode: "SG",
-        locale: "en-US",
-        translations: translations,
-        onSubmit: async (state, dropin) => {
-          console.log("onSubmit called with state:");
-          console.log(JSON.stringify(state, null, 2));
-          const res = await fetch('/api/payments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        countryCode: 'SG',
+        channel: 'Web'
+      };
+
+      try {
+        setFlowStepStatus('payment-methods-request', 'active', 'Browser requested payment methods from the demo server.');
+        recordStepDetails('payment-methods-request', [
+          { label: 'Browser request body', value: paymentMethodsRequestBody, meta: `${currency} ${amountValue}` }
+        ]);
+        appendTimelineEvent({
+          title: 'Payment methods requested',
+          subtitle: 'POST /api/paymentMethods',
+          summary: 'Browser sent paymentMethods request through demo server.',
+          source: 'browser',
+          tone: 'active',
+          details: [
+            { label: 'Request body', value: paymentMethodsRequestBody, meta: `${currency} ${amountValue}` }
+          ]
+        });
+
+        const paymentMethodsRes = await fetch('/api/paymentMethods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(paymentMethodsRequestBody)
+        });
+
+        if (!paymentMethodsRes.ok) {
+          const message = await extractErrorMessage(paymentMethodsRes);
+          setFlowStepStatus('payment-methods-request', 'error', `Payment methods call failed: ${message}`);
+          showBanner(message, 'error');
+          throw new Error(message);
+        }
+
+        const paymentMethods = await paymentMethodsRes.json();
+        setFlowStepStatus('payment-methods-request', 'done', 'Demo server accepted request and returned payment methods payload.');
+        setFlowStepStatus('payment-methods-response', 'active', 'Adyen payment methods payload is available in browser runtime.');
+        recordStepDetails('payment-methods-response', [
+          { label: 'Payment methods response', value: paymentMethods, meta: summarizePayload(paymentMethods?.paymentMethods) }
+        ]);
+        appendTimelineEvent({
+          title: 'Payment methods returned',
+          subtitle: 'Response payload',
+          summary: 'Browser received payment methods and can now bootstrap Drop-in.',
+          source: 'adyen',
+          tone: 'done',
+          details: [
+            { label: 'paymentMethodsResponse', value: paymentMethods, meta: summarizePayload(paymentMethods?.paymentMethods) }
+          ]
+        });
+
+        const url = new URL(window.location.href);
+        const baseUrl = `${url.protocol}//${url.host}`;
+
+        const configuration = {
+          environment: env,
+          clientKey,
+          paymentMethodsResponse: paymentMethods,
+          amount,
+          countryCode: 'SG',
+          locale: 'en-US',
+          onChange: (state) => {
+            currentListenerState = sanitizeState(state);
+            if (currentListenerState.paymentMethodType) {
+              updatePreview({ method: currentListenerState.paymentMethodType });
+            }
+            recordStepDetails('dropin-mounted', [
+              { label: 'Drop-in runtime state', value: currentListenerState, meta: 'onChange snapshot' }
+            ]);
+          },
+          onSubmit: async (state, dropin) => {
+            const paymentsBody = {
               isLive,
               amount,
               reference,
               ...state.data,
-              shopperInteraction:"Ecommerce",
+              shopperInteraction: 'Ecommerce',
               returnUrl: `${baseUrl}/redirect`,
               browserInfo: state.data.browserInfo,
-              channel: "Web",
+              channel: 'Web',
               origin: window.location.origin
-            })
-          });
+            };
 
-          console.log("response from /api/payments: ")
-          console.log(res);
+            setFlowStepStatus('payment-submit', 'active', 'Shopper submitted payment, browser is posting payload to /api/payments.');
+            setFlowStepStatus('payments-call', 'active', 'Demo server is forwarding payment payload to Adyen /payments.');
+            updatePreview({ stage: 'Submitting' });
+            addActivity('Payment submitted', 'onSubmit triggered and payment payload posted to server.');
+            recordStepDetails('payments-call', [
+              { label: 'Payments request body', value: paymentsBody, meta: currentSelectedMethod || currentListenerState?.paymentMethodType || 'payment submit' }
+            ]);
+            appendTimelineEvent({
+              title: 'Payments call started',
+              subtitle: 'POST /api/payments',
+              summary: 'Demo server is calling Adyen payments API.',
+              source: 'server',
+              tone: 'active',
+              details: [
+                { label: 'Payments request', value: paymentsBody, meta: currentSelectedMethod || currentListenerState?.paymentMethodType || 'payment submit' }
+              ]
+            });
 
-          const result = await res.json();
+            const res = await fetch('/api/payments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(paymentsBody)
+            });
 
-          if (result.action) {
-            dropin.handleAction(result.action);
-          } else if (result.resultCode === 'Authorised') {
-            alert("Payment successful 🎉");
-          } else {
-            alert("Payment result: " + result.resultCode);
-          }
-        },
+            if (!res.ok) {
+              const message = await extractErrorMessage(res);
+              setFlowStepStatus('payments-call', 'error', `Payments call failed: ${message}`);
+              setFlowStepStatus('payment-outcome', 'error', message);
+              showBanner(message, 'error');
+              return;
+            }
 
-        onAdditionalDetails: async (state, dropin) => {
-          const res = await fetch('/api/payments/details', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+            const result = await res.json();
+            setFlowStepStatus('payment-submit', 'done', 'Browser handed payment data to the server successfully.');
+            setFlowStepStatus('payments-call', 'done', 'Demo server completed /payments call and returned response.');
+
+            if (result.action) {
+              setFlowStepStatus('details-call', 'active', 'Adyen returned action, waiting for additional details callback.');
+              setFlowStepStatus('payment-outcome', 'active', 'Action received and rendered in Drop-in.');
+              updatePreview({ stage: 'Action Required', result: 'Action in progress' });
+              showBanner('Additional action required. Continue in Drop-in.', 'info');
+              addActivity('Action required', 'Adyen requested additional shopper action.');
+              appendTimelineEvent({
+                title: 'Action payload received',
+                subtitle: 'Adyen response',
+                summary: 'Drop-in is handling action payload from /payments response.',
+                source: 'adyen',
+                tone: 'active',
+                details: [
+                  { label: 'Payments response', value: result, meta: 'action payload' }
+                ]
+              });
+              dropin.handleAction(result.action);
+              return;
+            }
+
+            setFlowStepStatus('payment-outcome', 'done', `Payment completed with ${result.resultCode || 'unknown result'}.`);
+            updatePreview({ stage: 'Completed', result: result.resultCode || 'Unknown' });
+            showBanner(`Payment result: ${result.resultCode || 'Unknown'}`, result.resultCode === 'Authorised' ? 'success' : 'warning');
+            appendTimelineEvent({
+              title: 'Payment completed',
+              subtitle: 'Adyen resultCode',
+              summary: `Adyen responded with ${result.resultCode || 'Unknown'}.`,
+              source: 'adyen',
+              tone: result.resultCode === 'Authorised' ? 'done' : 'active',
+              details: [
+                { label: 'Payments response', value: result, meta: result.resultCode || 'Unknown' }
+              ]
+            });
+          },
+          onAdditionalDetails: async (state, dropin) => {
+            const detailsBody = {
               isLive,
               details: state.data.details,
               paymentData: state.data.paymentData
-            })
-          });
+            };
 
-          const result = await res.json();
+            setFlowStepStatus('details-call', 'active', 'Submitting additional details to complete the action step.');
+            recordStepDetails('details-call', [
+              { label: 'Details request body', value: detailsBody, meta: 'additional details' }
+            ]);
+            appendTimelineEvent({
+              title: 'Additional details submitted',
+              subtitle: 'POST /api/payments/details',
+              summary: 'Browser sent action details back to demo server.',
+              source: 'browser',
+              tone: 'active',
+              details: [
+                { label: 'Details request', value: detailsBody, meta: 'additional details' }
+              ]
+            });
 
-          if (result.action) {
-            dropin.handleAction(result.action);
-          } else if (result.resultCode === 'Authorised') {
-            alert("Payment authorised ✅");
-          } else {
-            alert("Payment result: " + result.resultCode);
-          }
-        },
+            const res = await fetch('/api/payments/details', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(detailsBody)
+            });
 
-        onError: (err) => {
-          console.error("Payment error:", err);
-          alert("Something went wrong 😢");
-        }
-      };
-      
-
-      const checkout = await AdyenCheckout(configuration);
-
-      const dropinConfiguration = {
-        paymentMethodsConfiguration: {
-          card: { 
-            holderNameRequired: true,
-            enableStoreDetails: true,
-            hasHolderName:true,
-            minimumExpiryDate:"03/28",
-            onFieldValid:async(value, actions)=>{
-              console.log("on field valid value",value);
-              // use this event to check for issuerBin and check with tier upgrade logic
-            },
-            onChange:async(value, actions)=>{
-              console.log("value",value);
-              //use this event to check if holderName has changed and check with tier upgrade logic
+            if (!res.ok) {
+              const message = await extractErrorMessage(res);
+              setFlowStepStatus('details-call', 'error', `Additional details failed: ${message}`);
+              setFlowStepStatus('payment-outcome', 'error', message);
+              showBanner(message, 'error');
+              return;
             }
-          },
-        },
-      }
 
-      console.log("dropinConfiguration",dropinConfiguration);
-      // Create an instance of Drop-in and mount it to the container you created.
-      const dropin = new Dropin(checkout,dropinConfiguration).mount('#dropin-container');
+            const result = await res.json();
+            setFlowStepStatus('details-call', 'done', 'Additional details call completed successfully.');
+
+            if (result.action) {
+              setFlowStepStatus('payment-outcome', 'active', 'Received another action step from Adyen.');
+              dropin.handleAction(result.action);
+              updatePreview({ stage: 'Action Required', result: 'Action in progress' });
+              showBanner('Another action step is required.', 'info');
+            } else {
+              setFlowStepStatus('payment-outcome', 'done', `Final result is ${result.resultCode || 'Unknown'}.`);
+              updatePreview({ stage: 'Completed', result: result.resultCode || 'Unknown' });
+              showBanner(`Payment result: ${result.resultCode || 'Unknown'}`, result.resultCode === 'Authorised' ? 'success' : 'warning');
+            }
+
+            appendTimelineEvent({
+              title: 'Additional details response',
+              subtitle: 'Adyen details outcome',
+              summary: `Adyen returned ${result.resultCode || (result.action ? 'action payload' : 'Unknown')}.`,
+              source: 'adyen',
+              tone: result.resultCode === 'Authorised' ? 'done' : 'active',
+              details: [
+                { label: 'Details response', value: result, meta: result.resultCode || (result.action ? 'action payload' : 'Unknown') }
+              ]
+            });
+          },
+          onError: (err) => {
+            const message = err?.message || 'Unexpected checkout error.';
+            setFlowStepStatus('payment-outcome', 'error', message);
+            showBanner(message, 'error');
+            appendTimelineEvent({
+              title: 'Checkout error',
+              subtitle: 'Browser callback',
+              summary: message,
+              source: 'browser',
+              tone: 'error',
+              details: [
+                { label: 'Error object', value: { message }, meta: 'checkout error' }
+              ]
+            });
+          }
+        };
+
+        const checkout = await AdyenCheckout(configuration);
+        const dropinConfiguration = {
+          paymentMethodsConfiguration: {
+            card: {
+              holderNameRequired: true,
+              enableStoreDetails: true,
+              hasHolderName: true,
+              minimumExpiryDate: '03/28'
+            }
+          }
+        };
+
+        setFlowStepStatus('payment-methods-response', 'done', 'Payment methods are loaded and ready for Drop-in mount.');
+        setFlowStepStatus('dropin-mounted', 'active', 'Mounting Drop-in in browser viewport.');
+        recordStepDetails('dropin-mounted', [
+          { label: 'Browser configuration', value: { environment: env, amount, countryCode: 'SG', locale: 'en-US', dropinConfiguration }, meta: 'checkout config' }
+        ]);
+        currentDropin = new Dropin(checkout, dropinConfiguration);
+        currentDropin.mount('#dropin-container');
+        setFlowStepStatus('dropin-mounted', 'done', 'Drop-in mounted and waiting for shopper interaction.');
+        addActivity('Drop-in mounted', 'Advanced flow checkout is now ready.');
+        appendTimelineEvent({
+          title: 'Drop-in mounted',
+          subtitle: 'Browser runtime',
+          summary: 'AdyenCheckout and Drop-in are active in the live preview.',
+          source: 'browser',
+          tone: 'done',
+          details: [
+            { label: 'Drop-in config', value: dropinConfiguration, meta: 'runtime config' }
+          ]
+        });
+        updatePreview({ stage: 'Ready' });
+        setRuntimeNote('Advanced flow is ready. Interact with Drop-in to trace payments and additional details lifecycle.');
+      } catch (error) {
+        showBanner(error.message || 'Failed to initialize advanced flow.', 'error');
+        setRuntimeNote('Initialization failed. Review inspector details and retry from config.');
+        appendTimelineEvent({
+          title: 'Initialization failed',
+          subtitle: 'Setup error',
+          summary: error.message || 'Failed to initialize advanced flow.',
+          source: 'browser',
+          tone: 'error',
+          details: [
+            { label: 'Failure', value: { message: error.message || 'Failed to initialize advanced flow.' }, meta: 'initialization error' }
+          ]
+        });
+      } finally {
+        startButton.disabled = false;
+      }
+    });
+
+    queueMicrotask(() => {
+      configModal.show();
     });
   </script>
 </body>

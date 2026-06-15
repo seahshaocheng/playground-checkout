@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout Integration Variants</title>
+  <link rel="stylesheet" href="/css/workbench-theme.css" />
+  <style>
+    body {
+      padding: clamp(0.75rem, 1.8vw, 1.2rem);
+    }
+
+    .layout {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 0.8rem;
+      align-items: start;
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: sticky;
+      top: 0.75rem;
+      backdrop-filter: blur(20px);
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid rgba(137, 168, 216, 0.12);
+      background: linear-gradient(145deg, rgba(17, 31, 53, 0.9), rgba(8, 18, 34, 0.9));
+    }
+
+    .sidebar-title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-0);
+    }
+
+    .sidebar-toggle {
+      border: 1px solid var(--panel-border-strong);
+      background: rgba(17, 31, 53, 0.9);
+      color: var(--text-0);
+      border-radius: 8px;
+      padding: 0.28rem 0.54rem;
+      font-size: 0.77rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .sidebar-toggle:hover {
+      background: rgba(27, 46, 76, 0.96);
+    }
+
+    .sidebar-nav {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .sidebar-link {
+      text-decoration: none;
+      color: var(--text-1);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 0.52rem 0.62rem;
+      font-size: 0.87rem;
+      font-weight: 600;
+      background: rgba(8, 18, 34, 0.72);
+      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
+
+    .sidebar-link:hover {
+      color: var(--text-0);
+      border-color: rgba(56, 189, 248, 0.34);
+      background: rgba(27, 46, 76, 0.96);
+      transform: translateX(2px);
+    }
+
+    .sidebar-link.home {
+      background: rgba(12, 24, 42, 0.95);
+      border-color: rgba(56, 189, 248, 0.34);
+      color: var(--accent);
+    }
+
+    .sidebar.is-collapsed .sidebar-nav {
+      display: none;
+    }
+
+    .sidebar.is-collapsed {
+      min-height: 0;
+    }
+
+    .shell {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+
+    .hero {
+      padding: clamp(1.2rem, 2.4vw, 2rem);
+      border-bottom: 1px solid rgba(137, 168, 216, 0.12);
+      background: linear-gradient(130deg, rgba(17, 31, 53, 0.85), rgba(8, 18, 34, 0.88));
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      letter-spacing: -0.015em;
+      color: var(--text-0);
+    }
+
+    .hero p {
+      margin: 0.5rem 0 0;
+      color: var(--text-1);
+      max-width: 70ch;
+    }
+
+    .meta-row {
+      margin-top: 0.9rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      padding: 0.28rem 0.62rem;
+      background: rgba(12, 24, 42, 0.95);
+      color: var(--text-1);
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      font-weight: 600;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      padding: 0.95rem clamp(1rem, 2vw, 1.6rem) 0;
+    }
+
+    .filter-chip {
+      border: 1px solid rgba(137, 168, 216, 0.22);
+      background: rgba(12, 24, 42, 0.94);
+      color: var(--text-1);
+      border-radius: 999px;
+      padding: 0.38rem 0.72rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .filter-chip:hover {
+      color: var(--text-0);
+      background: rgba(27, 46, 76, 0.96);
+      border-color: rgba(56, 189, 248, 0.44);
+    }
+
+    .filter-chip.is-active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.44);
+      color: var(--text-0);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      padding: clamp(1rem, 2vw, 1.6rem);
+    }
+
+    .card {
+      border: 1px solid rgba(137, 168, 216, 0.14);
+      border-radius: 16px;
+      padding: 1rem;
+      background: rgba(12, 24, 42, 0.94);
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56, 189, 248, 0.44);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.04rem;
+      color: var(--text-0);
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--text-1);
+      font-size: 0.93rem;
+      line-height: 1.45;
+      flex-grow: 1;
+    }
+
+    .card a {
+      align-self: flex-start;
+      text-decoration: none;
+      font-weight: 600;
+      color: var(--text-0);
+      background: rgba(17, 31, 53, 0.9);
+      border: 1px solid var(--panel-border-strong);
+      border-radius: 10px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.87rem;
+    }
+
+    .card a:hover {
+      background: rgba(27, 46, 76, 0.96);
+      border-color: rgba(56, 189, 248, 0.44);
+    }
+
+    @media (max-width: 940px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="side-menu">
+      <div class="sidebar-header">
+        <p class="sidebar-title">Navigation</p>
+        <button id="side-menu-toggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-controls="side-menu-nav">Collapse</button>
+      </div>
+      <nav id="side-menu-nav" class="sidebar-nav" aria-label="Demo navigation">
+        <a class="sidebar-link home" href="/">Home</a>
+        <% integrationVariants.forEach((variant) => { %>
+          <a class="sidebar-link" href="<%= `${variant.href}?version=${defaultSdkVersion}&env=test` %>"><%= variant.name %></a>
+        <% }); %>
+      </nav>
+    </aside>
+
+    <main class="shell">
+      <section class="hero">
+        <h1>Choose an integration variant</h1>
+        <p>Use this selector to launch the payment integration flow you want to validate. Each card opens a dedicated demo variant while keeping a shared environment/version query model.</p>
+        <div class="meta-row">
+          <span class="meta-chip">Default SDK <%= defaultSdkVersion %></span>
+          <span class="meta-chip">Environment via ?env=test|live</span>
+        </div>
+      </section>
+
+      <section class="filter-bar" id="filter-bar">
+        <button class="filter-chip is-active" type="button" data-group="All">All</button>
+        <% integrationGroups.forEach((group) => { %>
+          <button class="filter-chip" type="button" data-group="<%= group %>"><%= group %></button>
+        <% }); %>
+      </section>
+
+      <section class="grid">
+        <% integrationVariants.forEach((variant) => { %>
+          <article class="card" data-group="<%= variant.group %>">
+            <h2><%= variant.name %></h2>
+            <p><%= variant.description %></p>
+            <a href="<%= `${variant.href}?version=${defaultSdkVersion}&env=test` %>">Open variant</a>
+          </article>
+        <% }); %>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const filterBar = document.getElementById('filter-bar');
+      if (!filterBar) {
+        return;
+      }
+
+      const chips = Array.from(filterBar.querySelectorAll('.filter-chip'));
+      const cards = Array.from(document.querySelectorAll('.card[data-group]'));
+
+      const applyFilter = (activeGroup) => {
+        chips.forEach((chip) => {
+          chip.classList.toggle('is-active', chip.dataset.group === activeGroup);
+        });
+
+        cards.forEach((card) => {
+          const isVisible = activeGroup === 'All' || card.dataset.group === activeGroup;
+          card.style.display = isVisible ? 'flex' : 'none';
+        });
+      };
+
+      filterBar.addEventListener('click', (event) => {
+        const chip = event.target.closest('.filter-chip');
+        if (!chip) {
+          return;
+        }
+
+        applyFilter(chip.dataset.group || 'All');
+      });
+    })();
+
+    (() => {
+      const sidebar = document.getElementById('side-menu');
+      const toggle = document.getElementById('side-menu-toggle');
+      if (!sidebar || !toggle) {
+        return;
+      }
+
+      toggle.addEventListener('click', () => {
+        const isCollapsed = sidebar.classList.toggle('is-collapsed');
+        toggle.textContent = isCollapsed ? 'Expand' : 'Collapse';
+        toggle.setAttribute('aria-expanded', String(!isCollapsed));
+      });
+    })();
+  </script>
+</body>
+</html>

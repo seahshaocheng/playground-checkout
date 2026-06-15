@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const {
   forward,
   createSession,
+  getSession,
   getPaymentMethods,
   intiatePayment,
   submitAdditionalDetails,
@@ -17,11 +18,26 @@ const req = require('express/lib/request');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
+const DEFAULT_SDK_VERSION = '6.13.1';
 
 let hotelOrders = [];
 
 const getLiveMerchantAccount = () => {
   return process.env.ADYEN_LIVE_MERCHANTACCOUNT || process.env.ADYEN_LIVE_MERCHANT_ACCOUNT;
+};
+
+const getCheckoutContext = (req) => {
+  const sdkVersion = req.query.version || DEFAULT_SDK_VERSION;
+  const env = req.query.env || 'test';
+  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+
+  return {
+    sdkVersion,
+    env,
+    clientKey,
+    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
+    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
+  };
 };
 
 const getMerchantAccountFromBody = (isLive) => {
@@ -68,8 +84,71 @@ const handlehotelsMerchantAccountCode = (currency) => {
   }
 }
 
+const maskSecret = (value) => {
+  if (!value) {
+    return 'Unavailable';
+  }
+
+  const normalized = String(value);
+  if (normalized.length <= 8) {
+    return `${normalized.slice(0, 2)}***${normalized.slice(-2)}`;
+  }
+
+  return `${normalized.slice(0, 4)}${'*'.repeat(Math.max(4, normalized.length - 8))}${normalized.slice(-4)}`;
+};
+
+const integrationVariants = [
+  {
+    name: 'Drop-in Session Basic',
+    description: 'Simple session-based Drop-in with configuration form and shopper viewport only.',
+    href: '/dropin-session-basic',
+    group: 'Session'
+  },
+  {
+    name: 'Drop-in Session Explorer',
+    description: 'Session-based Drop-in with interactive runtime explorer and sequence visibility.',
+    href: '/dropin-session',
+    group: 'Session'
+  },
+  {
+    name: 'Drop-in Advanced Basic',
+    description: 'Simple advanced Drop-in with configuration form and direct callbacks only.',
+    href: '/dropin-advanced-basic',
+    group: 'Advanced'
+  },
+  {
+    name: 'Drop-in Advanced Flow',
+    description: 'Advanced Drop-in callbacks with direct payments and additional details handling.',
+    href: '/dropin-advanced',
+    group: 'Advanced'
+  },
+  {
+    name: 'Drop-in Advanced Booking',
+    description: 'Booking-oriented advanced Drop-in flow for reservation style payment journeys.',
+    href: '/dropin-advance-booking',
+    group: 'Advanced'
+  },
+  {
+    name: 'Custom Card Component',
+    description: 'Card component integration for full control of payment UI and interaction points.',
+    href: '/custom-card',
+    group: 'Custom'
+  },
+  {
+    name: 'Hotels Booking Demo',
+    description: 'Customized hotels booking and payment journey with vertical-specific behavior.',
+    href: '/hotels/booking',
+    group: 'Vertical'
+  }
+];
+
 app.get('/', (req, res) => {
-  res.send('Adyen Checkout API is running ✅');
+  const integrationGroups = [...new Set(integrationVariants.map((variant) => variant.group))];
+  res.render('index', {
+    defaultSdkVersion: DEFAULT_SDK_VERSION,
+    integrationVariants,
+    integrationGroups
+  });
 });
 
 app.get('/.well-known/apple-developer-merchantid-domain-association', (req, res) => {
@@ -77,73 +156,44 @@ app.get('/.well-known/apple-developer-merchantid-domain-association', (req, res)
 });
 
 app.get('/dropin-session', (req, res) => {
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  const checkoutContext = getCheckoutContext(req);
   res.render('dropin-session', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
+    ...checkoutContext,
+    maskedTestApiKey: maskSecret(process.env.ADYEN_API_KEY_TEST),
+    maskedLiveApiKey: maskSecret(process.env.ADYEN_API_KEY_LIVE)
   });
+});
+
+app.get('/dropin-session-basic', (req, res) => {
+  res.render('dropin-session-basic', getCheckoutContext(req));
 });
 
 app.get('/dropin-advanced', (req, res) => {
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('dropin-advance', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
-  });
+  res.render('dropin-advance', getCheckoutContext(req));
+});
+
+app.get('/dropin-advanced-basic', (req, res) => {
+  res.render('dropin-advanced-basic', getCheckoutContext(req));
 });
 
 app.get('/dropin-advance-booking',(req,res)=>{
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('dropin-advance-booking', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
-  });
+  res.render('dropin-advance-booking', getCheckoutContext(req));
 })
 
 app.get('/custom-card',(req,res)=>{
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
-  res.render('custom-card', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY
-  });
+  res.render('custom-card', getCheckoutContext(req));
 })
 
 //hotels Customisation
 app.get('/hotels/booking',(req,res)=>{
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  const checkoutContext = getCheckoutContext(req);
   const mode = req.query.mode || null;
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
   res.render('custom-demos/hotels/hotels-booking', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY,
+    ...checkoutContext,
     mode,
     currency,
     country,
@@ -153,20 +203,14 @@ app.get('/hotels/booking',(req,res)=>{
 })
 
 app.get('/hotels/booking-confirmation',(req,res)=>{
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  const checkoutContext = getCheckoutContext(req);
   const mode = req.query.mode || null;
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
   res.render('custom-demos/hotels/hotels-booking-confirmation', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY,
+    ...checkoutContext,
     mode,
     currency,
     country,
@@ -176,20 +220,14 @@ app.get('/hotels/booking-confirmation',(req,res)=>{
 })
 
 app.get('/hotels/booking-payment',(req,res)=>{
-  const sdkVersion = req.query.version || '6.13.1'; // default fallback
-  const env = req.query.env || 'test';
-  const clientKey = env === 'live' ? process.env.ADYEN_LIVE_CLIENT_KEY : process.env.ADYEN_TEST_CLIENT_KEY;
+  const checkoutContext = getCheckoutContext(req);
   const mode = req.query.mode || null;
   const currency = req.query.CURRENCY || 'SGD';
   const country = handleCurrencyToCountryCode(currency);
   const merchantAccount = handlehotelsMerchantAccountCode(currency);
   const shopperReference = req.query.shopperReference || '';
   res.render('custom-demos/hotels/hotels-booking-payment', {
-    sdkVersion,
-    env,
-    clientKey,
-    testClientKey: process.env.ADYEN_TEST_CLIENT_KEY,
-    liveClientKey: process.env.ADYEN_LIVE_CLIENT_KEY,
+    ...checkoutContext,
     mode,
     currency,
     country,
@@ -332,7 +370,10 @@ app.post('/api/sessions', async (req, res) => {
   console.log("Request body for sessions:");
   console.log(JSON.stringify(rest, null, 2));
 
-  rest.storePaymentMethodMode="askForConsent";
+  const allowedStorePaymentMethodModes = ['enabled', 'askForConsent', 'disabled'];
+  if (!allowedStorePaymentMethodModes.includes(rest.storePaymentMethodMode)) {
+    rest.storePaymentMethodMode = 'askForConsent';
+  }
   rest.recurringProcessingModel = "Subscription"
 
   try {
@@ -342,6 +383,23 @@ app.post('/api/sessions', async (req, res) => {
   } catch (error) {
     console.log("THis is the error");
     console.log(error);
+    res.status(500).json(error.response?.data || { error: error.message });
+  }
+});
+
+app.get('/api/sessions/:id', async (req, res) => {
+  const { id } = req.params;
+  const isLive = req.query.isLive === 'true';
+  const merchantPrefix = req.query.merchantPrefix || '';
+  const version = req.query.version;
+  const sessionResult = req.query.sessionResult;
+
+  try {
+    const result = await getSession({ sessionId: id, sessionResult }, isLive, merchantPrefix, version);
+    console.log('Retrieved session from Adyen:', result);
+    res.json(result);
+  } catch (error) {
+    console.error('Error retrieving session:', error.message);
     res.status(500).json(error.response?.data || { error: error.message });
   }
 });

@@ -93,10 +93,10 @@ const intiatePayment = async (data, isLive = false, _merchantPrefix = "", versio
     };
 
     //drop browserInfo from data if it exist
-    if (data.browserInfo) {
+    /*if (data.browserInfo) {
         console.log("Removing browserInfo from data");
         delete data.browserInfo;
-    }
+    }*/
 
     //Zip specific fields
     if(data.paymentMethod && data.paymentMethod.type && data.paymentMethod.type.includes("zip")){
@@ -163,6 +163,30 @@ const checkSessionOutcome = async (data, isLive = false, _merchantPrefix = "", v
     }
 }
 
+const getSession = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
+    const config = configHandler(isLive, version);
+    const params = new URLSearchParams();
+
+    if (data.sessionResult) {
+        params.set('sessionResult', data.sessionResult);
+    }
+
+    const query = params.toString();
+    const url = `${config.url}/sessions/${data.sessionId}${query ? `?${query}` : ''}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': config.apikey
+    };
+
+    try {
+        const response = await axios.get(url, { headers });
+        return response.data;
+    } catch (error) {
+        console.error('Error getting session:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 
 const forward = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
     const config = configHandler(isLive, version);
@@ -206,5 +230,6 @@ module.exports = {
     removeStoredPaymentMethod,
     intiatePayment,
     submitAdditionalDetails,
-    checkSessionOutcome
+    checkSessionOutcome,
+    getSession
 }

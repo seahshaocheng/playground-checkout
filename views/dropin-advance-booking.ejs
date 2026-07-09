@@ -95,6 +95,18 @@
               <input type="text" id="reference" name="reference" class="form-control" placeholder="e.g. ORDER12345" value="ORDER_ADVANCED_DEMO" />
             </div>
 
+            <div class="mb-3">
+              <label for="allowedPaymentMethods" class="form-label">Allow Payment Methods</label>
+              <input type="text" id="allowedPaymentMethods" name="allowedPaymentMethods" class="form-control" placeholder="e.g. scheme, paypal" />
+              <div class="form-text">Optional comma-separated list.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="blockedPaymentMethods" class="form-label">Block Payment Methods</label>
+              <input type="text" id="blockedPaymentMethods" name="blockedPaymentMethods" class="form-control" placeholder="e.g. applepay, paywithgoogle" />
+              <div class="form-text">Optional comma-separated list.</div>
+            </div>
+
             <button type="submit" class="btn btn-primary w-100">Start Drop-in</button>
           </form>
         </div>
@@ -150,6 +162,13 @@
       environmentToggleLabel.textContent = isLive ? 'Live' : 'Test';
     };
 
+    const parsePaymentMethodList = (value) => {
+      return String(value || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    };
+
     environmentToggle.checked = initialEnv === 'live';
     updateEnvironmentLabel(environmentToggle.checked);
 
@@ -171,21 +190,33 @@
       const amountValue = parseInt(form.amount.value);
       const currency = form.currency.value;
       const reference = form.reference.value;
+      const allowedPaymentMethods = parsePaymentMethodList(form.allowedPaymentMethods?.value);
+      const blockedPaymentMethods = parsePaymentMethodList(form.blockedPaymentMethods?.value);
 
       const amount = { value: amountValue, currency };
+
+      const paymentMethodsRequestBody = {
+        isLive,
+        amount,
+        countryCode: "SG",
+        shopperLocale: "en_SG",
+        channel: "Web",
+        shopperReference: shopperReference || undefined,
+        isMember
+      };
+
+      if (allowedPaymentMethods.length > 0) {
+        paymentMethodsRequestBody.allowedPaymentMethods = allowedPaymentMethods;
+      }
+
+      if (blockedPaymentMethods.length > 0) {
+        paymentMethodsRequestBody.blockedPaymentMethods = blockedPaymentMethods;
+      }
 
       const paymentMethodsRes = await fetch('/api/paymentMethods', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isLive,
-          amount,
-          countryCode: "SG",
-          shopperLocale: "en_SG",
-          channel: "Web",
-          shopperReference: shopperReference || undefined,
-          isMember
-        })
+        body: JSON.stringify(paymentMethodsRequestBody)
       });
 
       const paymentMethods = await paymentMethodsRes.json();

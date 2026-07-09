@@ -23,6 +23,10 @@
       test: "<%= maskedTestApiKey %>",
       live: "<%= maskedLiveApiKey %>"
     };
+    const merchantAccounts = <%- JSON.stringify({
+      test: testMerchantAccount || '',
+      live: liveMerchantAccount || ''
+    }) %>;
   </script>
 
   <style>
@@ -1184,6 +1188,10 @@
                   <label>Selected Method</label>
                   <strong id="preview-method">Not chosen</strong>
                 </div>
+                <div class="preview-data-card">
+                  <label>BIN Value</label>
+                  <strong id="preview-bin-value">Not captured</strong>
+                </div>
               </div>
             </div>
           </div>
@@ -1355,6 +1363,7 @@
     const previewSessionId = document.getElementById('preview-session-id');
     const previewResultCode = document.getElementById('preview-result-code');
     const previewMethod = document.getElementById('preview-method');
+    const previewBinValue = document.getElementById('preview-bin-value');
     const activityLog = document.getElementById('activity-log');
     const sequenceStepsElement = document.getElementById('sequence-steps');
     const timelineListElement = document.getElementById('timeline-list');
@@ -1392,6 +1401,8 @@
     let hasActiveSession = false;
     let currentListenerState = null;
     let currentSelectedMethod = null;
+    let currentBinValue = null;
+    let lastBinSignature = null;
     let isFollowLiveEnabled = true;
     let suppressManualPauseUntil = 0;
 
@@ -1446,8 +1457,8 @@
       },
       {
         id: 'session-fetch',
-        title: 'Fetch latest session state',
-        description: 'The browser asks the demo server to retrieve the current session resource for inspection.',
+        title: 'GET /api/sessions/:id',
+        description: 'The browser asks the demo server to retrieve the latest session state and render the returned result in the inspector.',
         actor: 'server',
         from: 2,
         column: 2
@@ -1539,7 +1550,7 @@
       viewportBanner.textContent = message;
     };
 
-    const updatePreviewSummary = ({ sessionId, resultCode, method }) => {
+    const updatePreviewSummary = ({ sessionId, resultCode, method, binValue }) => {
       if (sessionId !== undefined) {
         previewSessionId.textContent = sessionId || 'Waiting';
       }
@@ -1551,6 +1562,33 @@
       if (method !== undefined) {
         previewMethod.textContent = method || 'Not chosen';
       }
+
+      if (binValue !== undefined) {
+        previewBinValue.textContent = binValue || 'Not captured';
+      }
+    };
+
+    const extractBinValue = (payload) => {
+      if (payload === null || payload === undefined) {
+        return null;
+      }
+
+      if (typeof payload === 'string' || typeof payload === 'number') {
+        const normalized = String(payload).trim();
+        return normalized || null;
+      }
+
+      if (typeof payload === 'object') {
+        const candidate = payload.binValue ?? payload.bin ?? payload.value;
+        if (candidate === null || candidate === undefined) {
+          return null;
+        }
+
+        const normalized = String(candidate).trim();
+        return normalized || null;
+      }
+
+      return null;
     };
 
     const renderStatusStrip = () => {
@@ -1844,7 +1882,9 @@
       lastInteractionSignature = null;
       currentListenerState = null;
       currentSelectedMethod = null;
-      updatePreviewSummary({ sessionId: 'Waiting', resultCode: 'No result yet', method: 'Not chosen' });
+      currentBinValue = null;
+      lastBinSignature = null;
+      updatePreviewSummary({ sessionId: 'Waiting', resultCode: 'No result yet', method: 'Not chosen', binValue: 'Not captured' });
       updateRuntimeNote('Waiting for configuration to render a Drop-in session.');
       hideViewportBanner();
       sessionResultPanel.classList.add('d-none');
@@ -1877,6 +1917,114 @@
       addActivityEntry(title, detail, tone);
     };
 
+    const fetchLatestSessionSnapshot = async ({ session, isLive, env, callbackResult, callbackType }) => {
+      const getSessionUrl = new URL(`/api/sessions/${session.id}`, window.location.origin);
+      getSessionUrl.searchParams.set('isLive', String(isLive));
+
+      if (callbackResult?.sessionResult) {
+        getSessionUrl.searchParams.set('sessionResult', callbackResult.sessionResult);
+      }
+
+      const sessionFetchHeaders = {
+        'Content-Type': 'application/json',
+        'X-API-Key': maskedApiKeys[env] || 'Unavailable'
+      };
+
+      recordStepDetails('session-fetch', [
+        {
+          label: 'Server fetch request',
+          value: {
+            sessionId: session.id,
+            callbackType,
+            resultCode: callbackResult?.resultCode || null,
+            sessionResult: callbackResult?.sessionResult || null
+          },
+          meta: 'GET /api/sessions/:id'
+        },
+        { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' }
+      ]);
+
+      setFlowStepStatus('payment-outcome', 'done', 'The browser received the Adyen callback and is now asking the server for the latest session snapshot.');
+      setFlowStepStatus('session-fetch', 'active', 'The demo server is retrieving the latest session resource for inspection.');
+      addActivityEntry('Fetching latest session', 'The demo calls GET /api/sessions/:id to show the final state returned by Adyen.');
+      appendTimelineEvent({
+        title: 'Latest session requested',
+        subtitle: 'GET /api/sessions/:id',
+        summary: 'The browser requested the freshest session resource from the demo server.',
+        source: 'server',
+        tone: 'active',
+        details: [
+          {
+            label: 'Fetch request',
+            value: {
+              sessionId: session.id,
+              callbackType,
+              resultCode: callbackResult?.resultCode || null,
+              sessionResult: callbackResult?.sessionResult || null
+            },
+            meta: 'session lookup'
+          },
+          { label: 'Fetch headers', value: sessionFetchHeaders, meta: 'masked headers' }
+        ]
+      });
+
+      const sessionResponse = await fetch(getSessionUrl.toString(), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!sessionResponse.ok) {
+        const message = await extractErrorMessage(sessionResponse);
+        setFlowStepStatus('session-fetch', 'error', `The latest session lookup failed: ${message}`);
+        recordStepDetails('session-fetch', [
+          {
+            label: 'Server fetch request',
+            value: {
+              sessionId: session.id,
+              callbackType,
+              resultCode: callbackResult?.resultCode || null,
+              sessionResult: callbackResult?.sessionResult || null
+            },
+            meta: 'GET /api/sessions/:id'
+          },
+          { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' },
+          { label: 'Fetch error', value: { error: message }, meta: 'server error' }
+        ]);
+        addActivityEntry('Session lookup failed', message, 'error');
+        throw new Error(`Get session failed: ${message}`);
+      }
+
+      const latestSession = await sessionResponse.json();
+      renderSessionResult(latestSession);
+      recordStepDetails('session-fetch', [
+        {
+          label: 'Server fetch request',
+          value: {
+            sessionId: session.id,
+            callbackType,
+            resultCode: callbackResult?.resultCode || null,
+            sessionResult: callbackResult?.sessionResult || null
+          },
+          meta: 'GET /api/sessions/:id'
+        },
+        { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' },
+        { label: 'Latest session response', value: latestSession, meta: latestSession.status || callbackResult?.resultCode || 'session payload' }
+      ]);
+      setFlowStepStatus('session-fetch', 'done', 'The latest Adyen session payload is now visible in the result panel below the explorer.');
+      addActivityEntry('Session state rendered', 'The page updated the result panel with the latest session payload from the server.');
+      appendTimelineEvent({
+        title: 'Latest session rendered',
+        subtitle: 'Server response',
+        summary: `The explorer rendered the final session state returned by the demo server (${latestSession.status || callbackResult?.resultCode || 'unknown status'}).`,
+        source: 'server',
+        tone: 'done',
+        details: [
+          { label: 'Latest session response', value: latestSession, meta: latestSession.status || callbackResult?.resultCode || 'session payload' }
+        ]
+      });
+      console.log('Latest Adyen session from server:', latestSession);
+    };
+
     const updateEnvironmentLabel = (isLive) => {
       const envLabel = isLive ? 'Live' : 'Test';
       environmentToggleLabel.textContent = envLabel;
@@ -1891,7 +2039,24 @@
 
     const getClientKeyForEnv = (env) => clientKeys[env] || clientKeys.test;
 
-    const buildSessionRequestBody = ({ isLive, amountValue, currency, reference, shopperReference, shopperEmail, storePaymentMethodMode }) => {
+    const parsePaymentMethodList = (value) => {
+      return String(value || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    };
+
+    const buildSessionRequestBody = ({
+      isLive,
+      amountValue,
+      currency,
+      reference,
+      shopperReference,
+      shopperEmail,
+      storePaymentMethodMode,
+      allowedPaymentMethods,
+      blockedPaymentMethods
+    }) => {
       const sessionRequestBody = {
         isLive,
         amount: { value: amountValue, currency },
@@ -1911,12 +2076,22 @@
         sessionRequestBody.shopperEmail = shopperEmail;
       }
 
+      if (Array.isArray(allowedPaymentMethods) && allowedPaymentMethods.length > 0) {
+        sessionRequestBody.allowedPaymentMethods = allowedPaymentMethods;
+      }
+
+      if (Array.isArray(blockedPaymentMethods) && blockedPaymentMethods.length > 0) {
+        sessionRequestBody.blockedPaymentMethods = blockedPaymentMethods;
+      }
+
       return sessionRequestBody;
     };
 
     const buildServerForwardBody = (requestBody) => {
       const forwarded = JSON.parse(JSON.stringify(requestBody));
-      forwarded.merchantAccount = requestBody.isLive ? 'Configured live merchant account' : 'Configured test merchant account';
+      forwarded.merchantAccount = requestBody.isLive
+        ? (merchantAccounts.live || 'Unavailable')
+        : (merchantAccounts.test || 'Unavailable');
       forwarded.countryCode = String(requestBody.amount?.currency || '').toUpperCase() === 'SGD' ? 'SG' : 'Derived from currency';
       forwarded.recurringProcessingModel = 'Subscription';
       if (!['enabled', 'askForConsent', 'disabled'].includes(forwarded.storePaymentMethodMode)) {
@@ -2144,7 +2319,7 @@
         resetFlowSteps(4);
         setFlowStepStatus('payment-submit', 'active', 'Drop-in is handing the shopper payment data to Adyen through the active session.');
         recordStepDetails('payment-submit', [
-          { label: 'Submission context', value: { selectedPaymentMethod: currentSelectedMethod, listenerState: currentListenerState }, meta: currentSelectedMethod || 'pay click' }
+          { label: 'Submission context', value: { selectedPaymentMethod: currentSelectedMethod, listenerState: currentListenerState, binValue: currentBinValue }, meta: currentSelectedMethod || 'pay click' }
         ]);
         addActivityEntry('Payment submitted', 'Drop-in started the payment call for the selected method.');
         appendTimelineEvent({
@@ -2154,7 +2329,7 @@
           source: 'browser',
           tone: 'active',
           details: [
-            { label: 'Submission context', value: { selectedPaymentMethod: currentSelectedMethod, listenerState: currentListenerState }, meta: currentSelectedMethod || 'pay click' }
+            { label: 'Submission context', value: { selectedPaymentMethod: currentSelectedMethod, listenerState: currentListenerState, binValue: currentBinValue }, meta: currentSelectedMethod || 'pay click' }
           ]
         });
       }
@@ -2204,6 +2379,8 @@
       const shopperReference = (form.shopperReference?.value || '').trim();
       const shopperEmail = (form.shopperEmail?.value || '').trim();
       const storePaymentMethodMode = (form.storePaymentMethodMode?.value || '').trim();
+      const allowedPaymentMethods = parsePaymentMethodList(form.allowedPaymentMethods?.value);
+      const blockedPaymentMethods = parsePaymentMethodList(form.blockedPaymentMethods?.value);
 
       if (!clientKey) {
         alert(`Missing client key for the ${env} environment.`);
@@ -2251,7 +2428,9 @@
           reference,
           shopperReference,
           shopperEmail,
-          storePaymentMethodMode
+          storePaymentMethodMode,
+          allowedPaymentMethods,
+          blockedPaymentMethods
         });
 
         const serverForwardBody = buildServerForwardBody(sessionRequestBody);
@@ -2262,7 +2441,20 @@
 
         recordStepDetails('session-request', [
           { label: 'Browser request body', value: sessionRequestBody, meta: `${currency} ${amountValue}` },
-          { label: 'Config lightbox state', value: { amountValue, currency, reference, shopperReference, shopperEmail, storePaymentMethodMode }, meta: 'form state' }
+          {
+            label: 'Config lightbox state',
+            value: {
+              amountValue,
+              currency,
+              reference,
+              shopperReference,
+              shopperEmail,
+              storePaymentMethodMode,
+              allowedPaymentMethods,
+              blockedPaymentMethods
+            },
+            meta: 'form state'
+          }
         ]);
         appendTimelineEvent({
           title: 'Browser prepared session request',
@@ -2365,6 +2557,7 @@
             recordStepDetails('dropin-mounted', [
               { label: 'Drop-in configuration', value: { environment: env, clientKey: maskValue(clientKey), sessionId: session.id, dropinConfiguration }, meta: 'browser config' },
               { label: 'Event listener state', value: currentListenerState, meta: 'onChange snapshot' },
+              currentBinValue ? { label: 'Latest BIN value', value: { binValue: currentBinValue }, meta: currentBinValue } : null,
               currentSelectedMethod ? { label: 'Selected payment method', value: { label: currentSelectedMethod }, meta: currentSelectedMethod } : null
             ]);
             appendTimelineEvent({
@@ -2377,6 +2570,40 @@
                 { label: 'Event listener state', value: currentListenerState, meta: 'onChange snapshot' }
               ]
             });
+          },
+          onBinValue: (payload) => {
+            const binValue = extractBinValue(payload);
+
+            if (!binValue || binValue === currentBinValue) {
+              return;
+            }
+
+            currentBinValue = binValue;
+            updatePreviewSummary({ binValue });
+
+            recordStepDetails('dropin-mounted', [
+              { label: 'Drop-in configuration', value: { environment: env, clientKey: maskValue(clientKey), sessionId: session.id, dropinConfiguration }, meta: 'browser config' },
+              currentListenerState ? { label: 'Event listener state', value: currentListenerState, meta: 'onChange snapshot' } : null,
+              { label: 'Latest BIN value', value: { binValue, rawPayload: payload }, meta: binValue },
+              currentSelectedMethod ? { label: 'Selected payment method', value: { label: currentSelectedMethod }, meta: currentSelectedMethod } : null
+            ]);
+
+            const binSignature = `bin:${binValue}`;
+            if (lastBinSignature !== binSignature) {
+              addActivityEntry('BIN value captured', `Drop-in emitted onBinValue with ${binValue}.`);
+              appendTimelineEvent({
+                title: 'BIN value callback fired',
+                subtitle: 'onBinValue listener',
+                summary: `Drop-in emitted BIN value ${binValue} from shopper card input.`,
+                source: 'browser',
+                tone: 'active',
+                details: [
+                  { label: 'onBinValue payload', value: payload, meta: 'listener payload' },
+                  { label: 'Extracted BIN value', value: { binValue }, meta: binValue }
+                ]
+              });
+              lastBinSignature = binSignature;
+            }
           },
           onPaymentCompleted: async (result) => {
             setFlowStepStatus('payment-submit', 'done', 'Adyen accepted the shopper submission and resolved the payment attempt.');
@@ -2399,75 +2626,13 @@
             addActivityEntry('Payment completed', `Adyen returned ${result.resultCode || 'completed'} to the browser.`);
 
             try {
-              const getSessionUrl = new URL(`/api/sessions/${session.id}`, window.location.origin);
-              getSessionUrl.searchParams.set('isLive', String(isLive));
-
-              if (result?.sessionResult) {
-                getSessionUrl.searchParams.set('sessionResult', result.sessionResult);
-              }
-
-              const sessionFetchHeaders = {
-                'Content-Type': 'application/json',
-                'X-API-Key': maskedApiKeys[env] || 'Unavailable'
-              };
-
-              recordStepDetails('session-fetch', [
-                { label: 'Server fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'GET /api/sessions/:id' },
-                { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' }
-              ]);
-
-              const sessionResponse = await fetch(getSessionUrl.toString(), {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+              await fetchLatestSessionSnapshot({
+                session,
+                isLive,
+                env,
+                callbackResult: result,
+                callbackType: 'onPaymentCompleted'
               });
-
-              setFlowStepStatus('payment-outcome', 'done', 'The browser received the Adyen outcome and is now asking the server for the latest session snapshot.');
-              setFlowStepStatus('session-fetch', 'active', 'The demo server is retrieving the latest session resource for inspection.');
-              addActivityEntry('Fetching latest session', 'The demo calls GET /api/sessions/:id to show the final state returned by Adyen.');
-              appendTimelineEvent({
-                title: 'Latest session requested',
-                subtitle: 'GET /api/sessions/:id',
-                summary: 'The browser requested the freshest session resource from the demo server.',
-                source: 'server',
-                tone: 'active',
-                details: [
-                  { label: 'Fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'session lookup' },
-                  { label: 'Fetch headers', value: sessionFetchHeaders, meta: 'masked headers' }
-                ]
-              });
-
-              if (!sessionResponse.ok) {
-                const message = await extractErrorMessage(sessionResponse);
-                setFlowStepStatus('session-fetch', 'error', `The latest session lookup failed: ${message}`);
-                recordStepDetails('session-fetch', [
-                  { label: 'Server fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'GET /api/sessions/:id' },
-                  { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' },
-                  { label: 'Fetch error', value: { error: message }, meta: 'server error' }
-                ]);
-                addActivityEntry('Session lookup failed', message, 'error');
-                throw new Error(`Get session failed: ${message}`);
-              }
-
-              const latestSession = await sessionResponse.json();
-              renderSessionResult(latestSession);
-              recordStepDetails('session-fetch', [
-                { label: 'Server fetch request', value: { sessionId: session.id, sessionResult: result?.sessionResult || null }, meta: 'GET /api/sessions/:id' },
-                { label: 'Server fetch headers', value: sessionFetchHeaders, meta: 'masked headers' },
-                { label: 'Latest session response', value: latestSession, meta: latestSession.status || 'session payload' }
-              ]);
-              setFlowStepStatus('session-fetch', 'done', 'The latest Adyen session payload is now visible in the result panel below the explorer.');
-              addActivityEntry('Session state rendered', 'The page updated the result panel with the latest session payload from the server.');
-              appendTimelineEvent({
-                title: 'Latest session rendered',
-                subtitle: 'Server response',
-                summary: 'The explorer rendered the final session state returned by the demo server.',
-                source: 'server',
-                tone: 'done',
-                details: [
-                  { label: 'Latest session response', value: latestSession, meta: latestSession.status || 'session payload' }
-                ]
-              });
-              console.log('Latest Adyen session from server:', latestSession);
             } catch (sessionError) {
               setFlowStepStatus('session-fetch', 'error', sessionError.message || 'Unable to retrieve the latest session state.');
               console.error('Failed to retrieve latest session after payment completion:', sessionError);
@@ -2493,6 +2658,17 @@
             showViewportBanner(`Payment failed: ${result.resultCode || 'Unknown error'}`, 'error');
             addActivityEntry('Payment failed', `Adyen returned ${result.resultCode || 'Unknown error'}.`, 'error');
             console.log('Payment failed:', result);
+
+            fetchLatestSessionSnapshot({
+              session,
+              isLive,
+              env,
+              callbackResult: result,
+              callbackType: 'onPaymentFailed'
+            }).catch((sessionError) => {
+              setFlowStepStatus('session-fetch', 'error', sessionError.message || 'Unable to retrieve the latest session state.');
+              console.error('Failed to retrieve latest session after payment failure:', sessionError);
+            });
           },
           onError: (err) => {
             const message = err?.message || err?.name || 'Unknown error';

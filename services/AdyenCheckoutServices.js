@@ -146,6 +146,27 @@ const submitAdditionalDetails = async (data, isLive = false, _merchantPrefix = "
         }
 }
 
+const createPaymentLink = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
+    const config = configHandler(isLive, version);
+    const url = `${config.url}/paymentLinks`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': config.apikey,
+    };
+
+    if (!data.merchantAccount) {
+        data.merchantAccount = config.merchantAccount;
+    }
+
+    try {
+        const response = await axios.post(url, data, { headers });
+        return response.data;
+    } catch (error) {
+        console.error('Error creating payment link:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 const checkSessionOutcome = async (data, isLive = false, _merchantPrefix = "", version = latestVersion) => {
     const config = configHandler(isLive, version);
     const url = `${config.url}/sessions/${data.sessionId}?sessionResult=${data.sessionResult}`;
@@ -226,6 +247,7 @@ const removeStoredPaymentMethod = async (data, isLive = false, _merchantPrefix =
 module.exports = {
     forward,
     createSession,
+    createPaymentLink,
     getPaymentMethods,
     removeStoredPaymentMethod,
     intiatePayment,

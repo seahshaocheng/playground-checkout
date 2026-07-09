@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunway Payment Link Demo</title>
+  <link rel="stylesheet" href="/css/workbench-theme.css" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: clamp(0.8rem, 2vw, 1.2rem);
+      background:
+        radial-gradient(circle at 8% 10%, rgba(14, 165, 233, 0.12), transparent 28%),
+        radial-gradient(circle at 92% 85%, rgba(251, 191, 36, 0.14), transparent 30%),
+        linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+      color: #10243a;
+    }
+
+    .shell {
+      max-width: 920px;
+      margin: 0 auto;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: #ffffff;
+      box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 1.1rem 1.2rem;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      background: linear-gradient(110deg, #f2f8ff 0%, #f8fbff 70%, #fffaf0 100%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .logo-placeholder {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 2px dashed #8aa8c7;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 0.66rem;
+      color: #4b6b8f;
+      font-weight: 700;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 0.1rem;
+      min-width: 0;
+    }
+
+    .brand-subtitle {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #4b6580;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.01em;
+      color: #0f2c4d;
+    }
+
+    .home-link {
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f2c4d;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      background: #ffffff;
+      padding: 0.42rem 0.72rem;
+    }
+
+    .home-link:hover {
+      background: #eff6ff;
+    }
+
+    .body {
+      padding: clamp(1rem, 2vw, 1.4rem);
+      display: grid;
+      gap: 1rem;
+    }
+
+    .intro {
+      margin: 0;
+      color: #334e68;
+      line-height: 1.45;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      color: #334e68;
+      font-weight: 600;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #10243a;
+      padding: 0.58rem 0.66rem;
+      font-size: 0.92rem;
+      outline: none;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.14);
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      color: #5c738f;
+      font-size: 0.78rem;
+    }
+
+    .chip {
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #f8fbff;
+      border-radius: 999px;
+      padding: 0.25rem 0.52rem;
+    }
+
+    .submit {
+      border-radius: 10px;
+      border: 1px solid #0ea5e9;
+      background: #0ea5e9;
+      color: #ffffff;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 0.62rem 0.75rem;
+      cursor: pointer;
+    }
+
+    .submit:hover {
+      background: #0284c7;
+      border-color: #0284c7;
+    }
+
+    .submit:disabled {
+      cursor: progress;
+      opacity: 0.72;
+    }
+
+    .result {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #f8fbff;
+      padding: 0.85rem;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .result h2 {
+      margin: 0;
+      font-size: 0.93rem;
+      color: #0f2c4d;
+    }
+
+    .kv {
+      margin: 0;
+      color: #334e68;
+      font-size: 0.85rem;
+    }
+
+    .kv strong {
+      color: #10243a;
+      font-weight: 700;
+    }
+
+    .link {
+      color: #0369a1;
+      text-decoration: none;
+      word-break: break-word;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .error {
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.15);
+      color: #fecaca;
+      border-radius: 10px;
+      padding: 0.62rem 0.7rem;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 0.55rem;
+      }
+
+      .header {
+        padding: 0.9rem;
+      }
+
+      .logo-placeholder {
+        width: 38px;
+        height: 38px;
+      }
+
+      .title {
+        font-size: 1.06rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .home-link {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="brand">
+        <div class="logo-placeholder" aria-hidden="true">Logo</div>
+        <div class="brand-copy">
+          <h1 class="title">Sunway Payment Link Demo</h1>
+          <p class="brand-subtitle">Logo placeholder ready for merchant branding</p>
+        </div>
+      </div>
+      <a class="home-link" href="/">Home</a>
+    </header>
+
+    <section class="body">
+      <p class="intro">Create an Adyen payment link using the MYR amount, then dispatch it to either an email address or a phone number. Target currency selection is captured as metadata for future conversion logic.</p>
+
+      <div class="meta-row">
+        <span class="chip">Environment: <strong><%= env %></strong></span>
+        <span class="chip">SDK version: <strong><%= sdkVersion %></strong></span>
+      </div>
+
+      <form id="sunway-form" class="form-grid">
+        <div class="field">
+          <label for="targetCurrency">Target currency</label>
+          <select id="targetCurrency" name="targetCurrency" class="select" required>
+            <option value="MYR">MYR</option>
+            <option value="SGD">SGD</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="HKD">HKD</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="amountMyr">Amount in MYR</label>
+          <input id="amountMyr" name="amountMyr" class="input" type="number" min="0.01" step="0.01" placeholder="e.g. 129.90" required />
+        </div>
+
+        <div class="field">
+          <label for="emailAddress">Email address (optional)</label>
+          <input id="emailAddress" name="emailAddress" class="input" type="email" placeholder="name@example.com" />
+        </div>
+
+        <div class="field">
+          <label for="phoneNumber">Phone number (optional)</label>
+          <input id="phoneNumber" name="phoneNumber" class="input" type="tel" placeholder="+60123456789" />
+        </div>
+
+        <div class="field full">
+          <button id="submitBtn" class="submit" type="submit">Generate payment link</button>
+        </div>
+      </form>
+
+      <p id="errorBox" class="error"></p>
+
+      <section id="resultBox" class="result" style="display:none;">
+        <h2>Payment Link Created</h2>
+        <p class="kv"><strong>Link:</strong> <a id="linkValue" class="link" target="_blank" rel="noreferrer"></a></p>
+        <p class="kv"><strong>Status:</strong> <span id="statusValue"></span></p>
+        <p class="kv"><strong>Recipient:</strong> <span id="recipientValue"></span></p>
+        <p class="kv"><strong>Channel:</strong> <span id="channelValue"></span></p>
+        <p class="kv"><strong>Expires at:</strong> <span id="expiresAtValue"></span></p>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const initialEnv = '<%= env %>';
+      const form = document.getElementById('sunway-form');
+      const submitBtn = document.getElementById('submitBtn');
+      const errorBox = document.getElementById('errorBox');
+      const resultBox = document.getElementById('resultBox');
+      const linkValue = document.getElementById('linkValue');
+      const statusValue = document.getElementById('statusValue');
+      const recipientValue = document.getElementById('recipientValue');
+      const channelValue = document.getElementById('channelValue');
+      const expiresAtValue = document.getElementById('expiresAtValue');
+
+      const showError = (message) => {
+        errorBox.textContent = message;
+        errorBox.style.display = 'block';
+      };
+
+      const clearError = () => {
+        errorBox.textContent = '';
+        errorBox.style.display = 'none';
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearError();
+        resultBox.style.display = 'none';
+
+        const formData = new FormData(form);
+        const payload = {
+          targetCurrency: String(formData.get('targetCurrency') || 'MYR').toUpperCase(),
+          amountMyr: Number(formData.get('amountMyr')),
+          emailAddress: String(formData.get('emailAddress') || '').trim(),
+          phoneNumber: String(formData.get('phoneNumber') || '').trim(),
+          isLive: initialEnv === 'live'
+        };
+
+        if (!payload.emailAddress && !payload.phoneNumber) {
+          showError('Please enter at least an email address or phone number.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Generating...';
+
+        try {
+          const response = await fetch('/api/custom-demos/sunway/payment-link', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Unable to generate payment link.');
+          }
+
+          linkValue.textContent = data.paymentLinkUrl;
+          linkValue.href = data.paymentLinkUrl;
+          statusValue.textContent = data.status || 'unknown';
+          recipientValue.textContent = data.recipient || '-';
+          channelValue.textContent = data.channel || '-';
+          expiresAtValue.textContent = data.expiresAt || '-';
+          resultBox.style.display = 'grid';
+        } catch (error) {
+          showError(error.message || 'Unable to generate payment link.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Generate payment link';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

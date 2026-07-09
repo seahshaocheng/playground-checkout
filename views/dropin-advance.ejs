@@ -1149,6 +1149,13 @@
     const getCurrentIsLive = () => getCurrentEnv() === 'live';
     const getCurrentClientKey = () => clientKeys[getCurrentEnv()] || clientKeys.test;
 
+    const parsePaymentMethodList = (value) => {
+      return String(value || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    };
+
     const extractErrorMessage = async (response) => {
       try {
         const payload = await response.json();
@@ -1269,6 +1276,8 @@
       const amountValue = Number.parseInt(form.amount.value, 10);
       const currency = (form.currency.value || '').trim().toUpperCase();
       const reference = (form.reference.value || '').trim();
+      const allowedPaymentMethods = parsePaymentMethodList(form.allowedPaymentMethods?.value);
+      const blockedPaymentMethods = parsePaymentMethodList(form.blockedPaymentMethods?.value);
 
       if (!clientKey) {
         showBanner(`Missing client key for ${env}.`, 'error');
@@ -1300,6 +1309,14 @@
         countryCode: 'SG',
         channel: 'Web'
       };
+
+      if (allowedPaymentMethods.length > 0) {
+        paymentMethodsRequestBody.allowedPaymentMethods = allowedPaymentMethods;
+      }
+
+      if (blockedPaymentMethods.length > 0) {
+        paymentMethodsRequestBody.blockedPaymentMethods = blockedPaymentMethods;
+      }
 
       try {
         setFlowStepStatus('payment-methods-request', 'active', 'Browser requested payment methods from the demo server.');

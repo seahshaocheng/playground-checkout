@@ -174,6 +174,13 @@
       homeLink.classList.toggle('text-dark', isLive);
     };
 
+    const parsePaymentMethodList = (value) => {
+      return String(value || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    };
+
     environmentToggle.checked = initialEnv === 'live';
     updateEnvironmentLabel(environmentToggle.checked);
 
@@ -196,6 +203,8 @@
       const amountValue = Number.parseInt(form.amount.value, 10);
       const currency = (form.currency.value || '').trim().toUpperCase();
       const reference = (form.reference.value || '').trim();
+      const allowedPaymentMethods = parsePaymentMethodList(form.allowedPaymentMethods?.value);
+      const blockedPaymentMethods = parsePaymentMethodList(form.blockedPaymentMethods?.value);
 
       if (!clientKey) {
         showBanner(`Missing client key for ${env}.`, 'danger');
@@ -217,15 +226,25 @@
 
         dropinContainer.innerHTML = '';
 
+        const sessionRequestBody = {
+          isLive,
+          amount: { value: amountValue, currency },
+          reference,
+          returnUrl: `${window.location.origin}/redirect`
+        };
+
+        if (allowedPaymentMethods.length > 0) {
+          sessionRequestBody.allowedPaymentMethods = allowedPaymentMethods;
+        }
+
+        if (blockedPaymentMethods.length > 0) {
+          sessionRequestBody.blockedPaymentMethods = blockedPaymentMethods;
+        }
+
         const response = await fetch('/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            isLive,
-            amount: { value: amountValue, currency },
-            reference,
-            returnUrl: `${window.location.origin}/redirect`
-          })
+          body: JSON.stringify(sessionRequestBody)
         });
 
         if (!response.ok) {

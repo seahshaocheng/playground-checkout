@@ -12,3 +12,27 @@
   <label for="reference" class="form-label">Reference</label>
   <input type="text" id="reference" name="reference" class="form-control" placeholder="e.g. ORDER12345" value="ORDER_ADVANCED_DEMO" required />
 </div>
+
+<div class="mb-3">
+  <label for="allowedPaymentMethods" class="form-label">Allow Payment Methods</label>
+  <input
+    type="text"
+    id="allowedPaymentMethods"
+    name="allowedPaymentMethods"
+    class="form-control"
+    placeholder="e.g. scheme, paypal"
+  />
+  <div class="form-text">Optional comma-separated list. Only these payment methods will be shown.</div>
+</div>
+
+<div class="mb-3">
+  <label for="blockedPaymentMethods" class="form-label">Block Payment Methods</label>
+  <input
+    type="text"
+    id="blockedPaymentMethods"
+    name="blockedPaymentMethods"
+    class="form-control"
+    placeholder="e.g. applepay, paywithgoogle"
+  />
+  <div class="form-text">Optional comma-separated list. These payment methods will be hidden.</div>
+</div>

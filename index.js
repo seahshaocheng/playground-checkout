@@ -1,12 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 require('dotenv').config();
 const { v4: uuidv4 } = require('uuid');
 
 const {
   forward,
   createSession,
+  createPaymentLink,
   getSession,
   getPaymentMethods,
   intiatePayment,
@@ -14,11 +17,26 @@ const {
   checkSessionOutcome,
   removeStoredPaymentMethod
 } = require('./services/AdyenCheckoutServices');
+const {
+  startSunwayFxCron,
+  handleWebhookPayload,
+  checkForNewFxReports,
+  downloadReportFromUrl,
+  rebuildFxTable,
+  getFxTableSnapshot
+} = require('./services/SunwayReportAutomationService');
 const req = require('express/lib/request');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
 const DEFAULT_SDK_VERSION = '6.13.1';
+const MERCHANT_ACCESS_COOKIE = 'merchant_demo_access';
+const MERCHANT_ACCESS_DURATION_SECONDS = Number(process.env.MERCHANT_ACCESS_DURATION_SECONDS || 8 * 60 * 60);
+const MERCHANT_ACCESS_SECRET = process.env.MERCHANT_ACCESS_SECRET || process.env.MERCHANT_DEMO_PASSCODE || 'merchant-access-secret';
+const DEFAULT_MERCHANT_ID = 'default-merchant';
+const MERCHANT_CONFIG_FILE_PATH = process.env.MERCHANT_DEMO_CONFIG_PATH
+  ? path.resolve(process.env.MERCHANT_DEMO_CONFIG_PATH)
+  : path.join(__dirname, 'merchant-demo-configs.json');
 
 let hotelOrders = [];
 
@@ -47,6 +65,7 @@ const getMerchantAccountFromBody = (isLive) => {
 };
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -133,7 +152,10 @@ const integrationVariants = [
     description: 'Card component integration for full control of payment UI and interaction points.',
     href: '/custom-card',
     group: 'Custom'
-  },
+  }
+];
+
+const defaultMerchantIntegrationVariants = [
   {
     name: 'Hotels Booking Demo',
     description: 'Customized hotels booking and payment journey with vertical-specific behavior.',
@@ -141,6 +163,266 @@ const integrationVariants = [
     group: 'Vertical'
   }
 ];
+
+const normalizeMerchantDemoConfigs = (parsedConfig) => {
+  if (!Array.isArray(parsedConfig)) {
+    return [];
+  }
+
+  return parsedConfig
+    .map((item) => {
+      const merchantId = String(item.merchantId || item.id || '').trim();
+      const displayName = String(item.displayName || item.name || merchantId || '').trim();
+      const passcodes = Array.isArray(item.passcodes)
+        ? item.passcodes.map((entry) => String(entry || '').trim()).filter(Boolean)
+        : [];
+      const variants = Array.isArray(item.variants)
+        ? item.variants
+            .map((variant) => ({
+              name: String(variant.name || '').trim(),
+              description: String(variant.description || '').trim(),
+              href: String(variant.href || '').trim(),
+              group: String(variant.group || 'Merchant').trim()
+            }))
+            .filter((variant) => variant.name && variant.href)
+        : [];
+      const allowedPathPrefixes = Array.isArray(item.allowedPathPrefixes)
+        ? item.allowedPathPrefixes.map((entry) => String(entry || '').trim()).filter(Boolean)
+        : [];
+
+      if (!merchantId || passcodes.length === 0) {
+        return null;
+      }
+
+      return {
+        merchantId,
+        displayName: displayName || merchantId,
+        passcodes,
+        variants,
+        allowedPathPrefixes
+      };
+    })
+    .filter(Boolean);
+};
+
+const getMerchantDemoConfigs = () => {
+  if (!fs.existsSync(MERCHANT_CONFIG_FILE_PATH)) {
+    return [];
+  }
+
+  try {
+    const fileContent = fs.readFileSync(MERCHANT_CONFIG_FILE_PATH, 'utf8');
+    const parsed = JSON.parse(fileContent);
+    return normalizeMerchantDemoConfigs(parsed);
+  } catch (error) {
+    console.error(`Invalid merchant demo config file ${MERCHANT_CONFIG_FILE_PATH}:`, error.message);
+    return [];
+  }
+};
+
+const getFallbackMerchantConfig = () => {
+  const passcodes = [process.env.MERCHANT_DEMO_PASSCODES, process.env.MERCHANT_DEMO_PASSCODE]
+    .filter(Boolean)
+    .flatMap((item) => String(item).split(','))
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return {
+    merchantId: DEFAULT_MERCHANT_ID,
+    displayName: 'Default Merchant',
+    passcodes: [...new Set(passcodes)],
+    variants: defaultMerchantIntegrationVariants,
+    allowedPathPrefixes: ['/hotels', '/api/hotel']
+  };
+};
+
+const getEffectiveMerchantConfigs = () => {
+  const configuredMerchants = getMerchantDemoConfigs();
+  if (configuredMerchants.length > 0) {
+    return configuredMerchants;
+  }
+
+  const fallbackMerchant = getFallbackMerchantConfig();
+  if (fallbackMerchant.passcodes.length > 0) {
+    return [fallbackMerchant];
+  }
+
+  return [];
+};
+
+const findMerchantById = (merchantId) => {
+  return getEffectiveMerchantConfigs().find((merchant) => merchant.merchantId === merchantId) || null;
+};
+
+const findMerchantByPasscode = (passcode) => {
+  return getEffectiveMerchantConfigs().find((merchant) => merchant.passcodes.includes(passcode)) || null;
+};
+
+const getMerchantVariants = (merchantConfig) => {
+  if (!merchantConfig) {
+    return [];
+  }
+
+  return merchantConfig.variants.length > 0 ? merchantConfig.variants : defaultMerchantIntegrationVariants;
+};
+
+const getMerchantAllowedPathPrefixes = (merchantConfig) => {
+  if (!merchantConfig) {
+    return [];
+  }
+
+  const prefixes = merchantConfig.allowedPathPrefixes.length > 0
+    ? merchantConfig.allowedPathPrefixes
+    : getMerchantVariants(merchantConfig).map((variant) => variant.href);
+
+  return [...new Set(prefixes.map((entry) => entry.split('?')[0]).filter(Boolean))];
+};
+
+const isPathAllowedForMerchant = (merchantConfig, targetPath) => {
+  if (!merchantConfig || !targetPath || !targetPath.startsWith('/')) {
+    return false;
+  }
+
+  const pathOnly = targetPath.split('?')[0];
+  if (pathOnly === '/merchant-demos') {
+    return true;
+  }
+
+  const allowedPrefixes = getMerchantAllowedPathPrefixes(merchantConfig);
+  return allowedPrefixes.some((prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`));
+};
+
+const parseCookieHeader = (cookieHeader = '') => {
+  return cookieHeader
+    .split(';')
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .reduce((acc, pair) => {
+      const separatorIndex = pair.indexOf('=');
+      if (separatorIndex <= 0) {
+        return acc;
+      }
+
+      const key = pair.slice(0, separatorIndex);
+      const value = pair.slice(separatorIndex + 1);
+      acc[key] = decodeURIComponent(value || '');
+      return acc;
+    }, {});
+};
+
+const computeCookieSignature = (payload) => {
+  return crypto
+    .createHmac('sha256', MERCHANT_ACCESS_SECRET)
+    .update(payload)
+    .digest('hex');
+};
+
+const mintMerchantAccessToken = (merchantId) => {
+  const payload = JSON.stringify({
+    merchantId,
+    expiresAt: Date.now() + (MERCHANT_ACCESS_DURATION_SECONDS * 1000)
+  });
+  const encodedPayload = Buffer.from(payload, 'utf8').toString('base64url');
+  const signature = computeCookieSignature(encodedPayload);
+  return `${encodedPayload}.${signature}`;
+};
+
+const isMerchantAccessTokenValid = (token) => {
+  if (!token || typeof token !== 'string' || !token.includes('.')) {
+    return null;
+  }
+
+  const [encodedPayload, signature] = token.split('.');
+  if (!encodedPayload || !signature) {
+    return null;
+  }
+
+  const expectedSignature = computeCookieSignature(encodedPayload);
+  if (signature.length !== expectedSignature.length) {
+    return null;
+  }
+
+  const isSignatureMatch = crypto.timingSafeEqual(
+    Buffer.from(signature, 'utf8'),
+    Buffer.from(expectedSignature, 'utf8')
+  );
+  if (!isSignatureMatch) {
+    return null;
+  }
+
+  try {
+    const decodedPayload = Buffer.from(encodedPayload, 'base64url').toString('utf8');
+    const parsedPayload = JSON.parse(decodedPayload);
+    const merchantId = String(parsedPayload.merchantId || '').trim();
+    const expiresAt = Number(parsedPayload.expiresAt);
+
+    if (!merchantId || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      return null;
+    }
+
+    return {
+      merchantId,
+      expiresAt
+    };
+  } catch (error) {
+    return null;
+  }
+};
+
+const hasMerchantAccess = (req) => {
+  const cookies = parseCookieHeader(req.headers.cookie || '');
+  return isMerchantAccessTokenValid(cookies[MERCHANT_ACCESS_COOKIE]);
+};
+
+const setMerchantAccessCookie = (res, merchantId) => {
+  const token = mintMerchantAccessToken(merchantId);
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader(
+    'Set-Cookie',
+    `${MERCHANT_ACCESS_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${MERCHANT_ACCESS_DURATION_SECONDS}${secure}`
+  );
+};
+
+const clearMerchantAccessCookie = (res) => {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader(
+    'Set-Cookie',
+    `${MERCHANT_ACCESS_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`
+  );
+};
+
+const requireMerchantAccess = (req, res, next) => {
+  const merchantAccess = hasMerchantAccess(req);
+  if (merchantAccess && findMerchantById(merchantAccess.merchantId)) {
+    req.merchantAccess = merchantAccess;
+    return next();
+  }
+
+  const nextPath = encodeURIComponent(req.originalUrl || '/merchant-demos');
+  return res.redirect(`/merchant-access?next=${nextPath}`);
+};
+
+const requireMerchantPathAccess = () => {
+  return (req, res, next) => {
+    const merchantAccess = req.merchantAccess || hasMerchantAccess(req);
+    if (!merchantAccess) {
+      const nextPath = encodeURIComponent(req.originalUrl || '/merchant-demos');
+      return res.redirect(`/merchant-access?next=${nextPath}`);
+    }
+
+    const merchantConfig = findMerchantById(merchantAccess.merchantId);
+    if (!merchantConfig) {
+      clearMerchantAccessCookie(res);
+      return res.redirect('/merchant-access');
+    }
+
+    if (!isPathAllowedForMerchant(merchantConfig, req.originalUrl || req.baseUrl || '/')) {
+      return res.status(403).send('You are not authorized to access this merchant demo.');
+    }
+
+    return next();
+  };
+};
 
 app.get('/', (req, res) => {
   const integrationGroups = [...new Set(integrationVariants.map((variant) => variant.group))];
@@ -151,6 +433,75 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/merchant-access', (req, res) => {
+  if (hasMerchantAccess(req)) {
+    return res.redirect('/merchant-demos');
+  }
+
+  const rawNext = typeof req.query.next === 'string' && req.query.next.startsWith('/')
+    ? req.query.next
+    : '/merchant-demos';
+
+  res.render('merchant-access', {
+    nextPath: rawNext,
+    hasConfiguredPasscode: getEffectiveMerchantConfigs().length > 0,
+    errorMessage: req.query.error === 'invalid' ? 'Invalid passcode. Please try again.' : null
+  });
+});
+
+app.post('/merchant-access', (req, res) => {
+  const submittedPasscode = String(req.body.passcode || '').trim();
+  const merchant = findMerchantByPasscode(submittedPasscode);
+  const requestedNextPath = typeof req.body.next === 'string' && req.body.next.startsWith('/')
+    ? req.body.next
+    : '/merchant-demos';
+
+  if (getEffectiveMerchantConfigs().length === 0) {
+    return res.status(500).render('merchant-access', {
+      nextPath: requestedNextPath,
+      hasConfiguredPasscode: false,
+      errorMessage: 'Merchant passcode is not configured on this server.'
+    });
+  }
+
+  if (!submittedPasscode || !merchant) {
+    return res.redirect(`/merchant-access?error=invalid&next=${encodeURIComponent(requestedNextPath)}`);
+  }
+
+  setMerchantAccessCookie(res, merchant.merchantId);
+  if (isPathAllowedForMerchant(merchant, requestedNextPath)) {
+    return res.redirect(requestedNextPath);
+  }
+
+  return res.redirect('/merchant-demos');
+});
+
+app.post('/merchant-access/logout', (req, res) => {
+  clearMerchantAccessCookie(res);
+  return res.redirect('/');
+});
+
+app.get('/merchant-demos', requireMerchantAccess, (req, res) => {
+  const merchantConfig = findMerchantById(req.merchantAccess.merchantId);
+  if (!merchantConfig) {
+    clearMerchantAccessCookie(res);
+    return res.redirect('/merchant-access');
+  }
+
+  const merchantVariants = getMerchantVariants(merchantConfig);
+  const integrationGroups = [...new Set(merchantVariants.map((variant) => variant.group))];
+  res.render('index', {
+    defaultSdkVersion: DEFAULT_SDK_VERSION,
+    integrationVariants: merchantVariants,
+    integrationGroups
+  });
+});
+
+app.use('/hotels', requireMerchantAccess, requireMerchantPathAccess());
+app.use('/api/hotel', requireMerchantAccess, requireMerchantPathAccess());
+app.use('/custom-demos/sunway', requireMerchantAccess, requireMerchantPathAccess());
+app.use('/api/custom-demos/sunway', requireMerchantAccess, requireMerchantPathAccess());
+
 app.get('/.well-known/apple-developer-merchantid-domain-association', (req, res) => {
   res.sendFile(path.join(__dirname,'.well-known','apple-developer-merchantid-domain-association'));
 });
@@ -159,6 +510,8 @@ app.get('/dropin-session', (req, res) => {
   const checkoutContext = getCheckoutContext(req);
   res.render('dropin-session', {
     ...checkoutContext,
+    testMerchantAccount: getMerchantAccountFromBody(false),
+    liveMerchantAccount: getLiveMerchantAccount(),
     maskedTestApiKey: maskSecret(process.env.ADYEN_API_KEY_TEST),
     maskedLiveApiKey: maskSecret(process.env.ADYEN_API_KEY_LIVE)
   });
@@ -183,6 +536,135 @@ app.get('/dropin-advance-booking',(req,res)=>{
 app.get('/custom-card',(req,res)=>{
   res.render('custom-card', getCheckoutContext(req));
 })
+
+app.get('/custom-demos/sunway', (req, res) => {
+  res.render('custom-demos/sunway/index', getCheckoutContext(req));
+});
+
+app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
+  const {
+    isLive = false,
+    merchantPrefix = '',
+    version,
+    amountMyr,
+    targetCurrency,
+    emailAddress,
+    phoneNumber
+  } = req.body;
+
+  const normalizedEmail = String(emailAddress || '').trim();
+  const normalizedPhone = String(phoneNumber || '').trim();
+  const normalizedTargetCurrency = String(targetCurrency || 'MYR').toUpperCase();
+  const parsedAmount = Number(amountMyr);
+
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    return res.status(400).json({
+      error: 'Please provide a valid MYR amount greater than 0.'
+    });
+  }
+
+  if (!normalizedEmail && !normalizedPhone) {
+    return res.status(400).json({
+      error: 'Please provide either an email address or a phone number.'
+    });
+  }
+
+  const payload = {
+    reference: `SUNWAY-${uuidv4()}`,
+    amount: {
+      value: Math.round(parsedAmount * 100),
+      currency: 'MYR'
+    },
+    countryCode: 'MY',
+    shopperLocale: 'en-MY',
+    merchantAccount: getMerchantAccountFromBody(Boolean(isLive)),
+    metadata: {
+      source: 'sunway-demo',
+      targetCurrency: normalizedTargetCurrency,
+      emailAddress: normalizedEmail,
+      phoneNumber: normalizedPhone
+    }
+  };
+
+  try {
+    const result = await createPaymentLink(payload, Boolean(isLive), merchantPrefix, version);
+    const recipientChannel = normalizedEmail ? 'email' : 'phone';
+    const recipient = normalizedEmail || normalizedPhone;
+
+    // Demo-only dispatch: replace with real provider integration for SMS/email sending.
+    console.log(`[sunway-demo] Payment link ${result.url} would be sent via ${recipientChannel} to ${recipient}`);
+
+    return res.json({
+      paymentLinkId: result.id,
+      paymentLinkUrl: result.url,
+      expiresAt: result.expiresAt,
+      status: result.status,
+      channel: recipientChannel,
+      recipient,
+      message: `Payment link generated and queued for ${recipientChannel} delivery.`
+    });
+  } catch (error) {
+    return res.status(500).json(error.response?.data || { error: error.message });
+  }
+});
+
+// Placeholder webhook endpoint for Adyen report notifications.
+app.post('/api/custom-demos/sunway/reports/webhook', async (req, res) => {
+  try {
+    const result = await handleWebhookPayload(req.body, req.headers);
+    return res.status(202).json({
+      message: 'Webhook accepted for processing.',
+      ...result
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/custom-demos/sunway/reports/check', async (_req, res) => {
+  try {
+    const downloaded = await checkForNewFxReports();
+    return res.json({
+      checkedAt: new Date().toISOString(),
+      downloadedCount: downloaded.length,
+      downloaded
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/custom-demos/sunway/reports/download', async (req, res) => {
+  const { reportUrl } = req.body || {};
+  if (!reportUrl) {
+    return res.status(400).json({ error: 'reportUrl is required.' });
+  }
+
+  try {
+    const downloaded = await downloadReportFromUrl(reportUrl, { source: 'manual' });
+    const fxTable = rebuildFxTable();
+    return res.json({
+      downloaded,
+      fxTableUpdatedAt: fxTable.updatedAt,
+      pairCount: fxTable.pairCount
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/custom-demos/sunway/reports/fx-table/rebuild', (_req, res) => {
+  try {
+    const fxTable = rebuildFxTable();
+    return res.json(fxTable);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/custom-demos/sunway/reports/fx-table', (_req, res) => {
+  return res.json(getFxTableSnapshot());
+});
 
 //hotels Customisation
 app.get('/hotels/booking',(req,res)=>{
@@ -514,6 +996,16 @@ app.get('/status', (req, res) => {
   res.render('status', { status });
 });
 
+const normalizeRedirectResult = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  // Adyen redirectResult contains base64-like characters; plus signs can become spaces in query parsing.
+  const normalized = String(value).trim().replace(/ /g, '+');
+  return normalized || null;
+};
+
 app.all('/redirect', async (req, res) => {
   try {
     const isLive = req.method === 'POST' ? Boolean(req.body?.isLive) : false;
@@ -528,13 +1020,23 @@ app.all('/redirect', async (req, res) => {
       console.log(sessionOutcome);
       actualResultCode = sessionOutcome.payments?.[0].resultCode;
     }else{
-        const redirectResult = req.method === 'POST' ? req.body.redirectResult : req.query.redirectResult;
-        if (!redirectResult) {
-          return res.status(400).json({ error: 'Missing redirectResult parameter.' });
+        const redirectResult = req.method === 'POST'
+          ? normalizeRedirectResult(req.body?.redirectResult)
+          : normalizeRedirectResult(req.query.redirectResult);
+        const payload = req.method === 'POST'
+          ? normalizeRedirectResult(req.body?.payload)
+          : normalizeRedirectResult(req.query.payload);
+
+        const details = redirectResult
+          ? { redirectResult }
+          : (payload ? { payload } : null);
+
+        if (!details) {
+          return res.status(400).json({ error: 'Missing redirectResult or payload parameter.' });
         }
-        console.log("submitting additional details with redirectResult:", redirectResult);
+        console.log('submitting additional details with redirect payload');
         const result = await submitAdditionalDetails(
-          { details: { redirectResult } }, // Format expected by Adyen
+          { details },
           isLive,
           merchantPrefix,
           version
@@ -586,6 +1088,8 @@ app.post('/api/deletePaymentMethods/:id', async (req, res) => {
 
 //
 //End Standard Integration Server Endpoints
+
+startSunwayFxCron(console);
 
 app.listen(PORT, () => {
   console.log(`🚀 Adyen API Demo running at http://localhost:${PORT}`);

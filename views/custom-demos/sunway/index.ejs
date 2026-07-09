@@ -801,26 +801,26 @@
         targetCurrency,
         amountMyr,
         exchangeRate,
-        exchangePlatformSettlement,
+        reverseSettlementRate,
         converted,
-        convertedSettlement,
+        convertedSettlementMyr,
         validFrom
       }) => {
-        const settlementBlock = Number.isFinite(exchangePlatformSettlement)
+        const settlementBlock = Number.isFinite(reverseSettlementRate)
           ? `
-            <p class="rate-banner-line">You will receive at settlement</p>
-            <p class="rate-banner-amount">${formatAmountByCode(convertedSettlement, targetCurrency)}</p>
-            <p class="rate-banner-rate">(settlement rate: ${formatRate(exchangePlatformSettlement)})</p>
+            <p class="rate-banner-line">You will receive at est. settlement</p>
+            <p class="rate-banner-amount">${formatAmountByCode(convertedSettlementMyr, 'MYR')}</p>
+            <p class="rate-banner-rate">(est. settlement rate ${targetCurrency}->MYR: ${formatRate(reverseSettlementRate)})</p>
           `
           : `
-            <p class="rate-banner-line">You will receive at settlement</p>
-            <p class="rate-banner-rate">(settlement rate: unavailable)</p>
+            <p class="rate-banner-line">You will receive at est. settlement</p>
+            <p class="rate-banner-rate">(est. settlement rate ${targetCurrency}->MYR: unavailable)</p>
           `;
 
         rateBanner.innerHTML = `
           <p class="rate-banner-line">You will be charging customer:</p>
           <p class="rate-banner-amount">${formatAmountByCode(converted, targetCurrency)}</p>
-          <p class="rate-banner-rate">(rate: ${formatRate(exchangeRate)})</p>
+          <p class="rate-banner-rate">(rate MYR->${targetCurrency}: ${formatRate(exchangeRate)})</p>
           <div class="rate-banner-gap"></div>
           ${settlementBlock}
           <p class="rate-banner-note">This rate is valid from ${formatLocalDateTime(validFrom)}</p>
@@ -843,9 +843,9 @@
             targetCurrency,
             amountMyr,
             exchangeRate: 1,
-            exchangePlatformSettlement: 1,
+            reverseSettlementRate: 1,
             converted: amountMyr,
-            convertedSettlement: amountMyr,
+            convertedSettlementMyr: amountMyr,
             validFrom: 'Immediate'
           });
           return;
@@ -875,8 +875,24 @@
             return;
           }
 
+          const reverseQuery = new URLSearchParams({
+            base: targetCurrency,
+            target: 'MYR'
+          });
+          const reverseResponse = await fetch(`/api/custom-demos/reports/rates?${reverseQuery.toString()}`);
+          const reverseData = await reverseResponse.json();
+
+          if (!reverseResponse.ok) {
+            showNoRateBanner({
+              targetCurrency,
+              amountMyr,
+              reason: reverseData.reason || `No reverse settlement rate found for ${targetCurrency} to MYR.`
+            });
+            return;
+          }
+
           const exchangeRate = Number(data.exchangeRate);
-          const exchangePlatformSettlement = Number(data.exchangePlatformSettlement);
+          const reverseSettlementRate = Number(reverseData.exchangePlatformSettlement);
           if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
             showNoRateBanner({
               targetCurrency,
@@ -886,18 +902,25 @@
             return;
           }
 
+          if (!Number.isFinite(reverseSettlementRate) || reverseSettlementRate <= 0) {
+            showNoRateBanner({
+              targetCurrency,
+              amountMyr,
+              reason: `Reverse settlement rate for ${targetCurrency} to MYR is unavailable.`
+            });
+            return;
+          }
+
           const converted = amountMyr * exchangeRate;
-          const convertedSettlement = Number.isFinite(exchangePlatformSettlement)
-            ? amountMyr * exchangePlatformSettlement
-            : NaN;
+          const convertedSettlementMyr = converted * reverseSettlementRate;
 
           showRateBanner({
             targetCurrency,
             amountMyr,
             exchangeRate,
-            exchangePlatformSettlement,
+            reverseSettlementRate,
             converted,
-            convertedSettlement,
+            convertedSettlementMyr,
             validFrom: data.validFrom
           });
         } catch (error) {

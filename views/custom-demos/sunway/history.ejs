@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunway Payment Link History</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 16px;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+      color: #0f2c4d;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: #ffffff;
+      box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(110deg, #f2f8ff 0%, #f8fbff 70%, #fffaf0 100%);
+    }
+
+    .title { margin: 0; font-size: 1.2rem; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f2c4d;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      background: #ffffff;
+      padding: 0.45rem 0.75rem;
+      cursor: pointer;
+    }
+
+    .btn:hover { background: #eff6ff; }
+
+    .body { padding: 16px; display: grid; gap: 10px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    th, td {
+      padding: 9px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
+    }
+
+    th {
+      background: #f1f7ff;
+      color: #23415f;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: #334e68;
+      background: #f8fafc;
+    }
+
+    .status.paid {
+      color: #166534;
+      background: #dcfce7;
+      border-color: rgba(22, 163, 74, 0.35);
+    }
+
+    .status.failed {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: rgba(220, 38, 38, 0.35);
+    }
+
+    .status.expired {
+      color: #92400e;
+      background: #fef3c7;
+      border-color: rgba(217, 119, 6, 0.35);
+    }
+
+    .muted { margin: 0; color: #4b6580; font-size: 0.8rem; }
+
+    @media (max-width: 760px) {
+      body { padding: 10px; }
+      .header, .body { padding: 12px; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tr { border-bottom: 1px solid rgba(148, 163, 184, 0.28); padding: 8px 0; }
+      td { border-bottom: none; padding: 6px 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <h1 class="title">Payment Link History</h1>
+      <div class="actions">
+        <a class="btn" href="/custom-demos/sunway">Dashboard</a>
+        <a class="btn" href="/custom-demos/sunway/create-payment-link">Create payment link</a>
+      </div>
+    </header>
+
+    <section class="body">
+      <p id="note" class="muted">Loading links...</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Created</th>
+            <th>Payment Link ID</th>
+            <th>Merchant</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const rows = document.getElementById('rows');
+      const note = document.getElementById('note');
+
+      const statusClass = (statusRaw) => {
+        const value = String(statusRaw || '').toLowerCase();
+        if (value === 'paid') return 'paid';
+        if (value === 'payment failed') return 'failed';
+        if (value === 'expired') return 'expired';
+        return '';
+      };
+
+      const load = async () => {
+        try {
+          const response = await fetch('/api/custom-demos/sunway/payment-links');
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Unable to load links');
+          }
+
+          const links = data.links || [];
+          note.textContent = `${links.length} link(s) in history. Auto-refreshing every 2 seconds.`;
+
+          rows.innerHTML = links.map((entry) => {
+            const amount = Number.isFinite(Number(entry.amount))
+              ? `${entry.currency || ''} ${(Number(entry.amount) / 100).toFixed(2)}`
+              : '-';
+            const status = entry.lifecycleStatus || entry.status || 'active';
+            const created = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '-';
+
+            return `
+              <tr>
+                <td>${created}</td>
+                <td>${entry.paymentLinkId || '-'}</td>
+                <td>${entry.merchantAccountCode || '-'}</td>
+                <td>${amount}</td>
+                <td><span class="status ${statusClass(status)}">${status}</span></td>
+                <td>${entry.paymentLinkUrl ? `<a href="${entry.paymentLinkUrl}" target="_blank" rel="noreferrer">Open</a>` : '-'}</td>
+              </tr>
+            `;
+          }).join('');
+        } catch (_error) {
+          note.textContent = 'Unable to load history right now.';
+          rows.innerHTML = '';
+        }
+      };
+
+      load();
+      setInterval(load, 2000);
+    })();
+  </script>
+</body>
+</html>

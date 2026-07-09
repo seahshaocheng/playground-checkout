@@ -1,0 +1,91 @@
+{
+  "id": "caf56362-9837-4177-aa67-2a578e1da64f",
+  "source": "webhook",
+  "receivedAt": "2026-07-09T06:20:18.010Z",
+  "eventCode": "AUTHORISATION",
+  "merchantAccountCode": "DEMOTOOL_MALAYSIA",
+  "fileName": "AUTHORISATION_DEMOTOOL_MALAYSIA_1783578018010.json",
+  "filePath": "/Users/markseah/Documents/github/playground-checkout/data/reports-automation/Webhooks/DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783578018010.json",
+  "headers": {
+    "host": "rewrite-mangle-crunchy.ngrok-free.dev",
+    "user-agent": "Adyen HttpClient 1.0",
+    "content-length": "1900",
+    "accept-encoding": "gzip,deflate",
+    "content-type": "application/json; charset=utf-8",
+    "traceparent": "00-0a91adf9302bdc75b1b749a70da3f9a3-57c3a355f7749e0d-01",
+    "x-forwarded-for": "147.12.18.10",
+    "x-forwarded-host": "rewrite-mangle-crunchy.ngrok-free.dev",
+    "x-forwarded-proto": "https"
+  },
+  "payload": {
+    "live": "false",
+    "notificationItems": [
+      {
+        "NotificationRequestItem": {
+          "additionalData": {
+            "fraudCheck-25-CVCAuthResultCheck": "0",
+            "avsResult": "1 Address matches, postal code doesn't",
+            "metadata.amountMyr": "1000",
+            "cardSummary": "0000",
+            "shopperCountry": "SG",
+            "metadata.targetCurrency": "SGD",
+            "networkTxReference": "047446635465758",
+            "eci": "05",
+            "fraudCheck-29-LiabilityShiftCheck": "0",
+            "totalFraudScore": "13",
+            "threeDSVersion": "2.2.0",
+            "metadata.convertedAmount": "307.2935341542227",
+            "acquirerAccountCode": "TestPmmAcquirerAccount",
+            "metadata.exchangeRate": "0.3072935341542227",
+            "expiryDate": "03/2030",
+            "cardBin": "491761",
+            "fraudCheck--1-Pre-Auth-Risk-Total": "13",
+            "metadata.shopperLocale": "en-SG",
+            "metadata.emailAddress": "seah.marksc@gmail.com",
+            "threeDAuthenticated": "true",
+            "metadata.countryCode": "SG",
+            "merchantReference": "SUNWAY-06d33e75-b8b2-4fea-800e-73f12e748942",
+            "issuerBin": "49176100",
+            "liabilityShift": "true",
+            "authCode": "093002",
+            "fraudResultType": "GREEN",
+            "paymentLinkId": "PL46E23F7B1623466336542BB",
+            "cardHolderName": "Checkout Shopper PlaceHolder",
+            "isCardCommercial": "unknown",
+            "fraudManualReview": "false",
+            "threeDOffered": "true",
+            "authorisationMid": "50",
+            "tokenization.shopperReference": "seah.marksc@gmail.com",
+            "authorisedAmountValue": "30729",
+            "issuerCountry": "PL",
+            "cvcResult": "1 Matches",
+            "cavv": "QURZRU4gM0RTMiBURVNUIENBVlY=",
+            "metadata.source": "sunway-demo",
+            "authorisedAmountCurrency": "SGD",
+            "metadata.phoneNumber": "",
+            "dsTransID": "bf2bf90d-bec7-48e5-849d-c60d06fe7a5c",
+            "recurring.shopperReference": "seah.marksc@gmail.com",
+            "networkProcessingMode": "auth"
+          },
+          "amount": {
+            "currency": "SGD",
+            "value": 30729
+          },
+          "eventCode": "AUTHORISATION",
+          "eventDate": "2026-07-09T08:20:17+02:00",
+          "merchantAccountCode": "Demotool_Malaysia",
+          "merchantReference": "SUNWAY-06d33e75-b8b2-4fea-800e-73f12e748942",
+          "operations": [
+            "CANCEL",
+            "CAPTURE",
+            "REFUND"
+          ],
+          "paymentMethod": "visa",
+          "pspReference": "HRMM4LL6FKW9PPV5",
+          "reason": "093002:0000:03/2030",
+          "success": "true"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "65baedef-abb5-4868-902b-c3891573da27",
+  "source": "webhook",
+  "receivedAt": "2026-07-09T06:08:03.171Z",
+  "eventCode": "AUTHORISATION",
+  "merchantAccountCode": "DEMOTOOL_MALAYSIA",
+  "fileName": "AUTHORISATION_DEMOTOOL_MALAYSIA_1783577283171.json",
+  "filePath": "/Users/markseah/Documents/github/playground-checkout/data/reports-automation/Webhooks/DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783577283171.json",
+  "headers": {
+    "host": "rewrite-mangle-crunchy.ngrok-free.dev",
+    "user-agent": "Adyen HttpClient 1.0",
+    "content-length": "1914",
+    "accept-encoding": "gzip,deflate",
+    "content-type": "application/json; charset=utf-8",
+    "servicename": "NotificationService",
+    "serviceversion": "1",
+    "traceparent": "00-2e8f2a9d7f67f79885d3cf4f10735717-e8736eff2dc7b756-01",
+    "x-forwarded-for": "147.12.16.12",
+    "x-forwarded-host": "rewrite-mangle-crunchy.ngrok-free.dev",
+    "x-forwarded-proto": "https"
+  },
+  "payload": {
+    "live": "false",
+    "notificationItems": [
+      {
+        "NotificationRequestItem": {
+          "additionalData": {
+            "fraudCheck-50-DistinctShopperEmailUsageByShopper": "0",
+            "fraudCheck-75-PaymentDetailCarteBancaireRefCheck": "0",
+            "fraudCheck-48-ChargebackCountByShopper": "0",
+            "fraudCheck-72-TransactionTimeCheck": "0",
+            "fraudCheck-41-PaymentDetailNonFraudRefCheck": "1",
+            "metadata.amountMyr": "1000",
+            "cardSummary": "0000",
+            "fraudCheck-56-ShopperReferenceCheck": "0",
+            "metadata.targetCurrency": "SGD",
+            "totalFraudScore": "1",
+            "metadata.convertedAmount": "307.2935341542227",
+            "metadata.exchangeRate": "0.3072935341542227",
+            "fraudCheck-63-TransactionAmountCheck": "0",
+            "expiryDate": "03/2030",
+            "fraudCheck-8-ShopperEmailUsage": "0",
+            "fraudCheck-64-TransactionAmountVelocity": "0",
+            "fraudCheck-6-ShopperIpRefCheck": "0",
+            "fraudCheck-37-ShopperDetailsUsage": "0",
+            "metadata.shopperLocale": "en-SG",
+            "fraudCheck-52-DistinctPaymentDetailUsageByShopper": "0",
+            "metadata.emailAddress": "seah.marksc@gmail.com",
+            "metadata.countryCode": "SG",
+            "fraudCheck-13-IssuerRefCheck": "0",
+            "fraudCheck-82-CustomFieldCheck": "0",
+            "fraudCheck-5-IPCountryReferral": "0",
+            "fraudCheck-54-DistinctSharedPaymentDetailUsageByShopper": "0",
+            "fraudResultType": "GREEN",
+            "paymentLinkId": "PL53DB89EC503590DF791F211",
+            "cardHolderName": "Checkout Shopper PlaceHolder",
+            "fraudManualReview": "false",
+            "fraudCheck-78-ShopperBehaviorCheck": "0",
+            "metadata.source": "sunway-demo",
+            "metadata.phoneNumber": "",
+            "refusalReasonCode": "11",
+            "fraudCheck-71-LoyalShopperTrustCheck": "0",
+            "fraudCheck-1-PaymentDetailRefCheck": "0",
+            "refusalReason": "3D Not Authenticated",
+            "fraudCheck-55-ShopperAuthorisedFrequency": "0"
+          },
+          "amount": {
+            "currency": "SGD",
+            "value": 30729
+          },
+          "eventCode": "AUTHORISATION",
+          "eventDate": "2026-07-09T08:08:02+02:00",
+          "merchantAccountCode": "Demotool_Malaysia",
+          "merchantReference": "SUNWAY-bcb0ec6b-455b-4988-bb46-2289170c31b7",
+          "operations": [],
+          "paymentMethod": "visa",
+          "pspReference": "RWXVMD6VZTQKBJV5",
+          "reason": "3D Not Authenticated",
+          "success": "false"
+        }
+      }
+    ]
+  }
+}

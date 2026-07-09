@@ -1,0 +1,6 @@
+{
+  "watch": ["index.js", "services", "views", "public", "package.json"],
+  "ext": "js,ejs,json,css",
+  "ignore": ["data/**", "**/*.ndjson"],
+  "legacyWatch": true
+}

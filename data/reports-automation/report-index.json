@@ -1,0 +1,19 @@
+{
+  "downloaded": [
+    {
+      "fingerprint": "f3db985571fa2fdbb7d69988a3af70587578bad43f7cfb0ce8c3ce07767e41b6",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_08.csv",
+      "fileName": "1783573904299-1f6a839c-5181-43cd-a1f3-9cbd1f6e9644.csv",
+      "absolutePath": "/Users/markseah/Documents/github/playground-checkout/data/reports-automation/reports/1783573904299-1f6a839c-5181-43cd-a1f3-9cbd1f6e9644.csv",
+      "downloadedAt": "2026-07-09T05:11:45.988Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_08.csv",
+        "isLive": false
+      }
+    }
+  ]
+}

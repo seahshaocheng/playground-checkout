@@ -1,0 +1,90 @@
+{
+  "processed": {
+    "REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783573487287.json": {
+      "processedAt": "2026-07-09T05:11:46.039Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783573904299-1f6a839c-5181-43cd-a1f3-9cbd1f6e9644.csv",
+          "absolutePath": "/Users/markseah/Documents/github/playground-checkout/data/reports-automation/reports/1783573904299-1f6a839c-5181-43cd-a1f3-9cbd1f6e9644.csv",
+          "bytes": 1987764
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-08.json",
+          "filePath": "/Users/markseah/Documents/github/playground-checkout/data/reports-automation/rates/rates_2026-07-08.json",
+          "dateOfReport": "2026-07-08",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783577283171.json": {
+      "processedAt": "2026-07-09T06:08:03.836Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "eventCode": "AUTHORISATION",
+        "paymentLinkId": "PL53DB89EC503590DF791F211",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "status": "payment failed"
+      }
+    },
+    "DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783577346356.json": {
+      "processedAt": "2026-07-09T06:09:07.872Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "eventCode": "AUTHORISATION",
+        "paymentLinkId": "PL53DB89EC503590DF791F211",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "status": "paid"
+      }
+    },
+    "DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783577589865.json": {
+      "processedAt": "2026-07-09T06:13:09.883Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "eventCode": "AUTHORISATION",
+        "paymentLinkId": "PLD3D49E5D8E44F00018272A4",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "status": "paid"
+      }
+    },
+    "DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783577990438.json": {
+      "processedAt": "2026-07-09T06:19:50.826Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "eventCode": "AUTHORISATION",
+        "paymentLinkId": "PLFBADBAE48C4758C684362E1",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "status": "paid"
+      }
+    },
+    "DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783578018010.json": {
+      "processedAt": "2026-07-09T06:20:18.839Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "eventCode": "AUTHORISATION",
+        "paymentLinkId": "PL46E23F7B1623466336542BB",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "status": "paid"
+      }
+    },
+    "DEMOTOOL_MALAYSIA/AUTHORISATION_DEMOTOOL_MALAYSIA_1783583014242.json": {
+      "processedAt": "2026-07-09T07:43:34.730Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "eventCode": "AUTHORISATION",
+        "paymentLinkId": "PL6205F9F10E266DC894F0264",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "status": "paid"
+      }
+    }
+  }
+}

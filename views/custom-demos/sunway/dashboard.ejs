@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunway Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 16px;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+      color: #0f2c4d;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: #ffffff;
+      box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(110deg, #f2f8ff 0%, #f8fbff 70%, #fffaf0 100%);
+    }
+
+    .title { margin: 0; font-size: 1.2rem; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f2c4d;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      background: #ffffff;
+      padding: 0.45rem 0.75rem;
+      cursor: pointer;
+    }
+
+    .btn:hover { background: #eff6ff; }
+
+    .body { padding: 16px; display: grid; gap: 14px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .card p { margin: 0; }
+    .card .label { font-size: 0.75rem; color: #4b6580; }
+    .card .value { font-size: 1.4rem; font-weight: 800; color: #0f2c4d; }
+
+    .panel {
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel h2 { margin: 0; font-size: 0.95rem; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .field { display: grid; gap: 4px; }
+    .field label { font-size: 0.78rem; color: #334e68; }
+    select {
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      padding: 8px;
+      background: #fff;
+      min-width: 110px;
+    }
+
+    .chart-wrap {
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 10px;
+    }
+
+    .chart-svg { width: 100%; height: 280px; display: block; }
+    .chart-note { margin: 0; font-size: 0.78rem; color: #4b6580; }
+
+    @media (max-width: 980px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .cards { grid-template-columns: 1fr; }
+      .header { padding: 12px; }
+      .body { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <h1 class="title">Sunway Custom Demo Dashboard</h1>
+      <div class="actions">
+        <a class="btn" href="/custom-demos/sunway/create-payment-link">Create payment link</a>
+        <a class="btn" href="/custom-demos/sunway/history">View link history</a>
+      </div>
+    </header>
+
+    <section class="body">
+      <section class="cards">
+        <article class="card"><p class="label">Payment links</p><p id="metricTotal" class="value">-</p></article>
+        <article class="card"><p class="label">Successful payments</p><p id="metricSuccess" class="value">-</p></article>
+        <article class="card"><p class="label">Active links</p><p id="metricActive" class="value">-</p></article>
+        <article class="card"><p class="label">Expired</p><p id="metricExpired" class="value">-</p></article>
+        <article class="card"><p class="label">Failed payments</p><p id="metricFailed" class="value">-</p></article>
+      </section>
+
+      <section class="panel">
+        <h2>FX Exchange Rate (Last 5 Days)</h2>
+        <div class="controls">
+          <div class="field">
+            <label for="baseCurrency">Base</label>
+            <select id="baseCurrency">
+              <option>MYR</option>
+              <option>SGD</option>
+              <option>USD</option>
+              <option>EUR</option>
+              <option>HKD</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="targetCurrency">Target</label>
+            <select id="targetCurrency">
+              <option>SGD</option>
+              <option>MYR</option>
+              <option>USD</option>
+              <option>EUR</option>
+              <option>HKD</option>
+            </select>
+          </div>
+          <button id="refreshChart" class="btn" type="button">Update graph</button>
+        </div>
+
+        <div class="chart-wrap">
+          <svg id="fxChart" class="chart-svg" viewBox="0 0 900 280" preserveAspectRatio="none"></svg>
+          <p id="chartNote" class="chart-note">Loading FX history...</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const metricTotal = document.getElementById('metricTotal');
+      const metricSuccess = document.getElementById('metricSuccess');
+      const metricActive = document.getElementById('metricActive');
+      const metricExpired = document.getElementById('metricExpired');
+      const metricFailed = document.getElementById('metricFailed');
+      const baseCurrency = document.getElementById('baseCurrency');
+      const targetCurrency = document.getElementById('targetCurrency');
+      const refreshChart = document.getElementById('refreshChart');
+      const fxChart = document.getElementById('fxChart');
+      const chartNote = document.getElementById('chartNote');
+
+      const loadSummary = async () => {
+        try {
+          const response = await fetch('/api/custom-demos/sunway/dashboard/summary');
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Unable to load summary');
+          }
+
+          metricTotal.textContent = data.totalLinks;
+          metricSuccess.textContent = data.successfulPayments;
+          metricActive.textContent = data.activeLinks;
+          metricExpired.textContent = data.expiredLinks;
+          metricFailed.textContent = data.failedPayments;
+        } catch (_error) {
+          metricTotal.textContent = '-';
+          metricSuccess.textContent = '-';
+          metricActive.textContent = '-';
+          metricExpired.textContent = '-';
+          metricFailed.textContent = '-';
+        }
+      };
+
+      const drawFxChart = (points) => {
+        fxChart.innerHTML = '';
+
+        const plotted = points.filter((point) => Number.isFinite(point.exchangeRate));
+        if (plotted.length === 0) {
+          chartNote.textContent = 'No FX data found for this pair in the last 5 days.';
+          return;
+        }
+
+        const width = 900;
+        const height = 280;
+        const padding = 40;
+        const minY = Math.min(...plotted.map((p) => p.exchangeRate));
+        const maxY = Math.max(...plotted.map((p) => p.exchangeRate));
+        const spanY = Math.max(0.0001, maxY - minY);
+
+        const allPoints = points.map((point, index) => {
+          const x = padding + ((width - padding * 2) * index) / Math.max(1, points.length - 1);
+          if (!Number.isFinite(point.exchangeRate)) {
+            return { x, y: null, point };
+          }
+
+          const y = height - padding - (((point.exchangeRate - minY) / spanY) * (height - padding * 2));
+          return { x, y, point };
+        });
+
+        const plottedLine = allPoints.filter((p) => Number.isFinite(p.y));
+        const pathD = plottedLine.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathD);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#0ea5e9');
+        path.setAttribute('stroke-width', '3');
+        fxChart.appendChild(path);
+
+        allPoints.forEach((entry) => {
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', String(entry.x));
+          label.setAttribute('y', String(height - 12));
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('font-size', '11');
+          label.setAttribute('fill', '#4b6580');
+          label.textContent = entry.point.date.slice(5);
+          fxChart.appendChild(label);
+
+          if (!Number.isFinite(entry.y)) {
+            return;
+          }
+
+          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', String(entry.x));
+          dot.setAttribute('cy', String(entry.y));
+          dot.setAttribute('r', '4');
+          dot.setAttribute('fill', '#0284c7');
+          fxChart.appendChild(dot);
+
+          const rateLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          rateLabel.setAttribute('x', String(entry.x));
+          rateLabel.setAttribute('y', String(Math.max(14, entry.y - 10)));
+          rateLabel.setAttribute('text-anchor', 'middle');
+          rateLabel.setAttribute('font-size', '11');
+          rateLabel.setAttribute('font-weight', '700');
+          rateLabel.setAttribute('fill', '#0f2c4d');
+          rateLabel.textContent = Number(entry.point.exchangeRate).toFixed(4);
+          fxChart.appendChild(rateLabel);
+        });
+
+        chartNote.textContent = `Rate range: ${minY.toFixed(4)} to ${maxY.toFixed(4)}`;
+      };
+
+      const loadFxHistory = async () => {
+        const base = String(baseCurrency.value || '').toUpperCase();
+        const target = String(targetCurrency.value || '').toUpperCase();
+
+        if (!base || !target || base === target) {
+          chartNote.textContent = 'Choose different base and target currencies.';
+          fxChart.innerHTML = '';
+          return;
+        }
+
+        chartNote.textContent = 'Loading FX history...';
+
+        try {
+          const query = new URLSearchParams({ base, target, days: '5' });
+          const response = await fetch(`/api/custom-demos/sunway/dashboard/fx-history?${query.toString()}`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Unable to load FX history');
+          }
+
+          drawFxChart(data.points || []);
+        } catch (_error) {
+          fxChart.innerHTML = '';
+          chartNote.textContent = 'Unable to load FX history right now.';
+        }
+      };
+
+      refreshChart.addEventListener('click', loadFxHistory);
+      baseCurrency.addEventListener('change', loadFxHistory);
+      targetCurrency.addEventListener('change', loadFxHistory);
+
+      loadSummary();
+      loadFxHistory();
+      setInterval(loadSummary, 2000);
+    })();
+  </script>
+</body>
+</html>

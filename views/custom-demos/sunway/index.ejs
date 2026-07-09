@@ -156,6 +156,66 @@
       font-size: 0.78rem;
     }
 
+    .rate-banner {
+      grid-column: 1 / -1;
+      border-radius: 12px;
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      background: rgba(14, 165, 233, 0.1);
+      color: #0f2c4d;
+      padding: 0.9rem 0.78rem;
+      display: none;
+      gap: 0.28rem;
+      text-align: center;
+      justify-items: center;
+    }
+
+    .rate-banner.show {
+      display: grid;
+    }
+
+    .rate-banner-title {
+      margin: 0;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #0b3d66;
+    }
+
+    .rate-banner-line {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #1e3a56;
+      line-height: 1.4;
+    }
+
+    .rate-banner-amount {
+      margin: 0;
+      font-size: 1.42rem;
+      line-height: 1.2;
+      font-weight: 800;
+      color: #0f2c4d;
+    }
+
+    .rate-banner-rate {
+      margin: 0;
+      font-size: 0.76rem;
+      color: #35536d;
+    }
+
+    .rate-banner-gap {
+      height: 0.22rem;
+    }
+
+    .rate-banner-note {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #35536d;
+    }
+
+    .rate-banner.empty {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.12);
+    }
+
     .chip {
       border: 1px solid rgba(148, 163, 184, 0.35);
       background: #f8fbff;
@@ -191,6 +251,134 @@
       padding: 0.85rem;
       display: grid;
       gap: 0.55rem;
+    }
+
+    .history {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #ffffff;
+      padding: 0.75rem;
+      display: none;
+      gap: 0.55rem;
+    }
+
+    .history h3 {
+      margin: 0;
+      font-size: 0.92rem;
+      color: #0f2c4d;
+    }
+
+    .history-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .history-item {
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 0.55rem 0.6rem;
+      display: grid;
+      gap: 0.22rem;
+      background: #f8fbff;
+    }
+
+    .history-line {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #334e68;
+      word-break: break-word;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.1rem 0.45rem;
+      font-size: 0.74rem;
+      font-weight: 700;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: #334e68;
+      background: #f8fafc;
+      width: fit-content;
+    }
+
+    .status-pill.paid {
+      color: #166534;
+      background: #dcfce7;
+      border-color: rgba(22, 163, 74, 0.35);
+    }
+
+    .status-pill.failed {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: rgba(220, 38, 38, 0.35);
+    }
+
+    .payment-status {
+      margin-top: 0.35rem;
+      border-radius: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(148, 163, 184, 0.1);
+      padding: 0.65rem 0.75rem;
+      display: grid;
+      justify-items: center;
+      gap: 0.25rem;
+      text-align: center;
+    }
+
+    .status-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      font-weight: 900;
+      color: #ffffff;
+      background: #94a3b8;
+      transform: scale(1);
+    }
+
+    .status-icon.paid {
+      background: #16a34a;
+      animation: paid-pop 650ms ease-out 1;
+    }
+
+    .status-icon.failed {
+      background: #dc2626;
+    }
+
+    .status-text {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #1e3a56;
+      font-weight: 700;
+    }
+
+    @keyframes paid-pop {
+      0% { transform: scale(0.7); opacity: 0.5; }
+      60% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .qr-wrap {
+      display: grid;
+      gap: 0.4rem;
+      justify-items: center;
+      margin-top: 0.25rem;
+    }
+
+    .qr-wrap img {
+      width: 190px;
+      height: 190px;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: #ffffff;
+      padding: 0.45rem;
+      object-fit: contain;
     }
 
     .result h2 {
@@ -269,15 +457,15 @@
           <p class="brand-subtitle">Logo placeholder ready for merchant branding</p>
         </div>
       </div>
-      <a class="home-link" href="/">Home</a>
+      <a class="home-link" href="/custom-demos/sunway">Dashboard</a>
     </header>
 
     <section class="body">
-      <p class="intro">Create an Adyen payment link using the MYR amount, then dispatch it to either an email address or a phone number. Target currency selection is captured as metadata for future conversion logic.</p>
+      <p class="intro">Create an Adyen payment link using MYR input, converted into the selected target currency and country locale.</p>
 
       <div class="meta-row">
-        <span class="chip">Environment: <strong><%= env %></strong></span>
-        <span class="chip">SDK version: <strong><%= sdkVersion %></strong></span>
+        <a class="home-link" href="/custom-demos/sunway" style="padding:0.32rem 0.58rem; font-size:0.78rem;">Back to dashboard</a>
+        <a class="home-link" href="/custom-demos/sunway/history" style="padding:0.32rem 0.58rem; font-size:0.78rem;">View history</a>
       </div>
 
       <form id="sunway-form" class="form-grid">
@@ -297,9 +485,30 @@
           <input id="amountMyr" name="amountMyr" class="input" type="number" min="0.01" step="0.01" placeholder="e.g. 129.90" required />
         </div>
 
+        <div id="rateBanner" class="rate-banner" aria-live="polite"></div>
+
         <div class="field">
-          <label for="emailAddress">Email address (optional)</label>
+          <label for="emailAddress">Email address</label>
           <input id="emailAddress" name="emailAddress" class="input" type="email" placeholder="name@example.com" />
+        </div>
+
+        <div class="field">
+          <label for="countryCode">Country</label>
+          <select id="countryCode" name="countryCode" class="select" required>
+            <option value="MY">Malaysia (MY)</option>
+            <option value="SG">Singapore (SG)</option>
+            <option value="US">United States (US)</option>
+            <option value="NL">Netherlands (NL)</option>
+            <option value="HK">Hong Kong (HK)</option>
+            <option value="JP">Japan (JP)</option>
+            <option value="AU">Australia (AU)</option>
+            <option value="GB">United Kingdom (GB)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="description">Description</label>
+          <input id="description" name="description" class="input" type="text" maxlength="280" placeholder="Blue Bag - ModelM671" />
         </div>
 
         <div class="field">
@@ -321,6 +530,19 @@
         <p class="kv"><strong>Recipient:</strong> <span id="recipientValue"></span></p>
         <p class="kv"><strong>Channel:</strong> <span id="channelValue"></span></p>
         <p class="kv"><strong>Expires at:</strong> <span id="expiresAtValue"></span></p>
+        <div id="paymentStatusBox" class="payment-status" style="display:none;">
+          <div id="paymentStatusIcon" class="status-icon">...</div>
+          <p id="paymentStatusText" class="status-text">Waiting for payment authorisation.</p>
+        </div>
+        <div class="qr-wrap">
+          <img id="qrCodeImage" alt="Payment Link QR Code" />
+          <p class="rate-banner-note">Scan this QR code to open the payment link.</p>
+        </div>
+      </section>
+
+      <section id="historyBox" class="history">
+        <h3>Links Created In This Session</h3>
+        <ul id="historyList" class="history-list"></ul>
       </section>
     </section>
   </main>
@@ -332,11 +554,27 @@
       const submitBtn = document.getElementById('submitBtn');
       const errorBox = document.getElementById('errorBox');
       const resultBox = document.getElementById('resultBox');
+      const targetCurrencyInput = document.getElementById('targetCurrency');
+      const amountMyrInput = document.getElementById('amountMyr');
+      const countryCodeInput = document.getElementById('countryCode');
+      const rateBanner = document.getElementById('rateBanner');
       const linkValue = document.getElementById('linkValue');
       const statusValue = document.getElementById('statusValue');
       const recipientValue = document.getElementById('recipientValue');
       const channelValue = document.getElementById('channelValue');
       const expiresAtValue = document.getElementById('expiresAtValue');
+      const paymentStatusBox = document.getElementById('paymentStatusBox');
+      const paymentStatusIcon = document.getElementById('paymentStatusIcon');
+      const paymentStatusText = document.getElementById('paymentStatusText');
+      const qrCodeImage = document.getElementById('qrCodeImage');
+      const historyBox = document.getElementById('historyBox');
+      const historyList = document.getElementById('historyList');
+      let rateLookupTimer = null;
+      let rateLookupSeq = 0;
+      let paymentStatusPollTimer = null;
+      let latestStatusToken = 0;
+      const linksHistory = [];
+      let activePaymentLinkKey = null;
 
       const showError = (message) => {
         errorBox.textContent = message;
@@ -348,22 +586,383 @@
         errorBox.style.display = 'none';
       };
 
+      const formatAmountByCode = (value, currency) => {
+        const amount = new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value);
+
+        return `${currency} ${amount}`;
+      };
+
+      const formatRate = (value) => {
+        if (!Number.isFinite(value)) {
+          return '-';
+        }
+
+        return value.toFixed(3);
+      };
+
+      const formatLocalDateTime = (value) => {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return '-';
+        }
+
+        return date.toLocaleString(undefined, {
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        });
+      };
+
+      const hideRateBanner = () => {
+        rateBanner.classList.remove('show');
+        rateBanner.classList.remove('empty');
+        rateBanner.innerHTML = '';
+      };
+
+      const resetPaymentStatus = () => {
+        paymentStatusBox.style.display = 'none';
+        paymentStatusIcon.className = 'status-icon';
+        paymentStatusIcon.textContent = '...';
+        paymentStatusText.textContent = 'Waiting for payment authorisation.';
+      };
+
+      const renderPaymentStatus = (statusValueRaw) => {
+        const normalized = String(statusValueRaw || '').toLowerCase();
+        paymentStatusBox.style.display = 'grid';
+
+        if (normalized === 'paid') {
+          paymentStatusIcon.className = 'status-icon paid';
+          paymentStatusIcon.textContent = '✓';
+          paymentStatusText.textContent = 'Customer has paid.';
+          return;
+        }
+
+        if (normalized === 'payment failed') {
+          paymentStatusIcon.className = 'status-icon failed';
+          paymentStatusIcon.textContent = '!';
+          paymentStatusText.textContent = 'Payment failed.';
+          return;
+        }
+
+        paymentStatusIcon.className = 'status-icon';
+        paymentStatusIcon.textContent = '...';
+        paymentStatusText.textContent = 'Waiting for payment authorisation.';
+      };
+
+      const stopPaymentStatusPolling = () => {
+        if (paymentStatusPollTimer) {
+          clearInterval(paymentStatusPollTimer);
+          paymentStatusPollTimer = null;
+        }
+      };
+
+      const normalizeStatusClass = (statusRaw) => {
+        const normalized = String(statusRaw || '').toLowerCase();
+        if (normalized === 'paid') {
+          return 'paid';
+        }
+
+        if (normalized === 'payment failed') {
+          return 'failed';
+        }
+
+        return '';
+      };
+
+      const getEntryKey = (entry) => `${entry.merchantAccountCode}::${entry.paymentLinkId}`;
+
+      const renderHistory = () => {
+        if (linksHistory.length === 0) {
+          historyBox.style.display = 'none';
+          historyList.innerHTML = '';
+          return;
+        }
+
+        const rows = linksHistory
+          .slice()
+          .reverse()
+          .map((entry) => {
+            const statusClass = normalizeStatusClass(entry.status);
+            const createdAt = entry.createdAt
+              ? new Date(entry.createdAt).toLocaleString()
+              : '-';
+
+            return `
+              <li class="history-item">
+                <p class="history-line"><strong>ID:</strong> ${entry.paymentLinkId}</p>
+                <p class="history-line"><strong>Merchant:</strong> ${entry.merchantAccountCode}</p>
+                <p class="history-line"><strong>Created:</strong> ${createdAt}</p>
+                <p class="history-line"><strong>Link:</strong> <a class="link" href="${entry.paymentLinkUrl}" target="_blank" rel="noreferrer">${entry.paymentLinkUrl}</a></p>
+                <span class="status-pill ${statusClass}">${entry.status || 'pending'}</span>
+              </li>
+            `;
+          })
+          .join('');
+
+        historyList.innerHTML = rows;
+        historyBox.style.display = 'grid';
+      };
+
+      const upsertHistoryEntry = (entry) => {
+        const key = getEntryKey(entry);
+        const index = linksHistory.findIndex((item) => getEntryKey(item) === key);
+
+        if (index === -1) {
+          linksHistory.push(entry);
+        } else {
+          linksHistory[index] = {
+            ...linksHistory[index],
+            ...entry
+          };
+        }
+
+        renderHistory();
+      };
+
+      const getActiveEntry = () => {
+        if (!activePaymentLinkKey) {
+          return null;
+        }
+
+        return linksHistory.find((entry) => getEntryKey(entry) === activePaymentLinkKey) || null;
+      };
+
+      const renderLatestPaymentPanel = (entry) => {
+        if (!entry) {
+          return;
+        }
+
+        linkValue.textContent = entry.paymentLinkUrl || '-';
+        linkValue.href = entry.paymentLinkUrl || '#';
+        statusValue.textContent = entry.status || 'pending';
+        recipientValue.textContent = entry.recipient || '-';
+        channelValue.textContent = entry.channel || '-';
+        expiresAtValue.textContent = entry.expiresAt || '-';
+        qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(entry.paymentLinkUrl || '')}`;
+        renderPaymentStatus(entry.status);
+        resultBox.style.display = 'grid';
+      };
+
+      const startPaymentStatusPolling = ({ paymentLinkId, merchantAccountCode }) => {
+        stopPaymentStatusPolling();
+        const token = latestStatusToken + 1;
+        latestStatusToken = token;
+        paymentStatusBox.style.display = 'grid';
+
+        const run = async () => {
+          try {
+            const snapshots = linksHistory.slice();
+            for (const entry of snapshots) {
+              const query = new URLSearchParams({ merchantAccountCode: entry.merchantAccountCode });
+              const response = await fetch(`/api/custom-demos/sunway/payment-link-status/${encodeURIComponent(entry.paymentLinkId)}?${query.toString()}`);
+              const data = await response.json();
+
+              if (token !== latestStatusToken) {
+                return;
+              }
+
+              if (!response.ok) {
+                continue;
+              }
+
+              upsertHistoryEntry({
+                ...entry,
+                status: data.status || entry.status
+              });
+            }
+
+            const activeEntry = getActiveEntry();
+            if (activeEntry) {
+              renderLatestPaymentPanel(activeEntry);
+            }
+          } catch (_error) {
+            // Keep polling silently for demo UX.
+          }
+        };
+
+        run();
+        paymentStatusPollTimer = setInterval(run, 2000);
+      };
+
+      const showNoRateBanner = ({ targetCurrency, amountMyr, reason }) => {
+        rateBanner.innerHTML = `
+          <p class="rate-banner-title">FX Preview</p>
+          <p class="rate-banner-line">No rate available for MYR to <strong>${targetCurrency}</strong> right now.</p>
+          <p class="rate-banner-amount">${formatAmountByCode(amountMyr, 'MYR')}</p>
+          <p class="rate-banner-note">${reason || 'Try again later or check if the latest report has been processed.'}</p>
+        `;
+        rateBanner.classList.add('show');
+        rateBanner.classList.add('empty');
+      };
+
+      const showRateBanner = ({
+        targetCurrency,
+        amountMyr,
+        exchangeRate,
+        exchangePlatformSettlement,
+        converted,
+        convertedSettlement,
+        validFrom
+      }) => {
+        const settlementBlock = Number.isFinite(exchangePlatformSettlement)
+          ? `
+            <p class="rate-banner-line">You will receive at settlement</p>
+            <p class="rate-banner-amount">${formatAmountByCode(convertedSettlement, targetCurrency)}</p>
+            <p class="rate-banner-rate">(settlement rate: ${formatRate(exchangePlatformSettlement)})</p>
+          `
+          : `
+            <p class="rate-banner-line">You will receive at settlement</p>
+            <p class="rate-banner-rate">(settlement rate: unavailable)</p>
+          `;
+
+        rateBanner.innerHTML = `
+          <p class="rate-banner-line">You will be charging customer:</p>
+          <p class="rate-banner-amount">${formatAmountByCode(converted, targetCurrency)}</p>
+          <p class="rate-banner-rate">(rate: ${formatRate(exchangeRate)})</p>
+          <div class="rate-banner-gap"></div>
+          ${settlementBlock}
+          <p class="rate-banner-note">This rate is valid from ${formatLocalDateTime(validFrom)}</p>
+        `;
+        rateBanner.classList.remove('empty');
+        rateBanner.classList.add('show');
+      };
+
+      const refreshRateBanner = async () => {
+        const amountMyr = Number(amountMyrInput.value);
+        const targetCurrency = String(targetCurrencyInput.value || '').toUpperCase();
+
+        if (!Number.isFinite(amountMyr) || amountMyr <= 0 || !targetCurrency) {
+          hideRateBanner();
+          return;
+        }
+
+        if (targetCurrency === 'MYR') {
+          showRateBanner({
+            targetCurrency,
+            amountMyr,
+            exchangeRate: 1,
+            exchangePlatformSettlement: 1,
+            converted: amountMyr,
+            convertedSettlement: amountMyr,
+            validFrom: 'Immediate'
+          });
+          return;
+        }
+
+        const requestId = rateLookupSeq + 1;
+        rateLookupSeq = requestId;
+
+        try {
+          const query = new URLSearchParams({
+            base: 'MYR',
+            target: targetCurrency
+          });
+          const response = await fetch(`/api/custom-demos/reports/rates?${query.toString()}`);
+          const data = await response.json();
+
+          if (requestId !== rateLookupSeq) {
+            return;
+          }
+
+          if (!response.ok) {
+            showNoRateBanner({
+              targetCurrency,
+              amountMyr,
+              reason: data.reason || 'No rates file found for the selected date.'
+            });
+            return;
+          }
+
+          const exchangeRate = Number(data.exchangeRate);
+          const exchangePlatformSettlement = Number(data.exchangePlatformSettlement);
+          if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+            showNoRateBanner({
+              targetCurrency,
+              amountMyr,
+              reason: 'Rate data is available but does not contain a valid exchange rate value.'
+            });
+            return;
+          }
+
+          const converted = amountMyr * exchangeRate;
+          const convertedSettlement = Number.isFinite(exchangePlatformSettlement)
+            ? amountMyr * exchangePlatformSettlement
+            : NaN;
+
+          showRateBanner({
+            targetCurrency,
+            amountMyr,
+            exchangeRate,
+            exchangePlatformSettlement,
+            converted,
+            convertedSettlement,
+            validFrom: data.validFrom
+          });
+        } catch (error) {
+          showNoRateBanner({
+            targetCurrency,
+            amountMyr,
+            reason: error?.message || 'Unable to fetch rates at the moment.'
+          });
+        }
+      };
+
+      const queueRateLookup = () => {
+        if (rateLookupTimer) {
+          clearTimeout(rateLookupTimer);
+        }
+
+        rateLookupTimer = setTimeout(() => {
+          refreshRateBanner();
+        }, 300);
+      };
+
+      const countryByTargetCurrency = {
+        MYR: 'MY',
+        SGD: 'SG',
+        USD: 'US',
+        EUR: 'NL',
+        HKD: 'HK'
+      };
+
+      const syncCountryToCurrency = () => {
+        const targetCurrency = String(targetCurrencyInput.value || '').toUpperCase();
+        const mappedCountry = countryByTargetCurrency[targetCurrency];
+        if (mappedCountry) {
+          countryCodeInput.value = mappedCountry;
+        }
+      };
+
+      targetCurrencyInput.addEventListener('change', () => {
+        syncCountryToCurrency();
+        queueRateLookup();
+      });
+      amountMyrInput.addEventListener('input', queueRateLookup);
+      syncCountryToCurrency();
+      queueRateLookup();
+      window.addEventListener('beforeunload', stopPaymentStatusPolling);
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         clearError();
-        resultBox.style.display = 'none';
+        stopPaymentStatusPolling();
+        let linkCreated = false;
 
         const formData = new FormData(form);
         const payload = {
           targetCurrency: String(formData.get('targetCurrency') || 'MYR').toUpperCase(),
           amountMyr: Number(formData.get('amountMyr')),
           emailAddress: String(formData.get('emailAddress') || '').trim(),
+          countryCode: String(formData.get('countryCode') || 'MY').toUpperCase(),
+          description: String(formData.get('description') || '').trim(),
           phoneNumber: String(formData.get('phoneNumber') || '').trim(),
           isLive: initialEnv === 'live'
         };
 
-        if (!payload.emailAddress && !payload.phoneNumber) {
-          showError('Please enter at least an email address or phone number.');
+        if (!payload.emailAddress) {
+          showError('Please enter an email address. It is used as shopperReference.');
           return;
         }
 
@@ -384,18 +983,38 @@
             throw new Error(data.error || 'Unable to generate payment link.');
           }
 
-          linkValue.textContent = data.paymentLinkUrl;
-          linkValue.href = data.paymentLinkUrl;
-          statusValue.textContent = data.status || 'unknown';
-          recipientValue.textContent = data.recipient || '-';
-          channelValue.textContent = data.channel || '-';
-          expiresAtValue.textContent = data.expiresAt || '-';
-          resultBox.style.display = 'grid';
+          const newEntry = {
+            paymentLinkId: data.paymentLinkId,
+            merchantAccountCode: data.merchantAccountCode,
+            paymentLinkUrl: data.paymentLinkUrl,
+            recipient: data.recipient || '-',
+            channel: data.channel || '-',
+            expiresAt: data.expiresAt || '-',
+            status: 'pending',
+            createdAt: new Date().toISOString()
+          };
+
+          activePaymentLinkKey = getEntryKey(newEntry);
+          upsertHistoryEntry(newEntry);
+          renderLatestPaymentPanel(newEntry);
+          linkCreated = true;
+
+          if (data.paymentLinkId && data.merchantAccountCode) {
+            startPaymentStatusPolling({
+              paymentLinkId: data.paymentLinkId,
+              merchantAccountCode: data.merchantAccountCode
+            });
+          }
         } catch (error) {
           showError(error.message || 'Unable to generate payment link.');
         } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Generate payment link';
+          if (linkCreated) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create another one';
+          } else {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Generate payment link';
+          }
         }
       });
     })();

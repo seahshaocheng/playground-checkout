@@ -1,0 +1,42 @@
+{
+  "id": "709b7bcb-e03e-48c7-926a-dd70a832b98e",
+  "source": "webhook",
+  "receivedAt": "2026-07-09T05:04:47.288Z",
+  "eventCode": "REPORT_AVAILABLE",
+  "merchantAccountCode": "DEMOTOOL_MALAYSIA",
+  "fileName": "REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783573487287.json",
+  "filePath": "/Users/markseah/Documents/github/playground-checkout/data/reports-automation/Webhooks/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783573487287.json",
+  "headers": {
+    "host": "rewrite-mangle-crunchy.ngrok-free.dev",
+    "user-agent": "Adyen HttpClient 1.0",
+    "content-length": "443",
+    "accept-encoding": "gzip,deflate",
+    "content-type": "application/json; charset=utf-8",
+    "servicename": "NotificationService",
+    "serviceversion": "1",
+    "traceparent": "00-1628846f19222d833a0961d67b0532cc-3bf7087784c372c9-01",
+    "x-forwarded-for": "147.12.16.12",
+    "x-forwarded-host": "rewrite-mangle-crunchy.ngrok-free.dev",
+    "x-forwarded-proto": "https"
+  },
+  "payload": {
+    "live": "false",
+    "notificationItems": [
+      {
+        "NotificationRequestItem": {
+          "amount": {
+            "currency": "EUR",
+            "value": 0
+          },
+          "eventCode": "REPORT_AVAILABLE",
+          "eventDate": "2026-07-09T07:04:46+02:00",
+          "merchantAccountCode": "Demotool_Malaysia",
+          "merchantReference": "",
+          "pspReference": "exchange_rate_report_2026_07_08.csv",
+          "reason": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_08.csv",
+          "success": "true"
+        }
+      }
+    ]
+  }
+}

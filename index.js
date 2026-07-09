@@ -18,12 +18,18 @@ const {
   removeStoredPaymentMethod
 } = require('./services/AdyenCheckoutServices');
 const {
-  startSunwayFxCron,
+  startReportWebhookCron,
   handleWebhookPayload,
   checkForNewFxReports,
   downloadReportFromUrl,
   rebuildFxTable,
-  getFxTableSnapshot
+  getFxTableSnapshot,
+  getRatesByDateAndCurrencyPair,
+  registerPaymentLink,
+  getPaymentLinkStatus,
+  listPaymentLinks,
+  getPaymentLinkSummary,
+  getFxRateHistory
 } = require('./services/SunwayReportAutomationService');
 const req = require('express/lib/request');
 
@@ -538,7 +544,15 @@ app.get('/custom-card',(req,res)=>{
 })
 
 app.get('/custom-demos/sunway', (req, res) => {
+  res.render('custom-demos/sunway/dashboard', getCheckoutContext(req));
+});
+
+app.get('/custom-demos/sunway/create-payment-link', (req, res) => {
   res.render('custom-demos/sunway/index', getCheckoutContext(req));
+});
+
+app.get('/custom-demos/sunway/history', (req, res) => {
+  res.render('custom-demos/sunway/history', getCheckoutContext(req));
 });
 
 app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
@@ -548,6 +562,8 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
     version,
     amountMyr,
     targetCurrency,
+    countryCode,
+    description,
     emailAddress,
     phoneNumber
   } = req.body;
@@ -555,7 +571,22 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
   const normalizedEmail = String(emailAddress || '').trim();
   const normalizedPhone = String(phoneNumber || '').trim();
   const normalizedTargetCurrency = String(targetCurrency || 'MYR').toUpperCase();
+  const normalizedCountryCode = String(countryCode || 'MY').toUpperCase();
+  const normalizedDescription = String(description || '').trim();
   const parsedAmount = Number(amountMyr);
+
+  const localeByCountry = {
+    MY: 'en-MY',
+    SG: 'en-SG',
+    US: 'en-US',
+    NL: 'nl-NL',
+    HK: 'zh-HK',
+    JP: 'ja-JP',
+    AU: 'en-AU',
+    GB: 'en-GB'
+  };
+
+  const shopperLocale = localeByCountry[normalizedCountryCode] || 'en-MY';
 
   if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
     return res.status(400).json({
@@ -563,31 +594,78 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
     });
   }
 
-  if (!normalizedEmail && !normalizedPhone) {
+  if (!normalizedEmail) {
     return res.status(400).json({
-      error: 'Please provide either an email address or a phone number.'
+      error: 'Email address is required because shopperReference uses email.'
     });
   }
+
+  let convertedAmount = parsedAmount;
+  let appliedExchangeRate = 1;
+
+  if (normalizedTargetCurrency !== 'MYR') {
+    const rateLookup = getRatesByDateAndCurrencyPair({
+      baseCurrency: 'MYR',
+      targetCurrency: normalizedTargetCurrency
+    });
+
+    if (!rateLookup.found) {
+      return res.status(400).json({
+        error: rateLookup.reason || `No MYR to ${normalizedTargetCurrency} rate found.`
+      });
+    }
+
+    const exchangeRate = Number(rateLookup.exchangeRate);
+    if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+      return res.status(400).json({
+        error: `Invalid exchange rate for MYR to ${normalizedTargetCurrency}.`
+      });
+    }
+
+    appliedExchangeRate = exchangeRate;
+    convertedAmount = parsedAmount * exchangeRate;
+  }
+
+  const convertedMinorUnits = Math.round(convertedAmount * 100);
 
   const payload = {
     reference: `SUNWAY-${uuidv4()}`,
     amount: {
-      value: Math.round(parsedAmount * 100),
-      currency: 'MYR'
+      value: convertedMinorUnits,
+      currency: normalizedTargetCurrency
     },
-    countryCode: 'MY',
-    shopperLocale: 'en-MY',
+    shopperReference: normalizedEmail,
+    description: normalizedDescription || `Sunway payment link (${normalizedTargetCurrency})`,
+    countryCode: normalizedCountryCode,
+    shopperLocale,
     merchantAccount: getMerchantAccountFromBody(Boolean(isLive)),
     metadata: {
       source: 'sunway-demo',
       targetCurrency: normalizedTargetCurrency,
+      countryCode: normalizedCountryCode,
+      shopperLocale,
+      exchangeRate: appliedExchangeRate,
+      amountMyr: parsedAmount,
+      convertedAmount,
       emailAddress: normalizedEmail,
       phoneNumber: normalizedPhone
     }
   };
 
   try {
-    const result = await createPaymentLink(payload, Boolean(isLive), merchantPrefix, version);
+    const result = await createPaymentLink(payload, Boolean(isLive), merchantPrefix, version || 'v72');
+    const merchantAccountCode = result.merchantAccount || payload.merchantAccount;
+    registerPaymentLink({
+      paymentLinkId: result.id,
+      merchantAccountCode,
+      reference: result.reference || payload.reference,
+      paymentLinkUrl: result.url,
+      expiresAt: result.expiresAt,
+      status: 'pending',
+      amount: payload.amount.value,
+      currency: payload.amount.currency
+    });
+
     const recipientChannel = normalizedEmail ? 'email' : 'phone';
     const recipient = normalizedEmail || normalizedPhone;
 
@@ -601,6 +679,12 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
       status: result.status,
       channel: recipientChannel,
       recipient,
+      merchantAccountCode,
+      amount: {
+        value: convertedMinorUnits,
+        currency: normalizedTargetCurrency
+      },
+      exchangeRate: appliedExchangeRate,
       message: `Payment link generated and queued for ${recipientChannel} delivery.`
     });
   } catch (error) {
@@ -608,18 +692,77 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
   }
 });
 
-// Placeholder webhook endpoint for Adyen report notifications.
-app.post('/api/custom-demos/sunway/reports/webhook', async (req, res) => {
+app.get('/api/custom-demos/sunway/payment-link-status/:paymentLinkId', (req, res) => {
+  const paymentLinkId = String(req.params.paymentLinkId || '').trim();
+  const merchantAccountCode = String(req.query.merchantAccountCode || '').trim();
+
+  const status = getPaymentLinkStatus({ paymentLinkId, merchantAccountCode });
+  if (!status.found) {
+    return res.status(404).json(status);
+  }
+
+  return res.json(status);
+});
+
+app.get('/api/custom-demos/sunway/payment-links', (req, res) => {
+  const merchantAccountCode = String(req.query.merchantAccountCode || '').trim();
+  const links = listPaymentLinks({ merchantAccountCode });
+  return res.json({
+    count: links.length,
+    links
+  });
+});
+
+app.get('/api/custom-demos/sunway/dashboard/summary', (req, res) => {
+  const merchantAccountCode = String(req.query.merchantAccountCode || '').trim();
+  return res.json(getPaymentLinkSummary({ merchantAccountCode }));
+});
+
+app.get('/api/custom-demos/sunway/dashboard/fx-history', (req, res) => {
+  const baseCurrency = String(req.query.base || '').trim();
+  const targetCurrency = String(req.query.target || '').trim();
+  const days = Number(req.query.days || 5);
+
+  if (!baseCurrency || !targetCurrency) {
+    return res.status(400).json({ error: 'Query parameters base and target are required.' });
+  }
+
+  return res.json(getFxRateHistory({
+    baseCurrency,
+    targetCurrency,
+    days
+  }));
+});
+
+const processReportsWebhook = async (req, res) => {
   try {
     const result = await handleWebhookPayload(req.body, req.headers);
     return res.status(202).json({
       message: 'Webhook accepted for processing.',
+      webhookType: 'reports',
       ...result
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-});
+};
+
+const processPaymentsWebhook = async (req, res) => {
+  try {
+    const result = await handleWebhookPayload(req.body, req.headers);
+    return res.status(202).json({
+      message: 'Webhook accepted for processing.',
+      webhookType: 'payments',
+      ...result
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Canonical webhook endpoints.
+app.post('/api/webhooks/reports', processReportsWebhook);
+app.post('/api/webhooks/payments', processPaymentsWebhook);
 
 app.post('/api/custom-demos/sunway/reports/check', async (_req, res) => {
   try {
@@ -664,6 +807,30 @@ app.post('/api/custom-demos/sunway/reports/fx-table/rebuild', (_req, res) => {
 
 app.get('/api/custom-demos/sunway/reports/fx-table', (_req, res) => {
   return res.json(getFxTableSnapshot());
+});
+
+app.get('/api/custom-demos/reports/rates', (req, res) => {
+  const baseCurrency = String(req.query.base || '').trim();
+  const targetCurrency = String(req.query.target || '').trim();
+  const requestedDate = req.query.date;
+
+  if (!baseCurrency || !targetCurrency) {
+    return res.status(400).json({
+      error: 'Query parameters base and target are required.'
+    });
+  }
+
+  const result = getRatesByDateAndCurrencyPair({
+    date: requestedDate,
+    baseCurrency,
+    targetCurrency
+  });
+
+  if (!result.found) {
+    return res.status(404).json(result);
+  }
+
+  return res.json(result);
 });
 
 //hotels Customisation
@@ -1089,7 +1256,7 @@ app.post('/api/deletePaymentMethods/:id', async (req, res) => {
 //
 //End Standard Integration Server Endpoints
 
-startSunwayFxCron(console);
+startReportWebhookCron(console);
 
 app.listen(PORT, () => {
   console.log(`🚀 Adyen API Demo running at http://localhost:${PORT}`);

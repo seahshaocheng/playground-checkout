@@ -527,6 +527,8 @@
         <h2>Payment Link Created</h2>
         <p class="kv"><strong>Link:</strong> <a id="linkValue" class="link" target="_blank" rel="noreferrer"></a></p>
         <p class="kv"><strong>Status:</strong> <span id="statusValue"></span></p>
+        <p class="kv"><strong>Payment method:</strong> <span id="paymentMethodValue">-</span></p>
+        <p class="kv"><strong>PSP reference:</strong> <span id="pspReferenceValue">-</span></p>
         <p class="kv"><strong>Recipient:</strong> <span id="recipientValue"></span></p>
         <p class="kv"><strong>Channel:</strong> <span id="channelValue"></span></p>
         <p class="kv"><strong>Expires at:</strong> <span id="expiresAtValue"></span></p>
@@ -560,6 +562,8 @@
       const rateBanner = document.getElementById('rateBanner');
       const linkValue = document.getElementById('linkValue');
       const statusValue = document.getElementById('statusValue');
+      const paymentMethodValue = document.getElementById('paymentMethodValue');
+      const pspReferenceValue = document.getElementById('pspReferenceValue');
       const recipientValue = document.getElementById('recipientValue');
       const channelValue = document.getElementById('channelValue');
       const expiresAtValue = document.getElementById('expiresAtValue');
@@ -694,6 +698,8 @@
                 <p class="history-line"><strong>ID:</strong> ${entry.paymentLinkId}</p>
                 <p class="history-line"><strong>Merchant:</strong> ${entry.merchantAccountCode}</p>
                 <p class="history-line"><strong>Created:</strong> ${createdAt}</p>
+                <p class="history-line"><strong>Payment method:</strong> ${entry.paymentMethod || '-'}</p>
+                <p class="history-line"><strong>PSP reference:</strong> ${entry.pspReference || '-'}</p>
                 <p class="history-line"><strong>Link:</strong> <a class="link" href="${entry.paymentLinkUrl}" target="_blank" rel="noreferrer">${entry.paymentLinkUrl}</a></p>
                 <span class="status-pill ${statusClass}">${entry.status || 'pending'}</span>
               </li>
@@ -737,6 +743,8 @@
         linkValue.textContent = entry.paymentLinkUrl || '-';
         linkValue.href = entry.paymentLinkUrl || '#';
         statusValue.textContent = entry.status || 'pending';
+        paymentMethodValue.textContent = entry.paymentMethod || '-';
+        pspReferenceValue.textContent = entry.pspReference || '-';
         recipientValue.textContent = entry.recipient || '-';
         channelValue.textContent = entry.channel || '-';
         expiresAtValue.textContent = entry.expiresAt || '-';
@@ -769,7 +777,9 @@
 
               upsertHistoryEntry({
                 ...entry,
-                status: data.status || entry.status
+                status: data.status || entry.status,
+                paymentMethod: data.paymentMethod || entry.paymentMethod,
+                pspReference: data.pspReference || entry.pspReference
               });
             }
 
@@ -1013,6 +1023,8 @@
             recipient: data.recipient || '-',
             channel: data.channel || '-',
             expiresAt: data.expiresAt || '-',
+            paymentMethod: '-',
+            pspReference: '-',
             status: 'pending',
             createdAt: new Date().toISOString()
           };

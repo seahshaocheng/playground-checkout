@@ -124,6 +124,14 @@ const detectColumnIndex = (headers, patterns) => {
 
 const normalizeCurrency = (value) => String(value || '').trim().toUpperCase();
 
+const normalizeMerchantAccountCode = (value) => {
+  return toSafeFileSegment(String(value || 'UNKNOWN_MERCHANT').trim().toUpperCase());
+};
+
+const getMerchantScopedDir = (baseDir, merchantAccountCode) => {
+  return path.join(baseDir, normalizeMerchantAccountCode(merchantAccountCode));
+};
+
 const toSafeFileSegment = (value, fallback = 'UNKNOWN') => {
   const normalized = String(value || fallback)
     .trim()
@@ -320,6 +328,8 @@ const registerPaymentLink = ({
   paymentLinkUrl,
   expiresAt,
   status = 'pending',
+  paymentMethod,
+  pspReference,
   amount,
   currency
 }) => {
@@ -337,6 +347,8 @@ const registerPaymentLink = ({
     reference: reference || existing.reference || null,
     paymentLinkUrl: paymentLinkUrl || existing.paymentLinkUrl || null,
     expiresAt: expiresAt || existing.expiresAt || null,
+    paymentMethod: paymentMethod || existing.paymentMethod || null,
+    pspReference: pspReference || existing.pspReference || null,
     amount: Number.isFinite(Number(amount)) ? Number(amount) : (existing.amount || null),
     currency: currency || existing.currency || null,
     status,
@@ -474,6 +486,7 @@ const updatePaymentLinkStatusFromAuthorisation = ({
   paymentLinkId,
   merchantAccountCode,
   success,
+  paymentMethod,
   pspReference,
   eventCode = 'AUTHORISATION'
 }) => {
@@ -483,22 +496,28 @@ const updatePaymentLinkStatusFromAuthorisation = ({
 
   const store = loadPaymentLinks();
   const key = buildPaymentLinkKey(paymentLinkId, merchantAccountCode);
-  const existing = store.links[key] || {
-    paymentLinkId,
-    merchantAccountCode,
-    createdAt: new Date().toISOString()
-  };
+  const existing = store.links[key];
+  if (!existing) {
+    return null;
+  }
 
   const isSuccess = String(success).toLowerCase() === 'true';
   const status = isSuccess ? 'paid' : 'payment failed';
+  const normalizedPaymentMethod = String(paymentMethod || existing.paymentMethod || '').trim() || null;
+  const normalizedPspReference = isSuccess
+    ? (String(pspReference || '').trim() || existing.pspReference || null)
+    : (existing.pspReference || null);
 
   store.links[key] = {
     ...existing,
     status,
+    paymentMethod: normalizedPaymentMethod,
+    pspReference: normalizedPspReference,
     webhook: {
       eventCode,
       success: String(success),
-      pspReference: pspReference || null,
+      paymentMethod: normalizedPaymentMethod,
+      pspReference: normalizedPspReference,
       updatedAt: new Date().toISOString()
     },
     updatedAt: new Date().toISOString()
@@ -634,7 +653,9 @@ const downloadReportFromUrl = async (reportUrl, metadata = {}) => {
 
   const extension = resolveFileExtensionFromUrl(reportUrl);
   const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
-  const absolutePath = path.join(REPORTS_DIR, fileName);
+  const merchantReportsDir = getMerchantScopedDir(REPORTS_DIR, metadata.merchantAccountCode);
+  fs.mkdirSync(merchantReportsDir, { recursive: true });
+  const absolutePath = path.join(merchantReportsDir, fileName);
 
   // Use curl for report downloads to match Adyen report service expectations.
   try {
@@ -718,7 +739,8 @@ const processAuthorisationWebhook = async (payload) => {
 
   if (!paymentLinkId || !merchantAccountCode) {
     return {
-      handled: false,
+      handled: true,
+      ignored: true,
       reason: 'Missing paymentLinkId or merchantAccountCode in AUTHORISATION webhook.'
     };
   }
@@ -727,16 +749,30 @@ const processAuthorisationWebhook = async (payload) => {
     paymentLinkId,
     merchantAccountCode,
     success: item.success || payload?.success,
+    paymentMethod: item.paymentMethod || payload?.paymentMethod,
     pspReference: item.pspReference || payload?.pspReference,
     eventCode: item.eventCode || payload?.eventCode || 'AUTHORISATION'
   });
+
+  if (!updated) {
+    return {
+      handled: true,
+      ignored: true,
+      eventCode: 'AUTHORISATION',
+      paymentLinkId,
+      merchantAccountCode,
+      reason: 'No payment-link match found. Webhook ignored.'
+    };
+  }
 
   return {
     handled: true,
     eventCode: 'AUTHORISATION',
     paymentLinkId,
     merchantAccountCode,
-    status: updated?.status || null
+    status: updated?.status || null,
+    paymentMethod: updated?.paymentMethod || null,
+    pspReference: updated?.pspReference || null
   };
 };
 
@@ -842,7 +878,9 @@ const saveExchangeRatesSnapshot = (rows = [], metadata = {}) => {
   ensureStorage();
   const dateOfReport = resolveReportDateFromRows(rows, metadata.dateOfReport);
   const fileName = `rates_${dateOfReport}.json`;
-  const filePath = path.join(RATES_DIR, fileName);
+  const merchantRatesDir = getMerchantScopedDir(RATES_DIR, metadata.merchantAccountCode);
+  fs.mkdirSync(merchantRatesDir, { recursive: true });
+  const filePath = path.join(merchantRatesDir, fileName);
   const payload = {
     dateOfReport,
     generatedAt: new Date().toISOString(),
@@ -882,6 +920,11 @@ const processExchangeRateReport = async (reportUrl, context = {}) => {
     sourceFile: downloaded.fileName,
     ...context
   });
+
+  // Remove raw downloaded report after it has been converted into rates data.
+  if (fs.existsSync(downloaded.absolutePath)) {
+    fs.unlinkSync(downloaded.absolutePath);
+  }
 
   return {
     handled: true,
@@ -969,6 +1012,23 @@ const listWebhookJsonFiles = (dirPath) => {
   return files;
 };
 
+const removeWebhookFileAfterProcessing = (filePath) => {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  fs.unlinkSync(filePath);
+
+  // Clean up now-empty merchant folders under Webhooks.
+  const parentDir = path.dirname(filePath);
+  if (parentDir !== WEBHOOKS_DIR && fs.existsSync(parentDir)) {
+    const remaining = fs.readdirSync(parentDir);
+    if (remaining.length === 0) {
+      fs.rmdirSync(parentDir);
+    }
+  }
+};
+
 const runWebhookEventCron = async (logger = console, options = {}) => {
   ensureStorage();
   const processingIndex = loadWebhookProcessingIndex();
@@ -1004,6 +1064,7 @@ const runWebhookEventCron = async (logger = console, options = {}) => {
       };
       hasProcessingIndexChanges = true;
       outcomes.push({ fileName: relativeFilePath, handled: false, reason: 'Invalid JSON payload.' });
+      removeWebhookFileAfterProcessing(filePath);
       continue;
     }
 
@@ -1016,6 +1077,9 @@ const runWebhookEventCron = async (logger = console, options = {}) => {
       };
       hasProcessingIndexChanges = true;
       outcomes.push({ fileName: relativeFilePath, ...result });
+
+      // Delete webhook files once processed (success or handled=false known outcome).
+      removeWebhookFileAfterProcessing(filePath);
     } catch (error) {
       processingIndex.processed[relativeFilePath] = {
         processedAt: new Date().toISOString(),
@@ -1196,14 +1260,33 @@ const handleWebhookPayload = async (payload, headers = {}) => {
   };
 };
 
-const getRatesByDateAndCurrencyPair = ({ date, baseCurrency, targetCurrency }) => {
+const getRatesByDateAndCurrencyPair = ({ date, baseCurrency, targetCurrency, merchantAccountCode }) => {
   ensureStorage();
 
   const normalizedDate = toIsoDate(date) || getDefaultRatesDate();
   const normalizedBase = normalizeCurrency(baseCurrency);
   const normalizedTarget = normalizeCurrency(targetCurrency);
   const fileName = `rates_${normalizedDate}.json`;
-  const filePath = path.join(RATES_DIR, fileName);
+  const legacyFilePath = path.join(RATES_DIR, fileName);
+
+  let filePath = legacyFilePath;
+  if (merchantAccountCode) {
+    const merchantFilePath = path.join(getMerchantScopedDir(RATES_DIR, merchantAccountCode), fileName);
+    filePath = fs.existsSync(merchantFilePath) ? merchantFilePath : legacyFilePath;
+  } else {
+    const merchantDirs = fs.readdirSync(RATES_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+
+    const firstMatch = merchantDirs
+      .map((dirName) => path.join(RATES_DIR, dirName, fileName))
+      .find((candidate) => fs.existsSync(candidate));
+
+    if (firstMatch) {
+      filePath = firstMatch;
+    }
+  }
 
   if (!fs.existsSync(filePath)) {
     return {

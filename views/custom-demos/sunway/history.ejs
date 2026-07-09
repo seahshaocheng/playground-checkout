@@ -142,6 +142,8 @@
             <th>Payment Link ID</th>
             <th>Merchant</th>
             <th>Amount</th>
+            <th>Payment Method</th>
+            <th>PSP Reference</th>
             <th>Status</th>
             <th>Link</th>
           </tr>
@@ -188,6 +190,8 @@
                 <td>${entry.paymentLinkId || '-'}</td>
                 <td>${entry.merchantAccountCode || '-'}</td>
                 <td>${amount}</td>
+                <td>${entry.paymentMethod || '-'}</td>
+                <td>${entry.pspReference || '-'}</td>
                 <td><span class="status ${statusClass(status)}">${status}</span></td>
                 <td>${entry.paymentLinkUrl ? `<a href="${entry.paymentLinkUrl}" target="_blank" rel="noreferrer">Open</a>` : '-'}</td>
               </tr>

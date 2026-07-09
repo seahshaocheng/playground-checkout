@@ -602,11 +602,13 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
 
   let convertedAmount = parsedAmount;
   let appliedExchangeRate = 1;
+  const resolvedMerchantAccount = getMerchantAccountFromBody(Boolean(isLive));
 
   if (normalizedTargetCurrency !== 'MYR') {
     const rateLookup = getRatesByDateAndCurrencyPair({
       baseCurrency: 'MYR',
-      targetCurrency: normalizedTargetCurrency
+      targetCurrency: normalizedTargetCurrency,
+      merchantAccountCode: resolvedMerchantAccount
     });
 
     if (!rateLookup.found) {
@@ -638,7 +640,7 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
     description: normalizedDescription || `Sunway payment link (${normalizedTargetCurrency})`,
     countryCode: normalizedCountryCode,
     shopperLocale,
-    merchantAccount: getMerchantAccountFromBody(Boolean(isLive)),
+    merchantAccount: resolvedMerchantAccount,
     metadata: {
       source: 'sunway-demo',
       targetCurrency: normalizedTargetCurrency,
@@ -813,6 +815,7 @@ app.get('/api/custom-demos/reports/rates', (req, res) => {
   const baseCurrency = String(req.query.base || '').trim();
   const targetCurrency = String(req.query.target || '').trim();
   const requestedDate = req.query.date;
+  const merchantAccountCode = String(req.query.merchantAccountCode || '').trim();
 
   if (!baseCurrency || !targetCurrency) {
     return res.status(400).json({
@@ -823,7 +826,8 @@ app.get('/api/custom-demos/reports/rates', (req, res) => {
   const result = getRatesByDateAndCurrencyPair({
     date: requestedDate,
     baseCurrency,
-    targetCurrency
+    targetCurrency,
+    merchantAccountCode
   });
 
   if (!result.found) {

@@ -1,0 +1,19 @@
+[
+  {
+    "merchantId": "sunway",
+    "displayName": "Sunway",
+    "passcodes": ["sunway"],
+    "variants": [
+      {
+        "name": "Sunway Reports Demo",
+        "description": "Sunway custom demo with report webhook and rates processing.",
+        "href": "/custom-demos/sunway",
+        "group": "Vertical"
+      }
+    ],
+    "allowedPathPrefixes": [
+      "/custom-demos/sunway",
+      "/api/custom-demos/sunway"
+    ]
+  }
+]

@@ -14,6 +14,111 @@
         "pspReference": "exchange_rate_report_2026_07_08.csv",
         "isLive": false
       }
+    },
+    {
+      "fingerprint": "d70eae248c2fef5aff3837fe0c2deeb6d6c9a8d82e57bedd2ae0a507aea4d123",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_09.csv",
+      "fileName": "1783694428450-637820dc-9da9-4796-a9f5-72886183f35d.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694428450-637820dc-9da9-4796-a9f5-72886183f35d.csv",
+      "downloadedAt": "2026-07-10T14:40:30.161Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_09.csv",
+        "isLive": false
+      }
+    },
+    {
+      "fingerprint": "d70eae248c2fef5aff3837fe0c2deeb6d6c9a8d82e57bedd2ae0a507aea4d123",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_09.csv",
+      "fileName": "1783694430280-319e23bd-87d8-4d7f-9dcc-922fd6212274.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694430280-319e23bd-87d8-4d7f-9dcc-922fd6212274.csv",
+      "downloadedAt": "2026-07-10T14:40:31.779Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_09.csv",
+        "isLive": false
+      }
+    },
+    {
+      "fingerprint": "d70eae248c2fef5aff3837fe0c2deeb6d6c9a8d82e57bedd2ae0a507aea4d123",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_09.csv",
+      "fileName": "1783694431907-17c11508-1d29-4b7d-af4d-1f8774e6678c.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694431907-17c11508-1d29-4b7d-af4d-1f8774e6678c.csv",
+      "downloadedAt": "2026-07-10T14:40:33.459Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_09.csv",
+        "isLive": false
+      }
+    },
+    {
+      "fingerprint": "d70eae248c2fef5aff3837fe0c2deeb6d6c9a8d82e57bedd2ae0a507aea4d123",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_09.csv",
+      "fileName": "1783694590997-d42003ed-38c5-4ad5-8d36-79ea3848737d.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694590997-d42003ed-38c5-4ad5-8d36-79ea3848737d.csv",
+      "downloadedAt": "2026-07-10T14:43:12.948Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_09.csv",
+        "isLive": false
+      }
+    },
+    {
+      "fingerprint": "4966f86c5d213249bbead77c3dd4281eccacce3623da5ab87dacbbb16fde74dd",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_10.csv",
+      "fileName": "1783735348284-f4ee43cd-9f8b-4cb4-8f27-c84315fc90f3.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783735348284-f4ee43cd-9f8b-4cb4-8f27-c84315fc90f3.csv",
+      "downloadedAt": "2026-07-11T02:02:30.481Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_10.csv",
+        "isLive": false
+      }
+    },
+    {
+      "fingerprint": "2081707b6169facaac197f13ed6fdc9d92e9acdebd4bbb7caaf18e56d2338644",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_11.csv",
+      "fileName": "1783821776994-2e2c167a-5f59-473a-8c66-00b8063c2a40.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783821776994-2e2c167a-5f59-473a-8c66-00b8063c2a40.csv",
+      "downloadedAt": "2026-07-12T02:02:58.565Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_11.csv",
+        "isLive": false
+      }
+    },
+    {
+      "fingerprint": "74b5c4db53b72c390f36d91ca59d74c2eaa17368242427aba002fa1398b805e4",
+      "reportUrl": "https://ca-test.adyen.com/reports/download/MerchantAccount/Demotool_Malaysia/exchange_rate_report_2026_07_12.csv",
+      "fileName": "1783908176979-816f55c0-c417-4c47-8cf3-c82de41a6c9e.csv",
+      "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783908176979-816f55c0-c417-4c47-8cf3-c82de41a6c9e.csv",
+      "downloadedAt": "2026-07-13T02:02:58.826Z",
+      "metadata": {
+        "source": "report-webhook-cron",
+        "reportType": "exchange_rate_report",
+        "eventCode": "REPORT_AVAILABLE",
+        "merchantAccountCode": "Demotool_Malaysia",
+        "pspReference": "exchange_rate_report_2026_07_12.csv",
+        "isLive": false
+      }
     }
   ]
 }

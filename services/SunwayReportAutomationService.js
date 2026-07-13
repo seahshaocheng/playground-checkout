@@ -657,6 +657,14 @@ const downloadReportFromUrl = async (reportUrl, metadata = {}) => {
   fs.mkdirSync(merchantReportsDir, { recursive: true });
   const absolutePath = path.join(merchantReportsDir, fileName);
 
+  console.log('[report-download] Starting Adyen report download.', {
+    reportUrl,
+    source: metadata.source || null,
+    reportType: metadata.reportType || null,
+    merchantAccountCode: metadata.merchantAccountCode || null,
+    isLive: toBooleanLiveFlag(metadata.isLive)
+  });
+
   // Use curl for report downloads to match Adyen report service expectations.
   try {
     execFileSync('curl', [
@@ -672,6 +680,13 @@ const downloadReportFromUrl = async (reportUrl, metadata = {}) => {
   } catch (error) {
     const stderr = String(error?.stderr || '').trim();
     const reason = stderr || 'curl download failed';
+    console.error('[report-download] Failed to download Adyen report.', {
+      reportUrl,
+      source: metadata.source || null,
+      reportType: metadata.reportType || null,
+      merchantAccountCode: metadata.merchantAccountCode || null,
+      reason
+    });
     throw new Error(`Report download failed: ${reason}`);
   }
 
@@ -687,10 +702,21 @@ const downloadReportFromUrl = async (reportUrl, metadata = {}) => {
   });
   writeJsonFile(REPORT_INDEX_PATH, index);
 
+  const bytes = fs.statSync(absolutePath).size;
+  console.log('[report-download] Adyen report downloaded successfully.', {
+    reportUrl,
+    fileName,
+    absolutePath,
+    bytes,
+    source: metadata.source || null,
+    reportType: metadata.reportType || null,
+    merchantAccountCode: metadata.merchantAccountCode || null
+  });
+
   return {
     fileName,
     absolutePath,
-    bytes: fs.statSync(absolutePath).size
+    bytes
   };
 };
 
@@ -946,6 +972,15 @@ const processReportAvailableWebhook = async (payload, logger = console) => {
     reportType = 'exchange_rate_report';
   }
 
+  logger.log('[report-webhook-cron] Processing REPORT_AVAILABLE webhook.', {
+    eventCode: item.eventCode || payload?.eventCode || 'REPORT_AVAILABLE',
+    merchantAccountCode: item.merchantAccountCode || payload?.merchantAccountCode || null,
+    pspReference: item.pspReference || payload?.pspReference || null,
+    reportType,
+    reportUrl,
+    isLive
+  });
+
   switch (reportType) {
     case 'exchange_rate_report':
       return processExchangeRateReport(reportUrl, {
@@ -1045,12 +1080,23 @@ const runWebhookEventCron = async (logger = console, options = {}) => {
   for (const filePath of files) {
     const fileName = path.basename(filePath);
     const relativeFilePath = path.relative(WEBHOOKS_DIR, filePath);
+    const looksLikeReportAvailableFile = fileName.toUpperCase().startsWith('REPORT_AVAILABLE_');
 
     if (specificFiles && !specificFiles.has(fileName) && !specificFiles.has(relativeFilePath)) {
       continue;
     }
 
     const existing = processingIndex.processed[relativeFilePath];
+    const existingEventCode = String(existing?.eventCode || '').toUpperCase();
+    const existingDownloadAttempted = Boolean(existing?.downloadAttempted);
+    const shouldSkipBecauseReportAttempted = Boolean(
+      existing && (existingDownloadAttempted || existingEventCode === 'REPORT_AVAILABLE' || looksLikeReportAvailableFile)
+    );
+
+    if (shouldSkipBecauseReportAttempted) {
+      continue;
+    }
+
     if (existing && !(shouldReprocessFailed && existing.handled === false)) {
       continue;
     }
@@ -1068,10 +1114,16 @@ const runWebhookEventCron = async (logger = console, options = {}) => {
       continue;
     }
 
+    const item = extractNotificationRequestItem(event?.payload) || {};
+    const eventCode = String(item.eventCode || event?.eventCode || '').toUpperCase();
+    const downloadAttempted = eventCode === 'REPORT_AVAILABLE';
+
     try {
       const result = await processWebhookEventFile(event, logger);
       processingIndex.processed[relativeFilePath] = {
         processedAt: new Date().toISOString(),
+        eventCode,
+        downloadAttempted,
         handled: Boolean(result?.handled),
         result
       };
@@ -1083,6 +1135,8 @@ const runWebhookEventCron = async (logger = console, options = {}) => {
     } catch (error) {
       processingIndex.processed[relativeFilePath] = {
         processedAt: new Date().toISOString(),
+        eventCode,
+        downloadAttempted,
         handled: false,
         reason: error.message
       };
@@ -1251,6 +1305,15 @@ const checkForNewFxReports = async () => {
 
 const handleWebhookPayload = async (payload, headers = {}) => {
   const event = queueWebhookEvent(payload, headers);
+  if (event.eventCode === 'REPORT_AVAILABLE') {
+    console.log('[report-webhook] REPORT_AVAILABLE webhook received.', {
+      eventId: event.id,
+      fileName: event.fileName,
+      merchantAccountCode: event.merchantAccountCode,
+      receivedAt: event.receivedAt
+    });
+  }
+
   return {
     eventId: event.id,
     queued: true,

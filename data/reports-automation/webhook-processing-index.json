@@ -85,6 +85,166 @@
         "merchantAccountCode": "Demotool_Malaysia",
         "status": "paid"
       }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783694427273.json": {
+      "processedAt": "2026-07-10T14:40:30.279Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783694428450-637820dc-9da9-4796-a9f5-72886183f35d.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694428450-637820dc-9da9-4796-a9f5-72886183f35d.csv",
+          "bytes": 1988731
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-09.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-09.json",
+          "dateOfReport": "2026-07-09",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783694427463.json": {
+      "processedAt": "2026-07-10T14:40:31.905Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783694430280-319e23bd-87d8-4d7f-9dcc-922fd6212274.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694430280-319e23bd-87d8-4d7f-9dcc-922fd6212274.csv",
+          "bytes": 1988731
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-09.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-09.json",
+          "dateOfReport": "2026-07-09",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783694427651.json": {
+      "processedAt": "2026-07-10T14:40:33.524Z",
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783694431907-17c11508-1d29-4b7d-af4d-1f8774e6678c.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694431907-17c11508-1d29-4b7d-af4d-1f8774e6678c.csv",
+          "bytes": 1988731
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-09.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-09.json",
+          "dateOfReport": "2026-07-09",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783694590233.json": {
+      "processedAt": "2026-07-10T14:43:13.083Z",
+      "eventCode": "REPORT_AVAILABLE",
+      "downloadAttempted": true,
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783694590997-d42003ed-38c5-4ad5-8d36-79ea3848737d.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783694590997-d42003ed-38c5-4ad5-8d36-79ea3848737d.csv",
+          "bytes": 1988731
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-09.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-09.json",
+          "dateOfReport": "2026-07-09",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783735346710.json": {
+      "processedAt": "2026-07-11T02:02:30.599Z",
+      "eventCode": "REPORT_AVAILABLE",
+      "downloadAttempted": true,
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783735348284-f4ee43cd-9f8b-4cb4-8f27-c84315fc90f3.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783735348284-f4ee43cd-9f8b-4cb4-8f27-c84315fc90f3.csv",
+          "bytes": 1988931
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-10.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-10.json",
+          "dateOfReport": "2026-07-10",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783821775197.json": {
+      "processedAt": "2026-07-12T02:02:58.694Z",
+      "eventCode": "REPORT_AVAILABLE",
+      "downloadAttempted": true,
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783821776994-2e2c167a-5f59-473a-8c66-00b8063c2a40.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783821776994-2e2c167a-5f59-473a-8c66-00b8063c2a40.csv",
+          "bytes": 1989427
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-11.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-11.json",
+          "dateOfReport": "2026-07-11",
+          "count": 22801
+        }
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783900551903.json": {
+      "processedAt": "2026-07-12T23:55:52.148Z",
+      "eventCode": "REPORT_AVAILABLE",
+      "downloadAttempted": true,
+      "handled": false,
+      "result": {
+        "handled": false,
+        "reason": "Unsupported report type for REPORT_AVAILABLE.",
+        "reportType": "unknown",
+        "pspReference": "settlement_detail_report_2026-07-06_2026-07-12.csv"
+      }
+    },
+    "DEMOTOOL_MALAYSIA/REPORT_AVAILABLE_DEMOTOOL_MALAYSIA_1783908176246.json": {
+      "processedAt": "2026-07-13T02:02:58.958Z",
+      "eventCode": "REPORT_AVAILABLE",
+      "downloadAttempted": true,
+      "handled": true,
+      "result": {
+        "handled": true,
+        "reportType": "exchange_rate_report",
+        "downloaded": {
+          "fileName": "1783908176979-816f55c0-c417-4c47-8cf3-c82de41a6c9e.csv",
+          "absolutePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/reports/DEMOTOOL_MALAYSIA/1783908176979-816f55c0-c417-4c47-8cf3-c82de41a6c9e.csv",
+          "bytes": 1989427
+        },
+        "rowsExtracted": 22801,
+        "savedRates": {
+          "fileName": "rates_2026-07-12.json",
+          "filePath": "/Users/markseah/Desktop/Personal Projects/playground-checkout/data/reports-automation/rates/DEMOTOOL_MALAYSIA/rates_2026-07-12.json",
+          "dateOfReport": "2026-07-12",
+          "count": 22801
+        }
+      }
     }
   }
 }

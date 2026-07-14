@@ -36,6 +36,8 @@ const req = require('express/lib/request');
 const app = express();
 const PORT = process.env.PORT || 3005;
 const DEFAULT_SDK_VERSION = '6.13.1';
+const PUBLIC_DIR_PATH = path.join(__dirname, 'public');
+const SUPPORTED_LOGO_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.avif']);
 const MERCHANT_ACCESS_COOKIE = 'merchant_demo_access';
 const MERCHANT_ACCESS_DURATION_SECONDS = Number(process.env.MERCHANT_ACCESS_DURATION_SECONDS || 8 * 60 * 60);
 const MERCHANT_ACCESS_SECRET = process.env.MERCHANT_ACCESS_SECRET || process.env.MERCHANT_DEMO_PASSCODE || 'merchant-access-secret';
@@ -70,12 +72,54 @@ const getMerchantAccountFromBody = (isLive) => {
     : (process.env.ADYEN_TEST_MERCHANTACCOUNT || process.env.ADYEN_TEST_MERCHANT_ACCOUNT);
 };
 
+const findMerchantLogoPath = () => {
+  const pendingDirectories = [PUBLIC_DIR_PATH];
+
+  while (pendingDirectories.length > 0) {
+    const currentDirectory = pendingDirectories.shift();
+    let dirEntries = [];
+
+    try {
+      dirEntries = fs.readdirSync(currentDirectory, { withFileTypes: true });
+    } catch (_error) {
+      continue;
+    }
+
+    for (const entry of dirEntries) {
+      const absolutePath = path.join(currentDirectory, entry.name);
+
+      if (entry.isDirectory()) {
+        pendingDirectories.push(absolutePath);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      const parsedPath = path.parse(entry.name);
+      if (parsedPath.name.toLowerCase() !== 'my_logo') {
+        continue;
+      }
+
+      if (!SUPPORTED_LOGO_EXTENSIONS.has(parsedPath.ext.toLowerCase())) {
+        continue;
+      }
+
+      const relativePath = path.relative(PUBLIC_DIR_PATH, absolutePath).split(path.sep).join('/');
+      return `/${relativePath}`;
+    }
+  }
+
+  return null;
+};
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, 'public'), {
+app.use(express.static(PUBLIC_DIR_PATH));
+app.use(express.static(PUBLIC_DIR_PATH, {
   dotfiles: 'allow'
 }));
 // Health check
@@ -548,7 +592,10 @@ app.get('/custom-demos/sunway', (req, res) => {
 });
 
 app.get('/custom-demos/sunway/create-payment-link', (req, res) => {
-  res.render('custom-demos/sunway/index', getCheckoutContext(req));
+  res.render('custom-demos/sunway/index', {
+    ...getCheckoutContext(req),
+    merchantLogoPath: findMerchantLogoPath()
+  });
 });
 
 app.get('/custom-demos/sunway/history', (req, res) => {
@@ -637,7 +684,7 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
       currency: normalizedTargetCurrency
     },
     shopperReference: normalizedEmail,
-    description: normalizedDescription || `Sunway payment link (${normalizedTargetCurrency})`,
+    description: normalizedDescription || `Payment link (${normalizedTargetCurrency})`,
     countryCode: normalizedCountryCode,
     shopperLocale,
     merchantAccount: resolvedMerchantAccount,

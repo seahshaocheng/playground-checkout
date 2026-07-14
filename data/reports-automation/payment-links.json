@@ -252,6 +252,34 @@
       "status": "pending",
       "createdAt": "2026-07-14T02:17:44.418Z",
       "updatedAt": "2026-07-14T02:17:44.418Z"
+    },
+    "DEMOTOOL_MALAYSIA::PL942B86AA2913106DA7E92C0": {
+      "paymentLinkId": "PL942B86AA2913106DA7E92C0",
+      "merchantAccountCode": "Demotool_Malaysia",
+      "reference": "SUNWAY-067c27b3-700b-4c05-a0f5-bff7b6e80c38",
+      "paymentLinkUrl": "https://test.adyen.link/PL942B86AA2913106DA7E92C0",
+      "expiresAt": "2026-07-15T08:13:52+02:00",
+      "paymentMethod": null,
+      "pspReference": null,
+      "amount": 43018530,
+      "currency": "IDR",
+      "status": "pending",
+      "createdAt": "2026-07-14T06:13:52.309Z",
+      "updatedAt": "2026-07-14T06:13:52.309Z"
+    },
+    "DEMOTOOL_MALAYSIA::PL3F105D9D0229BD873F932B2": {
+      "paymentLinkId": "PL3F105D9D0229BD873F932B2",
+      "merchantAccountCode": "Demotool_Malaysia",
+      "reference": "SUNWAY-b8932231-5507-40c5-9ca0-3492950c80cb",
+      "paymentLinkUrl": "https://test.adyen.link/PL3F105D9D0229BD873F932B2",
+      "expiresAt": "2026-07-15T08:18:52+02:00",
+      "paymentMethod": null,
+      "pspReference": null,
+      "amount": 430185,
+      "currency": "IDR",
+      "status": "pending",
+      "createdAt": "2026-07-14T06:18:52.120Z",
+      "updatedAt": "2026-07-14T06:18:52.120Z"
     }
   }
 }

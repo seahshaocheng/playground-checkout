@@ -38,6 +38,7 @@ const PORT = process.env.PORT || 3005;
 const DEFAULT_SDK_VERSION = '6.13.1';
 const PUBLIC_DIR_PATH = path.join(__dirname, 'public');
 const SUPPORTED_LOGO_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.avif']);
+const ZERO_DECIMAL_CURRENCIES = new Set(['IDR', 'JPY', 'VND']);
 const MERCHANT_ACCESS_COOKIE = 'merchant_demo_access';
 const MERCHANT_ACCESS_DURATION_SECONDS = Number(process.env.MERCHANT_ACCESS_DURATION_SECONDS || 8 * 60 * 60);
 const MERCHANT_ACCESS_SECRET = process.env.MERCHANT_ACCESS_SECRET || process.env.MERCHANT_DEMO_PASSCODE || 'merchant-access-secret';
@@ -70,6 +71,11 @@ const getMerchantAccountFromBody = (isLive) => {
   return isLive
     ? getLiveMerchantAccount()
     : (process.env.ADYEN_TEST_MERCHANTACCOUNT || process.env.ADYEN_TEST_MERCHANT_ACCOUNT);
+};
+
+const getCurrencyMinorUnitExponent = (currency) => {
+  const normalizedCurrency = String(currency || '').toUpperCase();
+  return ZERO_DECIMAL_CURRENCIES.has(normalizedCurrency) ? 0 : 2;
 };
 
 const findMerchantLogoPath = () => {
@@ -675,7 +681,8 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
     convertedAmount = parsedAmount * exchangeRate;
   }
 
-  const convertedMinorUnits = Math.round(convertedAmount * 100);
+  const minorUnitExponent = getCurrencyMinorUnitExponent(normalizedTargetCurrency);
+  const convertedMinorUnits = Math.round(convertedAmount * (10 ** minorUnitExponent));
 
   const payload = {
     reference: `SUNWAY-${uuidv4()}`,

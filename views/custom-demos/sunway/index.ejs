@@ -763,9 +763,11 @@
       };
 
       const formatAmountByCode = (value, currency) => {
+        const normalizedCurrency = String(currency || '').toUpperCase();
+        const fractionDigits = ['IDR', 'JPY', 'VND'].includes(normalizedCurrency) ? 0 : 2;
         const amount = new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
+          minimumFractionDigits: fractionDigits,
+          maximumFractionDigits: fractionDigits
         }).format(value);
 
         return `${currency} ${amount}`;

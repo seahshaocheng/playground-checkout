@@ -238,6 +238,20 @@
       "status": "pending",
       "createdAt": "2026-07-14T01:48:57.212Z",
       "updatedAt": "2026-07-14T01:48:57.213Z"
+    },
+    "DEMOTOOL_MALAYSIA::PLE7FF620A59F669CDCC58262": {
+      "paymentLinkId": "PLE7FF620A59F669CDCC58262",
+      "merchantAccountCode": "Demotool_Malaysia",
+      "reference": "SUNWAY-22a51448-5c1a-4c53-bfba-a98a474d9d31",
+      "paymentLinkUrl": "https://test.adyen.link/PLE7FF620A59F669CDCC58262",
+      "expiresAt": "2026-07-15T04:17:44+02:00",
+      "paymentMethod": null,
+      "pspReference": null,
+      "amount": 794115,
+      "currency": "THB",
+      "status": "pending",
+      "createdAt": "2026-07-14T02:17:44.418Z",
+      "updatedAt": "2026-07-14T02:17:44.418Z"
     }
   }
 }

@@ -155,6 +155,77 @@ const getDefaultRatesDate = () => {
   return toIsoDate(Date.now() - 24 * 60 * 60 * 1000);
 };
 
+const RATES_FILE_PATTERN = /^rates_(\d{4}-\d{2}-\d{2})\.json$/;
+
+const getRateSearchDirs = (merchantAccountCode) => {
+  if (merchantAccountCode) {
+    return [
+      getMerchantScopedDir(RATES_DIR, merchantAccountCode),
+      RATES_DIR
+    ];
+  }
+
+  const merchantDirs = fs.readdirSync(RATES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+    .map((dirName) => path.join(RATES_DIR, dirName));
+
+  return [...merchantDirs, RATES_DIR];
+};
+
+const findLatestRatesFileOnOrBeforeDate = ({ requestedDate, merchantAccountCode }) => {
+  const requestedTs = Date.parse(`${requestedDate}T00:00:00.000Z`);
+  if (!Number.isFinite(requestedTs)) {
+    return null;
+  }
+
+  const searchDirs = getRateSearchDirs(merchantAccountCode);
+  let bestMatch = null;
+
+  searchDirs.forEach((dirPath, priority) => {
+    if (!fs.existsSync(dirPath)) {
+      return;
+    }
+
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    entries.forEach((entry) => {
+      if (!entry.isFile()) {
+        return;
+      }
+
+      const match = entry.name.match(RATES_FILE_PATTERN);
+      if (!match) {
+        return;
+      }
+
+      const dateOfReport = match[1];
+      const candidateTs = Date.parse(`${dateOfReport}T00:00:00.000Z`);
+      if (!Number.isFinite(candidateTs) || candidateTs > requestedTs) {
+        return;
+      }
+
+      if (!bestMatch || candidateTs > bestMatch.timestamp || (candidateTs === bestMatch.timestamp && priority < bestMatch.priority)) {
+        bestMatch = {
+          dateOfReport,
+          timestamp: candidateTs,
+          priority,
+          filePath: path.join(dirPath, entry.name)
+        };
+      }
+    });
+  });
+
+  if (!bestMatch) {
+    return null;
+  }
+
+  return {
+    dateOfReport: bestMatch.dateOfReport,
+    filePath: bestMatch.filePath
+  };
+};
+
 const pickLatestByValidFrom = (rows = []) => {
   if (rows.length === 0) {
     return null;
@@ -1331,6 +1402,7 @@ const getRatesByDateAndCurrencyPair = ({ date, baseCurrency, targetCurrency, mer
   const normalizedTarget = normalizeCurrency(targetCurrency);
   const fileName = `rates_${normalizedDate}.json`;
   const legacyFilePath = path.join(RATES_DIR, fileName);
+  let resolvedDateOfReport = normalizedDate;
 
   let filePath = legacyFilePath;
   if (merchantAccountCode) {
@@ -1352,9 +1424,21 @@ const getRatesByDateAndCurrencyPair = ({ date, baseCurrency, targetCurrency, mer
   }
 
   if (!fs.existsSync(filePath)) {
+    const fallback = findLatestRatesFileOnOrBeforeDate({
+      requestedDate: normalizedDate,
+      merchantAccountCode
+    });
+
+    if (fallback) {
+      filePath = fallback.filePath;
+      resolvedDateOfReport = fallback.dateOfReport;
+    }
+  }
+
+  if (!fs.existsSync(filePath)) {
     return {
       found: false,
-      dateOfReport: normalizedDate,
+      dateOfReport: resolvedDateOfReport,
       reason: `Rates file not found for ${normalizedDate}.`
     };
   }
@@ -1363,8 +1447,8 @@ const getRatesByDateAndCurrencyPair = ({ date, baseCurrency, targetCurrency, mer
   if (!content || !Array.isArray(content.rates)) {
     return {
       found: false,
-      dateOfReport: normalizedDate,
-      reason: `Rates file for ${normalizedDate} is invalid.`
+      dateOfReport: resolvedDateOfReport,
+      reason: `Rates file for ${resolvedDateOfReport} is invalid.`
     };
   }
 
@@ -1377,14 +1461,14 @@ const getRatesByDateAndCurrencyPair = ({ date, baseCurrency, targetCurrency, mer
   if (!latest) {
     return {
       found: false,
-      dateOfReport: normalizedDate,
+      dateOfReport: resolvedDateOfReport,
       reason: `No rate found for ${normalizedBase} to ${normalizedTarget}.`
     };
   }
 
   return {
     found: true,
-    dateOfReport: normalizedDate,
+    dateOfReport: resolvedDateOfReport,
     baseCurrency: latest.baseCurrency,
     targetCurrency: latest.targetCurrency,
     exchangeRate: latest.exchangeRate,

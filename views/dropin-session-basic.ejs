@@ -145,7 +145,7 @@
   </div>
 
   <script>
-    const { AdyenCheckout } = window.AdyenWeb;
+    const { AdyenCheckout, Dropin } = window.AdyenWeb;
     const form = document.getElementById('dropinForm');
     const startButton = document.getElementById('startButton');
     const dropinContainer = document.getElementById('dropin-container');
@@ -267,14 +267,22 @@
           }
         });
 
-        currentDropin = checkout.create('dropin', {
+        const dropinConfiguration = {
           paymentMethodsConfiguration: {
             card: {
               hasHolderName: true,
               holderNameRequired: false
             }
           }
-        });
+        };
+
+        if (typeof checkout?.create === 'function') {
+          currentDropin = checkout.create('dropin', dropinConfiguration);
+        } else if (typeof Dropin === 'function') {
+          currentDropin = new Dropin(checkout, dropinConfiguration);
+        } else {
+          throw new Error('Drop-in component is unavailable for the loaded Adyen Web SDK version.');
+        }
 
         currentDropin.mount('#dropin-container');
         showBanner('Session ready. Complete payment in the Drop-in panel.', 'info');

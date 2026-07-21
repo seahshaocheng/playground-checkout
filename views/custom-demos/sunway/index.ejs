@@ -508,6 +508,14 @@
         </div>
 
         <div class="field">
+          <label for="paymentUsageType">Payment usage</label>
+          <select id="paymentUsageType" name="paymentUsageType" class="select" required>
+            <option value="one-off">One-off (tokenize card)</option>
+            <option value="unscheduled-recurring">Unscheduled recurring payments</option>
+          </select>
+        </div>
+
+        <div class="field">
           <label for="description">Description</label>
           <input id="description" name="description" class="input" type="text" maxlength="280" placeholder="Blue Bag - ModelM671" />
         </div>
@@ -990,6 +998,7 @@
           amountMyr: Number(formData.get('amountMyr')),
           emailAddress: String(formData.get('emailAddress') || '').trim(),
           countryCode: String(formData.get('countryCode') || 'MY').toUpperCase(),
+          paymentUsageType: String(formData.get('paymentUsageType') || 'one-off').trim().toLowerCase(),
           description: String(formData.get('description') || '').trim(),
           phoneNumber: String(formData.get('phoneNumber') || '').trim(),
           isLive: initialEnv === 'live'

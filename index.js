@@ -565,7 +565,8 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
     countryCode,
     description,
     emailAddress,
-    phoneNumber
+    phoneNumber,
+    paymentUsageType
   } = req.body;
 
   const normalizedEmail = String(emailAddress || '').trim();
@@ -573,7 +574,15 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
   const normalizedTargetCurrency = String(targetCurrency || 'MYR').toUpperCase();
   const normalizedCountryCode = String(countryCode || 'MY').toUpperCase();
   const normalizedDescription = String(description || '').trim();
+  const normalizedPaymentUsageType = String(paymentUsageType || 'one-off').trim().toLowerCase();
   const parsedAmount = Number(amountMyr);
+
+  const recurringModelByUsageType = {
+    'one-off': 'CardOnFile',
+    'unscheduled-recurring': 'UnscheduledCardOnFile'
+  };
+
+  const recurringProcessingModel = recurringModelByUsageType[normalizedPaymentUsageType] || recurringModelByUsageType['one-off'];
 
   const localeByCountry = {
     MY: 'en-MY',
@@ -637,12 +646,18 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
       currency: normalizedTargetCurrency
     },
     shopperReference: normalizedEmail,
+    shopperInteraction: 'Ecommerce',
+    storePaymentMethodMode: 'enabled',
+    recurringProcessingModel,
     description: normalizedDescription || `Sunway payment link (${normalizedTargetCurrency})`,
     countryCode: normalizedCountryCode,
     shopperLocale,
     merchantAccount: resolvedMerchantAccount,
     metadata: {
       source: 'sunway-demo',
+      paymentUsageType: normalizedPaymentUsageType,
+      recurringProcessingModel,
+      storePaymentMethodMode: 'enabled',
       targetCurrency: normalizedTargetCurrency,
       countryCode: normalizedCountryCode,
       shopperLocale,
@@ -687,6 +702,9 @@ app.post('/api/custom-demos/sunway/payment-link', async (req, res) => {
         currency: normalizedTargetCurrency
       },
       exchangeRate: appliedExchangeRate,
+      paymentUsageType: normalizedPaymentUsageType,
+      recurringProcessingModel,
+      storePaymentMethodMode: payload.storePaymentMethodMode,
       message: `Payment link generated and queued for ${recipientChannel} delivery.`
     });
   } catch (error) {

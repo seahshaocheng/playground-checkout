@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sunway Payment Link Demo</title>
+  <title>Payment Link w FX Demo</title>
   <link rel="stylesheet" href="/css/workbench-theme.css" />
   <style>
     body {
@@ -46,8 +46,8 @@
     }
 
     .logo-placeholder {
-      width: 44px;
-      height: 44px;
+      width: 60px;
+      height: 60px;
       border-radius: 12px;
       border: 2px dashed #8aa8c7;
       background: #ffffff;
@@ -58,6 +58,15 @@
       font-weight: 700;
       text-transform: uppercase;
       flex-shrink: 0;
+    }
+
+    .logo-image {
+      border-style: solid;
+      border-color: rgba(15, 23, 42, 0.12);
+      object-fit: contain;
+      object-position: center;
+      padding: 5px;
+      box-sizing: border-box;
     }
 
     .brand-copy {
@@ -418,6 +427,92 @@
       display: none;
     }
 
+    .error-more-info {
+      margin-left: 0.4rem;
+      border: none;
+      background: transparent;
+      color: #fde68a;
+      text-decoration: underline;
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 0;
+      font-weight: 700;
+    }
+
+    .error-more-info:hover {
+      color: #fef3c7;
+    }
+
+    .error-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      z-index: 1000;
+    }
+
+    .error-modal[hidden] {
+      display: none;
+    }
+
+    .error-modal-card {
+      width: min(520px, 100%);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 24px 45px rgba(15, 23, 42, 0.24);
+      padding: 0.95rem;
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .error-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+
+    .error-modal-title {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #0f2c4d;
+    }
+
+    .error-modal-close {
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: #f8fafc;
+      color: #334155;
+      border-radius: 8px;
+      padding: 0.28rem 0.52rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .error-modal-close:hover {
+      background: #e2e8f0;
+    }
+
+    .error-modal-grid {
+      display: grid;
+      gap: 0.42rem;
+    }
+
+    .error-modal-line {
+      margin: 0;
+      font-size: 0.84rem;
+      color: #334155;
+      word-break: break-word;
+    }
+
+    .error-modal-line strong {
+      color: #0f172a;
+    }
+
     @media (max-width: 720px) {
       body {
         padding: 0.55rem;
@@ -428,8 +523,8 @@
       }
 
       .logo-placeholder {
-        width: 38px;
-        height: 38px;
+        width: 60px;
+        height: 60px;
       }
 
       .title {
@@ -451,9 +546,13 @@
   <main class="shell">
     <header class="header">
       <div class="brand">
-        <div class="logo-placeholder" aria-hidden="true">Logo</div>
+        <% if (merchantLogoPath) { %>
+          <img class="logo-placeholder logo-image" src="<%= merchantLogoPath %>" alt="Merchant logo" />
+        <% } else { %>
+          <div class="logo-placeholder" aria-hidden="true">Logo</div>
+        <% } %>
         <div class="brand-copy">
-          <h1 class="title">Sunway Payment Link Demo</h1>
+          <h1 class="title">FX with Payment Link Demo</h1>
           <p class="brand-subtitle">Logo placeholder ready for merchant branding</p>
         </div>
       </div>
@@ -558,6 +657,21 @@
     </section>
   </main>
 
+  <div id="errorDetailsModal" class="error-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="errorDetailsTitle">
+    <div class="error-modal-card">
+      <div class="error-modal-header">
+        <h3 id="errorDetailsTitle" class="error-modal-title">Payment Link Error Details</h3>
+        <button id="errorDetailsClose" class="error-modal-close" type="button">Close</button>
+      </div>
+      <div class="error-modal-grid">
+        <p class="error-modal-line"><strong>Error code:</strong> <span id="errorDetailsCode">-</span></p>
+        <p class="error-modal-line"><strong>Message:</strong> <span id="errorDetailsMessage">-</span></p>
+        <p class="error-modal-line"><strong>Error type:</strong> <span id="errorDetailsType">-</span></p>
+        <p class="error-modal-line"><strong>PSP reference:</strong> <span id="errorDetailsPspReference">-</span></p>
+      </div>
+    </div>
+  </div>
+
   <script>
     (() => {
       const initialEnv = '<%= env %>';
@@ -582,27 +696,86 @@
       const qrCodeImage = document.getElementById('qrCodeImage');
       const historyBox = document.getElementById('historyBox');
       const historyList = document.getElementById('historyList');
+      const errorDetailsModal = document.getElementById('errorDetailsModal');
+      const errorDetailsClose = document.getElementById('errorDetailsClose');
+      const errorDetailsCode = document.getElementById('errorDetailsCode');
+      const errorDetailsMessage = document.getElementById('errorDetailsMessage');
+      const errorDetailsType = document.getElementById('errorDetailsType');
+      const errorDetailsPspReference = document.getElementById('errorDetailsPspReference');
       let rateLookupTimer = null;
       let rateLookupSeq = 0;
       let paymentStatusPollTimer = null;
       let latestStatusToken = 0;
       const linksHistory = [];
       let activePaymentLinkKey = null;
+      let latestCreateLinkErrorDetails = null;
 
-      const showError = (message) => {
-        errorBox.textContent = message;
+      const getErrorDetailValue = (value) => {
+        const normalized = String(value || '').trim();
+        return normalized || '-';
+      };
+
+      const closeErrorDetailsModal = () => {
+        errorDetailsModal.hidden = true;
+        errorDetailsModal.setAttribute('aria-hidden', 'true');
+      };
+
+      const openErrorDetailsModal = (details) => {
+        errorDetailsCode.textContent = getErrorDetailValue(details?.errorCode);
+        errorDetailsMessage.textContent = getErrorDetailValue(details?.message);
+        errorDetailsType.textContent = getErrorDetailValue(details?.errorType);
+        errorDetailsPspReference.textContent = getErrorDetailValue(details?.pspReference);
+        errorDetailsModal.hidden = false;
+        errorDetailsModal.setAttribute('aria-hidden', 'false');
+      };
+
+      const showError = (message, details = null) => {
+        latestCreateLinkErrorDetails = details;
+        errorBox.innerHTML = '';
+        errorBox.appendChild(document.createTextNode(message));
+
+        if (details) {
+          const moreInfoButton = document.createElement('button');
+          moreInfoButton.type = 'button';
+          moreInfoButton.className = 'error-more-info';
+          moreInfoButton.textContent = 'more info';
+          moreInfoButton.addEventListener('click', () => {
+            openErrorDetailsModal(latestCreateLinkErrorDetails);
+          });
+          errorBox.appendChild(document.createTextNode(' ('));
+          errorBox.appendChild(moreInfoButton);
+          errorBox.appendChild(document.createTextNode(')'));
+        }
+
         errorBox.style.display = 'block';
       };
 
       const clearError = () => {
-        errorBox.textContent = '';
+        latestCreateLinkErrorDetails = null;
+        errorBox.innerHTML = '';
         errorBox.style.display = 'none';
+        closeErrorDetailsModal();
+      };
+
+      const extractCreateLinkErrorDetails = (payload = {}) => {
+        const maybeObject = (payload && typeof payload === 'object') ? payload : {};
+        const details = {
+          errorCode: maybeObject.errorCode || maybeObject.code || maybeObject?.error?.errorCode || '',
+          message: maybeObject.message || maybeObject.error || maybeObject?.error?.message || '',
+          errorType: maybeObject.errorType || maybeObject.type || maybeObject?.error?.errorType || '',
+          pspReference: maybeObject.pspReference || maybeObject?.error?.pspReference || ''
+        };
+
+        const hasDetail = Object.values(details).some((value) => String(value || '').trim().length > 0);
+        return hasDetail ? details : null;
       };
 
       const formatAmountByCode = (value, currency) => {
+        const normalizedCurrency = String(currency || '').toUpperCase();
+        const fractionDigits = ['IDR', 'JPY', 'VND'].includes(normalizedCurrency) ? 0 : 2;
         const amount = new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
+          minimumFractionDigits: fractionDigits,
+          maximumFractionDigits: fractionDigits
         }).format(value);
 
         return `${currency} ${amount}`;
@@ -982,6 +1155,17 @@
         queueRateLookup();
       });
       amountMyrInput.addEventListener('input', queueRateLookup);
+      errorDetailsClose.addEventListener('click', closeErrorDetailsModal);
+      errorDetailsModal.addEventListener('click', (event) => {
+        if (event.target === errorDetailsModal) {
+          closeErrorDetailsModal();
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !errorDetailsModal.hidden) {
+          closeErrorDetailsModal();
+        }
+      });
       syncCountryToCurrency();
       queueRateLookup();
       window.addEventListener('beforeunload', stopPaymentStatusPolling);
@@ -1023,7 +1207,12 @@
 
           const data = await response.json();
           if (!response.ok) {
-            throw new Error(data.error || 'Unable to generate payment link.');
+            if (response.status === 422) {
+              showError('Unable to generate payment link.', extractCreateLinkErrorDetails(data));
+              return;
+            }
+
+            throw new Error(data.error || data.message || 'Unable to generate payment link.');
           }
 
           const newEntry = {

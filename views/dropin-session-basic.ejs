@@ -131,6 +131,24 @@
         <h2 class="h6 mb-3">Configuration</h2>
         <form id="dropinForm">
           <%- include('shared-dropin-configuration-form') %>
+          <div class="mb-3">
+            <label for="shopperReference" class="form-label">Shopper Reference</label>
+            <input type="text" id="shopperReference" name="shopperReference" class="form-control" placeholder="e.g. unique-shopper-id-12345" value="unique-shopper-id-12345" />
+          </div>
+
+          <div class="mb-3">
+            <label for="shopperEmail" class="form-label">Shopper Email</label>
+            <input type="email" id="shopperEmail" name="shopperEmail" class="form-control" placeholder="e.g. shopper@example.com" value="" />
+          </div>
+
+          <div class="mb-3">
+            <label for="storePaymentMethodMode" class="form-label">Store Payment Method Mode</label>
+            <select id="storePaymentMethodMode" name="storePaymentMethodMode" class="form-select">
+              <option value="enabled" selected>enabled</option>
+              <option value="askForConsent">askForConsent</option>
+              <option value="disabled">disabled</option>
+            </select>
+          </div>
           <button type="submit" class="btn btn-primary w-100" id="startButton">Start Session Drop-in</button>
         </form>
       </section>
@@ -203,6 +221,9 @@
       const amountValue = Number.parseInt(form.amount.value, 10);
       const currency = (form.currency.value || '').trim().toUpperCase();
       const reference = (form.reference.value || '').trim();
+      const shopperReference = (form.shopperReference?.value || '').trim();
+      const shopperEmail = (form.shopperEmail?.value || '').trim();
+      const storePaymentMethodMode = (form.storePaymentMethodMode?.value || '').trim();
       const allowedPaymentMethods = parsePaymentMethodList(form.allowedPaymentMethods?.value);
       const blockedPaymentMethods = parsePaymentMethodList(form.blockedPaymentMethods?.value);
 
@@ -239,6 +260,18 @@
 
         if (blockedPaymentMethods.length > 0) {
           sessionRequestBody.blockedPaymentMethods = blockedPaymentMethods;
+        }
+
+        if (storePaymentMethodMode) {
+          sessionRequestBody.storePaymentMethodMode = storePaymentMethodMode;
+        }
+
+        if (shopperReference) {
+          sessionRequestBody.shopperReference = shopperReference;
+        }
+
+        if (shopperEmail) {
+          sessionRequestBody.shopperEmail = shopperEmail;
         }
 
         const response = await fetch('/api/sessions', {
